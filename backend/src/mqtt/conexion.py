@@ -1,3 +1,4 @@
+
 import paho.mqtt.client as paho
 
 from paho import mqtt
@@ -18,3 +19,4 @@ def mensajeRecibido(client, userdata, msg):
     print("Tienes un mensaje")
 
 client.on_message = mensajeRecibido
+client.loop_forever()
