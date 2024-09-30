@@ -4,8 +4,8 @@ import threading
 import signal
 import random
 import paho.mqtt.client as paho
-from mqtt import TipoMensaje
-from mqtt.pub import Nodo
+from generatorMqtt import TipoMensaje
+from generatorMqtt.pub import Nodo
 
 
 def signal_handler(sig, frame):

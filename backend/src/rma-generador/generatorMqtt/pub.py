@@ -7,12 +7,11 @@ import paho.mqtt.client as paho
 from typing import Optional
 from datetime import datetime
 from dataclasses import dataclass
-from pydantic import BaseModel
-from mqtt import TipoMensaje
+from generatorMqtt import TipoMensaje
 from dotenv import load_dotenv
+from pydantic import BaseModel
 
 load_dotenv()
-
 
 class Mensaje(BaseModel):
     id: int
@@ -20,13 +19,12 @@ class Mensaje(BaseModel):
     data: str
     time: str
 
-
 @dataclass
 class Nodo:
     id: int
     stop_event: threading.Event
     cliente: paho.Client = paho.Client()
-    frecuencia: int = 10  # cada cuantos segundos publica mensajes?
+    frecuencia: int =10  # cada cuantos segundos publica mensajes?
 
     def publicar(
         self,
