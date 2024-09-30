@@ -1,9 +1,10 @@
 from sqlalchemy.ext.asyncio import AsyncSession
-from sqlalchemy.future import select
+#from sqlalchemy.future import select
 from src import schemas, models
 from src.models import Producto
 from fastapi import HTTPException
 from database import SessionLocal
+
 
 
 async def get_db():
@@ -13,24 +14,25 @@ async def get_db():
     finally:
         db.close()
 
-############################################################  CRUD PRODUCTO ############################################################
-#Controlar las transacciones
-
-async def crear_producto(db: AsyncSession, producto:schemas.ProductoCreate) -> schemas.ProductoCreate:
-    new_producto = models.Producto(
-        nombre=producto.nombre,
-        precio=producto.precio,
-        descripcion=producto.descripcion
+############################################################ TEMPERATURA ############################################################
+async def crear_temperatura(db: AsyncSession, temperatura: schemas.TemperaturaCreate) -> schemas.TemperaturaCreate:
+    new_temperatura = models.Temperatura(        
+        nodo=temperatura.nodo,
+        tipo=temperatura.tipo,
+        dato=temperatura.dato,
+        tiempo=temperatura.tiempo
     )
+    print(f"{new_temperatura.dato}, {new_temperatura.nodo}, {new_temperatura.tiempo}, {new_temperatura.tipo}")
     try:
-            db.add(new_producto)
+            db.add(new_temperatura)
             await db.commit()  
-            await db.refresh(new_producto)
+            await db.refresh(new_temperatura)
     except Exception as e:
             await db.rollback()  
-            raise HTTPException(status_code=400, detail="Error al crear producto") from e
-    return new_producto
+            raise HTTPException(status_code=400, detail="Error al crear temperatura") from e
+    return new_temperatura
 
+'''
 async def leer_producto(db:AsyncSession, producto_id:int) -> schemas.Producto:
      async with db.begin():
         result = await db.execute(select(Producto).filter(Producto.id == producto_id))
@@ -61,4 +63,4 @@ async def eliminar_producto(db:AsyncSession, producto_id:int) -> schemas.Product
     else:
         raise HTTPException(status_code=404, detail="Producto no encontrado")
     
-    
+'''

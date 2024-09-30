@@ -5,6 +5,13 @@ from src import schemas, services
 
 router = APIRouter()
 
+@router.post("/temperatura", response_model=schemas.TemperaturaCreate)
+async def create_temperatura(temperatura: schemas.TemperaturaCreate, db: AsyncSession = Depends(get_db)):
+    try:
+        return await services.crear_temperatura(db, temperatura)
+    except HTTPException as e:
+        raise HTTPException(status_code=400, detail=str(e))
+    
 ############################################################  ROUTER PRODUCTO ############################################################
 @router.post("/producto", response_model=schemas.Producto)
 async def create_producto(producto: schemas.ProductoCreate, db: AsyncSession = Depends(get_db)):

@@ -1,7 +1,7 @@
 from enum import StrEnum, auto
 
 class TipoMensaje(StrEnum):
-    STATUS: auto()
+    #STATUS: auto()
     TEMP_T = auto()  # Temperature
     TEMP2_T = auto()  # Temperature #2
     HUMIDITY_T = auto()  # Relative Humidity

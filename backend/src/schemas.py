@@ -1,27 +1,31 @@
 from pydantic import BaseModel
 from datetime import datetime
-from typing import Optional
+#from typing import Optional
 import datetime
 
+class TemperaturaBase(BaseModel):
+    nodo: int
+    tipo: str
+    dato: float
+    tiempo: datetime.datetime
 
+class Temperatura(TemperaturaBase):
+    id: int
+    nodo: int
+    tipo: str
+    dato: float
+    tiempo: datetime.datetime
+    class Config:
+        orm_config = True
+
+class TemperaturaCreate(TemperaturaBase):
+    pass
+
+'''
 class ProductoBase(BaseModel):
     nombre:str
     precio:float
     descripcion: Optional[str] = None
-
-class Producto(ProductoBase):
-    id:int
-    nombre:str
-    precio:float
-    descripcion:str
-    fecha_creacion: datetime.datetime
-    fecha_modificacion: datetime.datetime
-
-    class Config:
-        orm_config = True
-    
-class ProductoCreate(ProductoBase):
-    pass
 
 class ProductoUpdate(ProductoBase):
     nombre: Optional[str] = None
@@ -31,6 +35,7 @@ class ProductoUpdate(ProductoBase):
 
 class ProductoDelete(ProductoBase):
      detail: str  
+'''
     
 
 #ProductoOut()
