@@ -1,7 +1,6 @@
 from sqlalchemy.ext.asyncio import AsyncSession
 #from sqlalchemy.future import select
 from src import schemas, models
-from src.models import Producto
 from fastapi import HTTPException
 from database import SessionLocal
 
