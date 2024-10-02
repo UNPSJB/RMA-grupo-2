@@ -2,13 +2,10 @@ import os
 import sys
 import paho.mqtt.client as paho
 import asyncio
-from paho.mqtt.enums import MQTTProtocolVersion
+import database
 from dotenv import load_dotenv
 from src import services
-from src.models import Temperatura
 from src.schemas import TemperaturaCreate
-import database
-from sqlalchemy.ext.asyncio import AsyncSession
 from pydantic import BaseModel
 
 class Mensaje(BaseModel):
@@ -23,8 +20,6 @@ MQTT_HOST = os.getenv("MQTT_HOST", "localhost")
 MQTT_PORT = int(os.getenv("MQTT_PORT", 1883))
 MQTT_KEEPALIVE = int(os.getenv("MQTT_KEEPALIVE", 60))
 TOPIC = os.getenv("MQTT_TOPIC")
-
-
 
 async def message_handling(client, userdata, message):
     print("Estoy en el subscriptor") 
