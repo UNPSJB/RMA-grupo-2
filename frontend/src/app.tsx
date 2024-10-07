@@ -16,6 +16,7 @@ import Tablas from './pages/Tablas';
 import Alerts from './pages/UiElements/Alerts';
 import Buttons from './pages/UiElements/Buttons';
 import DefaultLayout from './layout/DefaultLayout';
+import Temperaturas from './pages/Dashboard/RMAList';
 
 function App() {
   const [loading, setLoading] = useState<boolean>(true);
@@ -40,6 +41,7 @@ function App() {
             <>
               <PageTitle title="Red de Monitoreo Ambiental" />
               <RMA />
+              <Temperaturas />
             </>
           }
         />

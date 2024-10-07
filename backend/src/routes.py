@@ -2,6 +2,10 @@ from fastapi import APIRouter, Depends, HTTPException
 from sqlalchemy.ext.asyncio import AsyncSession
 from database import get_db 
 from src import schemas, services
+from sqlalchemy.future import select
+from src.models import Temperatura
+from typing import List
+
 
 router = APIRouter()
 
@@ -12,7 +16,15 @@ async def create_temperatura(temperatura: schemas.TemperaturaCreate, db: AsyncSe
     except HTTPException as e:
         raise HTTPException(status_code=400, detail=str(e))
     
-############################################################  ROUTER PRODUCTO ############################################################
+@router.get("/temperatura", response_model=List[schemas.TemperaturaCreate])
+async def read_temperaturas(db: AsyncSession = Depends(get_db)):
+    async with db.begin():
+        result = await db.execute(select(Temperatura))
+        temperaturas = result.scalars().all()
+    return temperaturas
+
+    
+'''
 @router.post("/producto", response_model=schemas.Producto)
 async def create_producto(producto: schemas.ProductoCreate, db: AsyncSession = Depends(get_db)):
     try:
@@ -40,5 +52,4 @@ async def delete_producto(producto_id: int, db: AsyncSession = Depends(get_db)):
         return await services.eliminar_producto(db, producto_id)
     except HTTPException as e:
             raise HTTPException(status_code=400, detail=str(e))
-    
-    
+    '''

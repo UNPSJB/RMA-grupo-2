@@ -112,7 +112,7 @@ const ChartLineaTemp: React.FC = () => {
       },
     ],
   });
-
+  
   const [categories, setCategories] = useState<string[]>([]); // Para las etiquetas del eje X
   const [timeFrame, setTimeFrame] = useState<'day' | 'week' | 'month'>('day');
 
@@ -120,28 +120,27 @@ const ChartLineaTemp: React.FC = () => {
     fetchTemperatureData(timeFrame);
   }, [timeFrame]);
 
-  const fetchTemperatureData = async (timeFrame: 'day' | 'week' | 'month') => {
-    try {
+const fetchTemperatureData = async (timeFrame: 'day' | 'week' | 'month') => {
+  try {
         const response = await fetch(`/api/temperatures?timeFrame=${timeFrame}`);
         const result = await response.json();
-
+        
         const labels = result.map((item: any) => item.label); // Cada item tiene un campo 'label'
         const values = result.map((item: any) => item.value); // Cada item tiene un campo 'value'
 
         setCategories(labels);
         setState({
             series: [
-                {
-                    name: 'Temperatura',
-                    data: values,
-                },
+              {
+                name: 'Temperatura',
+                data: values,
+              },
             ],
-        });
-    } catch (error) {
-        console.error('Error fetching temperature data:', error);
-    }
-};
-
+          });
+        } catch (error) {
+          console.error('Error fetching temperature data:', error);
+        }
+      };
 
   const handleTimeFrameChange = (frame: 'day' | 'week' | 'month') => {
     setTimeFrame(frame);
