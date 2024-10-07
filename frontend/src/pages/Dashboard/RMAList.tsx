@@ -2,10 +2,11 @@ import React, { useEffect, useState } from 'react';
 import axios from 'axios';
 
 interface Temperatura {
-  nodo: number;
-  tipo: string;
-  dato: number;
-  tiempo: Date; 
+    id:number;
+    nodo: number;
+    tipo: string;
+    dato: number;
+    tiempo: Date; 
 }
 
 const Temperaturas: React.FC = () => {
@@ -14,7 +15,7 @@ const Temperaturas: React.FC = () => {
   useEffect(() => {
     const obtenerTemperaturas = async () => {
       try {
-        const response = await axios.get('http://localhost:8000/temperatura');
+        const response = await axios.get('http://localhost:8000/temperatura/');
 
         //const result = await response.json();
 
@@ -28,28 +29,23 @@ const Temperaturas: React.FC = () => {
   }, []);
 
   return (
-    <div>
+    <div style={{ maxHeight: '400px', overflowY: 'auto', padding: '10px', border: '1px solid #ddd' }}>
       <h1>Lista de Temperaturas</h1>
-      <table>
-        <thead>
-          <tr>
-            <th>Nodo</th>
-            <th>Tipo</th>
-            <th>Dato</th>
-            <th>Tiempo</th>
-          </tr>
-        </thead>
-        <tbody>
+      {temperaturas.length === 0 ? (
+        <p>No hay datos de temperaturas disponibles.</p>
+      ) : (
+        <ul style={{ listStyleType: 'none', padding: 0 }}>
           {temperaturas.map((temperatura) => (
-            <tr key={temperatura.nodo}>
-              <td>{temperatura.nodo}</td>
-              <td>{temperatura.tipo}</td>
-              <td>{temperatura.dato}</td>
-              <td>{new Date(temperatura.tiempo).toLocaleString()}</td>
-            </tr>
+            <li key={temperatura.id} style={{ marginBottom: '15px', padding: '10px', borderBottom: '1px solid #ccc' }}>
+              <strong>id:</strong> {temperatura.id}<br />
+              <strong>Nodo:</strong> {temperatura.nodo}<br />
+              <strong>Tipo:</strong> {temperatura.tipo}<br />
+              <strong>Dato:</strong> {temperatura.dato}<br />
+              <strong>Tiempo:</strong> {new Date(temperatura.tiempo).toLocaleString()}<br />
+            </li>
           ))}
-        </tbody>
-      </table>
+        </ul>
+      )}
     </div>
   );
 };

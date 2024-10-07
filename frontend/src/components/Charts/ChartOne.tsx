@@ -1,7 +1,7 @@
 import { ApexOptions } from 'apexcharts';
 import React, { useState } from 'react';
 import ReactApexChart from 'react-apexcharts';
-import Select from 'react-select';
+//import Select from 'react-select';
 
 // Productos de ejemplo
 const allProducts = [
@@ -68,14 +68,7 @@ const ChartOne: React.FC = () => {
     <div className="col-span-12 rounded-sm border border-stroke bg-white px-5 pt-7.5 pb-5 shadow-default dark:border-strokedark dark:bg-boxdark sm:px-7.5 xl:col-span-8">
       <div className="flex justify-between items-center mb-5">
         {/* Dropdown para seleccionar productos */}
-        <Select
-          isMulti
-          options={productOptions}
-          defaultValue={[productOptions[0], productOptions[1]]}
-          onChange={handleProductSelect}
-          className="w-1/2"
-          placeholder="Selecciona Productos"
-        />
+        
       </div>
 
       <div>

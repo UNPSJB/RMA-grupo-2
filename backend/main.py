@@ -9,7 +9,7 @@ from sqlalchemy.future import select
 from fastapi.middleware.cors import CORSMiddleware
 
 load_dotenv()#.env
-#DATABASE_URL = os.getenv("DB_URL")
+DATABASE_URL = os.getenv("DB_URL")
 ENV = os.getenv("ENV", "DEV")
 ROOT_PATH = os.getenv(f"ROOT_PATH_{ENV.upper()}", "")
 

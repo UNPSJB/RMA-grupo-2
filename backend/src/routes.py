@@ -16,7 +16,7 @@ async def create_temperatura(temperatura: schemas.TemperaturaCreate, db: AsyncSe
     except HTTPException as e:
         raise HTTPException(status_code=400, detail=str(e))
     
-@router.get("/temperatura", response_model=List[schemas.TemperaturaCreate])
+@router.get("/temperatura/", response_model=List[schemas.TemperaturaCreate])
 async def read_temperaturas(db: AsyncSession = Depends(get_db)):
     async with db.begin():
         result = await db.execute(select(Temperatura))

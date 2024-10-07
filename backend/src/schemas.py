@@ -4,6 +4,7 @@ from datetime import datetime
 import datetime
 
 class TemperaturaBase(BaseModel):
+    id:int
     nodo: int
     tipo: str
     dato: float
