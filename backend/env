@@ -1,4 +1,0 @@
-ENV="DEV o PROD"
-ROOT_PATH_DEV=""
-ROOT_PATH_PROD="/api/"
-DB_URL = "postgresql+asyncpg://postgres:2611@localhost/PedidoAhora"

@@ -5,16 +5,10 @@ import Loader from './common/Loader';
 import PageTitle from './components/PageTitle';
 import SignIn from './pages/Authentication/SignIn';
 import SignUp from './pages/Authentication/SignUp';
-import Calendar from './pages/Calendar';
-import Chart from './pages/Chart';
 import RMA from './pages/Dashboard/RMA';
-import FormElements from './pages/Form/FormElements';
-import FormLayout from './pages/Form/FormLayout';
 import Perfil from './pages/Perfil';
 import Settings from './pages/Settings';
 import Tablas from './pages/Tablas';
-import Alerts from './pages/UiElements/Alerts';
-import Buttons from './pages/UiElements/Buttons';
 import DefaultLayout from './layout/DefaultLayout';
 
 function App() {
@@ -38,22 +32,22 @@ function App() {
           index
           element={
             <>
-              <PageTitle title="Red de Monitoreo Ambiental" />
-              <RMA />
+              <PageTitle title="Iniciar Sesión" />
+              <SignIn />
             </>
           }
         />
         <Route
-          path="/calendar"
+          path="/auth/signup"
           element={
             <>
-              <PageTitle title="Calendar | TailAdmin - Tailwind CSS Admin Dashboard Template" />
-              <Calendar />
+              <PageTitle title="Signup | TailAdmin - Tailwind CSS Admin Dashboard Template" />
+              <SignUp />
             </>
           }
         />
         <Route
-          path="/perfil"
+          path="user/perfil"
           element={
             <>
               <PageTitle title="Perfil | Red de Monitoreo Ambiental" />
@@ -62,25 +56,7 @@ function App() {
           }
         />
         <Route
-          path="/forms/form-elements"
-          element={
-            <>
-              <PageTitle title="Form Elements | TailAdmin - Tailwind CSS Admin Dashboard Template" />
-              <FormElements />
-            </>
-          }
-        />
-        <Route
-          path="/forms/form-layout"
-          element={
-            <>
-              <PageTitle title="Form Layout | TailAdmin - Tailwind CSS Admin Dashboard Template" />
-              <FormLayout />
-            </>
-          }
-        />
-        <Route
-          path="/tablas"
+          path="user/tablas"
           element={
             <>
               <PageTitle title="Tablas | Red de Monitoreo Ambiental" />
@@ -92,53 +68,17 @@ function App() {
           path="/settings"
           element={
             <>
-              <PageTitle title="Settings | TailAdmin - Tailwind CSS Admin Dashboard Template" />
+              <PageTitle title="Configuración" />
               <Settings />
             </>
           }
         />
         <Route
-          path="/chart"
+          path="user/RMA"
           element={
             <>
-              <PageTitle title="Basic Chart | TailAdmin - Tailwind CSS Admin Dashboard Template" />
-              <Chart />
-            </>
-          }
-        />
-        <Route
-          path="/ui/alerts"
-          element={
-            <>
-              <PageTitle title="Alerts | TailAdmin - Tailwind CSS Admin Dashboard Template" />
-              <Alerts />
-            </>
-          }
-        />
-        <Route
-          path="/ui/buttons"
-          element={
-            <>
-              <PageTitle title="Buttons | TailAdmin - Tailwind CSS Admin Dashboard Template" />
-              <Buttons />
-            </>
-          }
-        />
-        <Route
-          path="/auth/signin"
-          element={
-            <>
-              <PageTitle title="Signin | TailAdmin - Tailwind CSS Admin Dashboard Template" />
-              <SignIn />
-            </>
-          }
-        />
-        <Route
-          path="/auth/signup"
-          element={
-            <>
-              <PageTitle title="Signup | TailAdmin - Tailwind CSS Admin Dashboard Template" />
-              <SignUp />
+              <PageTitle title="Red de Monitoreo Ambiental" />
+              <RMA />
             </>
           }
         />
