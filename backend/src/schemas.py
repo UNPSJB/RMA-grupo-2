@@ -1,10 +1,9 @@
-from pydantic import BaseModel
+from pydantic import BaseModel, EmailStr, field_validator
 from datetime import datetime
 from typing import Optional
 import datetime
 
 class TemperaturaBase(BaseModel):
-    id:int
     nodo: int
     tipo: str
     dato: float
@@ -43,3 +42,49 @@ class Medicion(BaseModel):
         
 class MedicionCreate(MedicionBase):
     pass
+
+## ----------------------- USUARIO
+class UsuarioBase(BaseModel):
+    id: int
+    nombre: str
+    email: EmailStr  # Validación del formato del email
+    contrasena: str
+    fecha_registro: datetime.datetime
+
+    # Validación de la contraseña utilizando field_validator
+    @field_validator('contrasena')
+    def validar_contrasena(cls, contrasena):
+        if len(contrasena) < 8:
+            raise ValueError('La contraseña debe tener al menos 8 caracteres.')
+        if not any(char.isdigit() for char in contrasena):
+            raise ValueError('La contraseña debe contener al menos un número.')
+        if not any(char.islower() for char in contrasena):
+            raise ValueError('La contraseña debe contener al menos una letra minúscula.')
+        if not any(char.isupper() for char in contrasena):
+            raise ValueError('La contraseña debe contener al menos una letra mayúscula.')
+        return contrasena
+
+class Usuario(UsuarioBase):
+    class Config:
+        orm_mode = True
+
+class UsuarioCreate(UsuarioBase):
+    # Aquí puedes agregar más validaciones o campos si es necesario
+    pass
+
+class UsuarioUpdate(BaseModel):
+    nombre: str
+    email: EmailStr
+    contrasena: str
+
+    @field_validator('contrasena')
+    def validar_contrasena(cls, contrasena):
+        if len(contrasena) < 8:
+            raise ValueError('La contraseña debe tener al menos 8 caracteres.')
+        if not any(char.isdigit() for char in contrasena):
+            raise ValueError('La contraseña debe contener al menos un número.')
+        if not any(char.islower() for char in contrasena):
+            raise ValueError('La contraseña debe contener al menos una letra minúscula.')
+        if not any(char.isupper() for char in contrasena):
+            raise ValueError('La contraseña debe contener al menos una letra mayúscula.')
+        return contrasena

@@ -3,7 +3,7 @@ from sqlalchemy import Integer, String, Float, DateTime
 from sqlalchemy.orm import Mapped, mapped_column
 from sqlalchemy.ext.declarative import declarative_base
 from sqlalchemy import func
-from backend.database import Base, engine
+from database import Base, engine
 
 Base = declarative_base()
 
@@ -35,3 +35,15 @@ class Medicion(Base):
         default=func.now()
     )
     bateria: Mapped[int] = mapped_column(Integer, nullable=True)
+
+class Usuario(Base):
+    __tablename__ = "usuario"
+
+    id: Mapped[int] = mapped_column(Integer, primary_key=True, index=True, autoincrement=True)
+    nombre: Mapped[str] = mapped_column(String, index=True, nullable=False)
+    email: Mapped[str] = mapped_column(String, unique=True, nullable=False)
+    contrasena: Mapped[str] = mapped_column(String, nullable=False)
+    fecha_registro: Mapped[datetime.datetime] = mapped_column(
+        DateTime(timezone=True),
+        default=func.now()
+    )

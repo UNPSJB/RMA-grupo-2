@@ -1,7 +1,0 @@
-Topic: test_topic, Mensaje: {'id': 0, 'type': 'temp_t', 'data': '22.892078864259947', 'time': '2024-09-28 20:50:45.172974'}
-Topic: test_topic, Mensaje: {'id': 0, 'type': 'temp_t', 'data': '22.138803480967997', 'time': '2024-09-28 20:50:55.173608'}
-Topic: test_topic, Mensaje: {'id': 0, 'type': 'temp_t', 'data': '22.26112767409653', 'time': '2024-09-29 14:09:05.268955'}
-Topic: test_topic, Mensaje: {'id': 0, 'type': 'temp_t', 'data': '22.44069759152135', 'time': '2024-09-29 14:09:10.269562'}
-Topic: test_topic, Mensaje: {'id': 0, 'type': 'temp_t', 'data': '22.108897333391965', 'time': '2024-09-29 14:09:15.270851'}
-Topic: test_topic, Mensaje: {'id': 0, 'type': 'temp_t', 'data': '22.93288295055912', 'time': '2024-09-29 14:09:20.272339'}
-Topic: test_topic, Mensaje: {'id': 0, 'type': 'temp_t', 'data': '22.37381428603026', 'time': '2024-09-29 14:09:25.273769'}
