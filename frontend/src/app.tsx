@@ -10,6 +10,7 @@ import Perfil from './pages/Perfil';
 import Settings from './pages/Settings';
 import Tablas from './pages/Tablas';
 import DefaultLayout from './layout/DefaultLayout';
+import Temperaturas from './pages/Dashboard/RMAList';
 
 function App() {
   const [loading, setLoading] = useState<boolean>(true);
@@ -28,60 +29,12 @@ function App() {
   ) : (
     <DefaultLayout>
       <Routes>
-        <Route
-          index
-          element={
-            <>
-              <PageTitle title="Iniciar Sesión" />
-              <SignIn />
-            </>
-          }
-        />
-        <Route
-          path="/auth/signup"
-          element={
-            <>
-              <PageTitle title="Signup | TailAdmin - Tailwind CSS Admin Dashboard Template" />
-              <SignUp />
-            </>
-          }
-        />
-        <Route
-          path="user/perfil"
-          element={
-            <>
-              <PageTitle title="Perfil | Red de Monitoreo Ambiental" />
-              <Perfil />
-            </>
-          }
-        />
-        <Route
-          path="user/tablas"
-          element={
-            <>
-              <PageTitle title="Tablas | Red de Monitoreo Ambiental" />
-              <Tablas />
-            </>
-          }
-        />
-        <Route
-          path="/settings"
-          element={
-            <>
-              <PageTitle title="Configuración" />
-              <Settings />
-            </>
-          }
-        />
-        <Route
-          path="user/RMA"
-          element={
-            <>
-              <PageTitle title="Red de Monitoreo Ambiental" />
-              <RMA />
-            </>
-          }
-        />
+        <Route path="/" element={<SignIn />} />
+        <Route path="/auth/signup" element={<SignUp />} />
+        <Route path="/user/RMA" element={<RMA />} />
+        <Route path="/user/tablas" element={<Tablas />} />
+        <Route path="/user/perfil" element={<Perfil />} />
+        <Route path="/settings" element={<Settings />} />
       </Routes>
     </DefaultLayout>
   );

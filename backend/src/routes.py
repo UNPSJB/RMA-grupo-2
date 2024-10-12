@@ -1,7 +1,11 @@
 from fastapi import APIRouter, Depends, HTTPException
 from sqlalchemy.ext.asyncio import AsyncSession
-from database import get_db 
-from src import schemas, services
+from backend.database import get_db 
+from backend.src import schemas, services
+from sqlalchemy.future import select
+from backend.src.models import Temperatura
+from typing import List
+
 
 router = APIRouter()
 
@@ -12,4 +16,17 @@ async def create_temperatura(temperatura: schemas.TemperaturaCreate, db: AsyncSe
     except HTTPException as e:
         raise HTTPException(status_code=400, detail=str(e))
     
-############################################################  ROUTER PRODUCTO ############################################################
+@router.get("/temperatura/", response_model=List[schemas.TemperaturaCreate])
+async def read_temperaturas(db: AsyncSession = Depends(get_db)):
+    async with db.begin():
+        result = await db.execute(select(Temperatura))
+        temperaturas = result.scalars().all()
+    return temperaturas
+## ----------------------- MEDICIONES
+
+@router.post("/medicion", response_model=schemas.MedicionCreate)
+async def create_temperatura(medicion: schemas.MedicionCreate, db: AsyncSession = Depends(get_db)):
+    try:
+        return await services.crear_medicion(db, medicion)
+    except HTTPException as e:
+        raise HTTPException(status_code=400, detail=str(e))

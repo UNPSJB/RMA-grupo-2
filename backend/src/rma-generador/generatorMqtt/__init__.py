@@ -1,7 +1,9 @@
-from enum import StrEnum, auto
+from enum import auto, Enum
+ 
 
-class TipoMensaje(StrEnum):
-    #STATUS: auto()
+#class TipoMensaje(StrEnum):
+class TipoMensaje(Enum):
+    STATUS: auto()
     TEMP_T = auto()  # Temperature
     TEMP2_T = auto()  # Temperature #2
     HUMIDITY_T = auto()  # Relative Humidity
@@ -14,8 +16,8 @@ class TipoMensaje(StrEnum):
     OXYGEN_T = auto()  # Oxygen
     CO2_T = auto()  # Carbon Dioxide
     WINDSPD_T = auto()  # Wind Speed
-    WINDHDG_T = auto()  # Wind Direction
     RAINFALL_T = auto()  # Rainfall
+    WINDHDG_T = auto()  # Wind Direction
     MOTION_T = auto()  # Motion
     VOLTAGE_T = auto()  # Voltage
     VOLTAGE2_T = auto()  # Voltage #2
