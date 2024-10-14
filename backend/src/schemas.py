@@ -1,5 +1,5 @@
 from pydantic import BaseModel, EmailStr, field_validator
-from datetime import datetime
+#from datetime import datetime
 from typing import Optional
 import datetime
 
@@ -15,6 +15,7 @@ class Temperatura(TemperaturaBase):
     tipo: str
     dato: float
     tiempo: datetime.datetime
+
     class Config:
         orm_config = True
 
@@ -45,11 +46,9 @@ class MedicionCreate(MedicionBase):
 
 ## ----------------------- USUARIO
 class UsuarioBase(BaseModel):
-    id: int
     nombre: str
     email: EmailStr  # Validación del formato del email
     contrasena: str
-    fecha_registro: datetime.datetime
 
     # Validación de la contraseña utilizando field_validator
     @field_validator('contrasena')
@@ -64,12 +63,18 @@ class UsuarioBase(BaseModel):
             raise ValueError('La contraseña debe contener al menos una letra mayúscula.')
         return contrasena
 
+
 class Usuario(UsuarioBase):
+    id: Optional[int]  # Hacer que id sea opcional
+    nombre: str
+    email: EmailStr  # Validación del formato del email
+    contrasena: str
+    fecha_registro: datetime.datetime
+        
     class Config:
         orm_mode = True
 
 class UsuarioCreate(UsuarioBase):
-    # Aquí puedes agregar más validaciones o campos si es necesario
     pass
 
 class UsuarioUpdate(BaseModel):

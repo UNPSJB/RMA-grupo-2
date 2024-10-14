@@ -4,6 +4,7 @@ from src import schemas, models
 from src.models import Usuario
 from fastapi import HTTPException
 from database import SessionLocal
+import datetime
 
 
 
@@ -53,11 +54,19 @@ async def crear_medicion(db: AsyncSession, medicion: schemas.MedicionCreate) -> 
 
 ## ----------------------- USUARIO
 async def crear_usuario(db: AsyncSession, usuario: schemas.UsuarioCreate) -> schemas.UsuarioCreate:
+    result = await db.execute(select(models.Usuario).filter(models.Usuario.email == usuario.email))
+    existing_user = result.scalars().first()
+    if existing_user:
+        raise HTTPException(status_code=400, detail="El email ya está en uso")
+    result = await db.execute(select(models.Usuario).filter(models.Usuario.contrasena == usuario.contrasena))
+    existing_user = result.scalars().first()
+    if existing_user:
+        raise HTTPException(status_code=400, detail="La contraseña ya está en uso")
     new_usuario = models.Usuario(
         nombre=usuario.nombre,
         email=usuario.email,
         contrasena=usuario.contrasena,
-        fecha_registro=usuario.fecha_registro
+        fecha_registro=datetime.datetime.now(datetime.timezone.utc)
     )
     print(f"Nombre: {new_usuario.nombre}, Email: {new_usuario.email}, Fecha: {new_usuario.fecha_registro}")
     try:

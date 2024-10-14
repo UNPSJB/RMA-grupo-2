@@ -25,13 +25,15 @@ async def init_db():
         await conn.run_sync(Base.metadata.create_all) # Crear todas las tablas
 
 #Conexion con el frontend
+'''
 origins = [
     "http://localhost:5173"
 ]
+'''
 
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=origins,  # Permitir el origen de tu frontend
+    allow_origins=["*"],  # Permitir el origen de tu frontend
     allow_credentials=True,
     allow_methods=["*"],  # Permitir todos los métodos HTTP
     allow_headers=["*"],  # Permitir todos los headers
@@ -43,3 +45,5 @@ async def main():
 
 if __name__ == "__main__":
     asyncio.run(main())
+
+

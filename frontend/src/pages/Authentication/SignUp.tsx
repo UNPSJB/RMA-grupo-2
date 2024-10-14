@@ -1,10 +1,63 @@
-import React from 'react';
+import React, { useState }  from 'react';
 import { Link } from 'react-router-dom';
 import Breadcrumb from '../../components/Breadcrumbs/Breadcrumb';
 import LogoDark from '../../images/logo/logo-dark.svg';
 import Logo from '../../images/logo/logo.svg';
 
 const SignUp: React.FC = () => {
+    
+    const [formData, setFormData] = useState({
+      name: '',
+      email: '',
+      password: '',
+      retype_password:'',
+    });
+  
+    const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
+      e.preventDefault(); // Previene el comportamiento predeterminado del formulario
+
+    // Aquí usas formData para construir el objeto que enviarás
+    const data = {
+      nombre: formData.name,  
+      email: formData.email,    
+      contrasena: formData.password,
+    };
+    const { retype_password, ...dataToSend } = formData;
+    
+    if (formData.password !== formData.retype_password) {
+      alert("Las contraseñas no coinciden.");
+      return;
+      }
+     
+    if (!formData.name || !formData.email || !formData.password || !formData.retype_password) {
+      alert("Por favor completa todos los campos.");
+      return;
+    }
+  
+    // Omitir retype_password
+    console.log(dataToSend); // Imprimir datos a enviar
+    try {
+        console.log("Datos enviados:", data);
+        const response = await fetch("http://localhost:8000/usuario", {
+            method: "POST", 
+            headers: {
+                "Content-Type": "application/json", // Indica que envías JSON
+            },
+            body: JSON.stringify(data), // Convierte el objeto a una cadena JSON
+        });
+
+        if (response.ok) {
+            const responseData = await response.json(); // Si la respuesta es correcta, obtienes los datos
+            console.log("Usuario creado:", responseData); // Manejo de la respuesta exitosa
+        } else {
+            const errorData = await response.json(); // Si hay un error, obtienes los datos del error
+            console.error("Error del servidor:", errorData); // Manejo del error
+        }
+    } catch (error) {
+        console.error("Error:", error); // Manejo de errores de red
+    }
+    };
+  
   return (
     <>
       <Breadcrumb pageName="Sign Up" />
@@ -153,17 +206,20 @@ const SignUp: React.FC = () => {
               <h2 className="mb-9 text-2xl font-bold text-black dark:text-white sm:text-title-xl2">
                 Sign Up to TailAdmin
               </h2>
-
-              <form>
+              <form onSubmit={handleSubmit}>
                 <div className="mb-4">
                   <label className="mb-2.5 block font-medium text-black dark:text-white">
                     Name
                   </label>
+                  
                   <div className="relative">
                     <input
                       type="text"
+                      id='name'
                       placeholder="Enter your full name"
                       className="w-full rounded-lg border border-stroke bg-transparent py-4 pl-6 pr-10 text-black outline-none focus:border-primary focus-visible:shadow-none dark:border-form-strokedark dark:bg-form-input dark:text-white dark:focus:border-primary"
+                      onChange={(e) => setFormData({ ...formData, name: e.target.value })}
+                      value={formData.name}
                     />
 
                     <span className="absolute right-4 top-4">
@@ -197,7 +253,10 @@ const SignUp: React.FC = () => {
                   <div className="relative">
                     <input
                       type="email"
+                      id='email'
                       placeholder="Enter your email"
+                      onChange={(e) => setFormData({ ...formData, email: e.target.value })}
+                      value={formData.email}
                       className="w-full rounded-lg border border-stroke bg-transparent py-4 pl-6 pr-10 text-black outline-none focus:border-primary focus-visible:shadow-none dark:border-form-strokedark dark:bg-form-input dark:text-white dark:focus:border-primary"
                     />
 
@@ -228,8 +287,11 @@ const SignUp: React.FC = () => {
                   <div className="relative">
                     <input
                       type="password"
+                      id='contrasena'
                       placeholder="Enter your password"
                       className="w-full rounded-lg border border-stroke bg-transparent py-4 pl-6 pr-10 text-black outline-none focus:border-primary focus-visible:shadow-none dark:border-form-strokedark dark:bg-form-input dark:text-white dark:focus:border-primary"
+                      onChange={(e) => setFormData({ ...formData, password: e.target.value })}
+                      value={formData.password}
                     />
 
                     <span className="absolute right-4 top-4">
@@ -263,8 +325,11 @@ const SignUp: React.FC = () => {
                   <div className="relative">
                     <input
                       type="password"
+                      id='retype_password'
                       placeholder="Re-enter your password"
-                      className="w-full rounded-lg border border-stroke bg-transparent py-4 pl-6 pr-10 text-black outline-none focus:border-primary focus-visible:shadow-none dark:border-form-strokedark dark:bg-form-input dark:text-white dark:focus:border-primary"
+                      className="w-full rounded-lg border border-stroke bg-transparent py-4 pl-6 pr-10 text-black outline-none focus:border-primary focus-visible:shadow-none dark:border-form-strokedark dark:bg-form-input dark:text-white dark:focus:border-primary"                      
+                      onChange={(e) => setFormData({ ...formData, retype_password: e.target.value })}
+                      value={formData.retype_password}
                     />
 
                     <span className="absolute right-4 top-4">
