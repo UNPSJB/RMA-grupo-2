@@ -2,7 +2,6 @@ import React, { useEffect, useState } from 'react';
 import { DataGrid } from '@mui/x-data-grid';
 import axios from 'axios';
 
-
 interface Temperatura {
   id: number;
   nodo: number;
@@ -19,7 +18,11 @@ const TableTwo: React.FC = () => {
     const obtenerTemperaturas = async () => {
       try {
         const response = await axios.get('http://localhost:8000/temperatura/');
-        setTemperatureData(response.data);
+        const dataWithIds = response.data.map((item: Omit<Temperatura, 'id'>, index: number) => ({
+          ...item,
+          id: index, // or any unique identifier if available
+        }));
+        setTemperatureData(dataWithIds);
       } catch (error) {
         console.error('Error al obtener las temperaturas:', error);
         setError('Error al cargar los datos.');
@@ -51,21 +54,21 @@ const TableTwo: React.FC = () => {
         rowsPerPageOptions={[5]}
         checkboxSelection
         sx={{
-          bgcolor: '#f0f0f0', // Cambia el color de fondo
+          bgcolor: '#f0f0f0',
           '& .MuiDataGrid-columnHeaders': {
-            bgcolor: '#1976d2', // Color de fondo de los encabezados
-            color: '#000000', // Color de texto de los encabezados
+            bgcolor: '#1976d2',
+            color: '#000000',
           },
           '& .MuiDataGrid-cell': {
-            bgcolor: '#ffffff', // Color de fondo de las celdas
-            color: '#000000', // Color de texto de las celdas
+            bgcolor: '#ffffff',
+            color: '#000000',
           },
           '& .MuiDataGrid-cell:hover': {
-            bgcolor: '#e0e0e0', // Color de fondo al pasar el ratón sobre la celda
+            bgcolor: '#e0e0e0',
           },
           '& .MuiDataGrid-footerContainer': {
-            bgcolor: '#1976d2', // Color de fondo del pie de página
-            color: '#ffffff', // Color de texto del pie de página
+            bgcolor: '#1976d2',
+            color: '#ffffff',
           },
         }}
       />
