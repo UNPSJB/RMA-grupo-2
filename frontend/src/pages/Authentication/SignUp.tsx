@@ -12,67 +12,18 @@ const SignUp: React.FC = () => {
       password: '',
       retype_password:'',
     });
-
-    const [errors, setErrors] = useState({
-      name: '',
-      email: '',
-      password: '',
-      retype_password: '',
-    });
   
-    {/* VALIDACIONES */}
-    const validateEmail = (email: string) => {
-      const regex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
-      return regex.test(email);
-    };
-
-    const validatePassword = (password: string) => {
-      return password.length >= 8; // O cualquier otra lógica que necesites
-    };
-
-    const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-      const { name, value } = e.target;
-      setFormData((prevData) => ({
-        ...prevData,
-        [name]: value,
-      }));
-    };
-
     const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
       e.preventDefault(); // Previene el comportamiento predeterminado del formulario
 
-    const newErrors = { name: '', email: '', password: '', retype_password: '' };
-
-    if (!formData.name) {
-      newErrors.name = 'Nombre es requerido';
-    }
-    
-    if (!validateEmail(formData.email)) {
-      newErrors.email = 'Email no es válido';
-    }
-
-    if (!validatePassword(formData.password)) {
-      newErrors.password = 'La contraseña debe tener al menos 8 caracteres';
-    }
-
-    if (formData.password !== formData.retype_password) {
-      newErrors.retype_password = 'Las contraseñas no coinciden';
-    }
-
-    // Si hay errores, actualiza el estado y no envíes el formulario
-    if (Object.values(newErrors).some(error => error)) {
-      setErrors(newErrors);
-      return;
-    }
-
-    // formData para construir el objeto que enviamos
+    // Aquí usas formData para construir el objeto que enviarás
     const data = {
       nombre: formData.name,  
       email: formData.email,    
       contrasena: formData.password,
     };
-    const { retype_password, ...dataToSend } = formData; 
-
+    const { retype_password, ...dataToSend } = formData;
+    
     if (formData.password !== formData.retype_password) {
       alert("Las contraseñas no coinciden.");
       return;
@@ -90,22 +41,22 @@ const SignUp: React.FC = () => {
         const response = await fetch("http://localhost:8000/usuario", {
             method: "POST", 
             headers: {
-                "Content-Type": "application/json", 
+                "Content-Type": "application/json", // Indica que envías JSON
             },
-            body: JSON.stringify(data), 
+            body: JSON.stringify(data), // Convierte el objeto a una cadena JSON
         });
 
         if (response.ok) {
-            const responseData = await response.json(); 
-            console.log("Usuario creado:", responseData); 
-            window.location.href = '/user/RMA'; 
+            const responseData = await response.json(); // Si la respuesta es correcta, obtienes los datos
+            console.log("Usuario creado:", responseData); // Manejo de la respuesta exitosa
         } else {
-            const errorData = await response.json(); 
-            console.error("Error del servidor:", errorData); 
+            const errorData = await response.json(); // Si hay un error, obtienes los datos del error
+            console.error("Error del servidor:", errorData); // Manejo del error
         }
     } catch (error) {
         console.error("Error:", error); // Manejo de errores de red
-    }};
+    }
+    };
   
   return (
     <>
@@ -267,11 +218,9 @@ const SignUp: React.FC = () => {
                       id='name'
                       placeholder="Enter your full name"
                       className="w-full rounded-lg border border-stroke bg-transparent py-4 pl-6 pr-10 text-black outline-none focus:border-primary focus-visible:shadow-none dark:border-form-strokedark dark:bg-form-input dark:text-white dark:focus:border-primary"
-                      onChange={handleChange}
-                      name='name'
+                      onChange={(e) => setFormData({ ...formData, name: e.target.value })}
                       value={formData.name}
                     />
-                    {errors.name && <div>{errors.name}</div>}
 
                     <span className="absolute right-4 top-4">
                       <svg
@@ -281,7 +230,7 @@ const SignUp: React.FC = () => {
                         viewBox="0 0 22 22"
                         fill="none"
                         xmlns="http://www.w3.org/2000/svg"
-                        >
+                      >
                         <g opacity="0.5">
                           <path
                             d="M11.0008 9.52185C13.5445 9.52185 15.607 7.5281 15.607 5.0531C15.607 2.5781 13.5445 0.584351 11.0008 0.584351C8.45703 0.584351 6.39453 2.5781 6.39453 5.0531C6.39453 7.5281 8.45703 9.52185 11.0008 9.52185ZM11.0008 2.1656C12.6852 2.1656 14.0602 3.47185 14.0602 5.08748C14.0602 6.7031 12.6852 8.00935 11.0008 8.00935C9.31641 8.00935 7.94141 6.7031 7.94141 5.08748C7.94141 3.47185 9.31641 2.1656 11.0008 2.1656Z"
@@ -306,12 +255,10 @@ const SignUp: React.FC = () => {
                       type="email"
                       id='email'
                       placeholder="Enter your email"
-                      onChange={handleChange}
-                      name='email'
+                      onChange={(e) => setFormData({ ...formData, email: e.target.value })}
                       value={formData.email}
                       className="w-full rounded-lg border border-stroke bg-transparent py-4 pl-6 pr-10 text-black outline-none focus:border-primary focus-visible:shadow-none dark:border-form-strokedark dark:bg-form-input dark:text-white dark:focus:border-primary"
                     />
-                    {errors.email && <div>{errors.email}</div>}
 
                     <span className="absolute right-4 top-4">
                       <svg
@@ -321,7 +268,7 @@ const SignUp: React.FC = () => {
                         viewBox="0 0 22 22"
                         fill="none"
                         xmlns="http://www.w3.org/2000/svg"
-                        >
+                      >
                         <g opacity="0.5">
                           <path
                             d="M19.2516 3.30005H2.75156C1.58281 3.30005 0.585938 4.26255 0.585938 5.46567V16.6032C0.585938 17.7719 1.54844 18.7688 2.75156 18.7688H19.2516C20.4203 18.7688 21.4172 17.8063 21.4172 16.6032V5.4313C21.4172 4.26255 20.4203 3.30005 19.2516 3.30005ZM19.2516 4.84692C19.2859 4.84692 19.3203 4.84692 19.3547 4.84692L11.0016 10.2094L2.64844 4.84692C2.68281 4.84692 2.71719 4.84692 2.75156 4.84692H19.2516ZM19.2516 17.1532H2.75156C2.40781 17.1532 2.13281 16.8782 2.13281 16.5344V6.35942L10.1766 11.5157C10.4172 11.6875 10.6922 11.7563 10.9672 11.7563C11.2422 11.7563 11.5172 11.6875 11.7578 11.5157L19.8016 6.35942V16.5688C19.8703 16.9125 19.5953 17.1532 19.2516 17.1532Z"
@@ -343,11 +290,10 @@ const SignUp: React.FC = () => {
                       id='contrasena'
                       placeholder="Enter your password"
                       className="w-full rounded-lg border border-stroke bg-transparent py-4 pl-6 pr-10 text-black outline-none focus:border-primary focus-visible:shadow-none dark:border-form-strokedark dark:bg-form-input dark:text-white dark:focus:border-primary"
-                      onChange={handleChange}
-                      name='password'
+                      onChange={(e) => setFormData({ ...formData, password: e.target.value })}
                       value={formData.password}
                     />
-                    {errors.password && <div>{errors.password}</div>}
+
                     <span className="absolute right-4 top-4">
                       <svg
                         className="fill-current"
@@ -382,11 +328,10 @@ const SignUp: React.FC = () => {
                       id='retype_password'
                       placeholder="Re-enter your password"
                       className="w-full rounded-lg border border-stroke bg-transparent py-4 pl-6 pr-10 text-black outline-none focus:border-primary focus-visible:shadow-none dark:border-form-strokedark dark:bg-form-input dark:text-white dark:focus:border-primary"                      
-                      onChange={handleChange}
-                      name='retype_password'
+                      onChange={(e) => setFormData({ ...formData, retype_password: e.target.value })}
                       value={formData.retype_password}
                     />
-                    {errors.retype_password && <div>{errors.retype_password}</div>}
+
                     <span className="absolute right-4 top-4">
                       <svg
                         className="fill-current"
