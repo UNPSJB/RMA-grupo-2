@@ -2,9 +2,9 @@ import os, asyncio
 from dotenv import load_dotenv
 from fastapi import FastAPI
 from fastapi.staticfiles import StaticFiles
-from backend.database import engine, Base
+from database import engine, Base
 #from src.models import Producto
-from backend.src.routes import router as routers
+from src.routes import router as routers
 from sqlalchemy.future import select
 from fastapi.middleware.cors import CORSMiddleware
 

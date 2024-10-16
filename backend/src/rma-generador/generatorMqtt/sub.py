@@ -2,8 +2,8 @@ import os
 import sys
 import paho.mqtt.client as paho
 import asyncio
-from backend.database import *
 from dotenv import load_dotenv
+from backend.database import *
 from backend.src import services
 from backend.src.schemas import TemperaturaCreate
 from pydantic import BaseModel

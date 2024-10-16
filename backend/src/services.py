@@ -1,9 +1,9 @@
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.future import select
-from backend.src import schemas, models
-from backend.src.models import Usuario
+from src import schemas, models
+from src.models import Usuario
 from fastapi import HTTPException
-from backend.database import SessionLocal
+from database import SessionLocal
 import datetime
 
 
