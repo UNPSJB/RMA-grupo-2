@@ -10,6 +10,7 @@ import Perfil from './pages/Perfil';
 import Settings from './pages/Settings';
 import Tablas from './pages/Tablas';
 import DefaultLayout from './layout/DefaultLayout';
+import AuthLayout from './layout/AuthLayout';
 import Temperaturas from './pages/Dashboard/RMAList';
 
 function App() {
@@ -27,16 +28,20 @@ function App() {
   return loading ? (
     <Loader />
   ) : (
-    <DefaultLayout>
-      <Routes>
+    <Routes>
+      {/* Rutas con AuthLayout para SignIn y SignUp */}
+      <Route element={<AuthLayout />}>
         <Route path="/" element={<SignIn />} />
         <Route path="/auth/signup" element={<SignUp />} />
+      </Route>
+
+      {/* Rutas con DefaultLayout para páginas de usuario */}
+      <Route element={<DefaultLayout />}>
         <Route path="/user/RMA" element={<RMA />} />
         <Route path="/user/tablas" element={<Tablas />} />
-        <Route path="/user/perfil" element={<Perfil />} />
         <Route path="/settings" element={<Settings />} />
-      </Routes>
-    </DefaultLayout>
+      </Route>
+    </Routes>
   );
 }
 
