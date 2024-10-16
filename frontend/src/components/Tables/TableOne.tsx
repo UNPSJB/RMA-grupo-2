@@ -17,7 +17,11 @@ const TableOne: React.FC = () => {
     const obtenerTemperaturas = async () => {
       try {
         const response = await axios.get('http://localhost:8000/temperatura/');
-        setTemperatureData(response.data);
+        const temperaturas = response.data;
+        const ultimasCinco = temperaturas
+          .sort((a: Temperatura, b: Temperatura) => new Date(b.tiempo).getTime() - new Date(a.tiempo).getTime())
+          .slice(0, 5);
+        setTemperatureData(ultimasCinco);
       } catch (error) {
         console.error('Error al obtener las temperaturas:', error);
         setError('Error al cargar los datos.');
