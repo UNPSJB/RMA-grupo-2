@@ -3,7 +3,7 @@ from sqlalchemy import Integer, String, Float, DateTime
 from sqlalchemy.orm import Mapped, mapped_column
 from sqlalchemy.ext.declarative import declarative_base
 from sqlalchemy import func
-from database import Base, engine
+from backend.database import Base, engine
 
 Base = declarative_base()
 

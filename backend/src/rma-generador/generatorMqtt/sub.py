@@ -2,10 +2,10 @@ import os
 import sys
 import paho.mqtt.client as paho
 import asyncio
-import database
+from backend.database import *
 from dotenv import load_dotenv
-from src import services
-from src.schemas import TemperaturaCreate
+from backend.src import services
+from backend.src.schemas import TemperaturaCreate
 from pydantic import BaseModel
 
 class Mensaje(BaseModel):
@@ -16,10 +16,10 @@ class Mensaje(BaseModel):
 
 load_dotenv()
 
-MQTT_HOST = os.getenv("MQTT_HOST", "localhost")
-MQTT_PORT = int(os.getenv("MQTT_PORT", 1883))
-MQTT_KEEPALIVE = int(os.getenv("MQTT_KEEPALIVE", 60))
-TOPIC = os.getenv("MQTT_TOPIC")
+MQTT_HOST = "localhost"
+MQTT_PORT = 1883
+MQTT_KEEPALIVE = 60
+TOPIC = "test_topic"
 
 async def message_handling(client, userdata, message):
     print("Estoy en el subscriptor") 
@@ -30,7 +30,7 @@ async def message_handling(client, userdata, message):
         temp = TemperaturaCreate(nodo=m.id, dato=m.data, tiempo=m.time, tipo=m.type)
         print("Guardando en la base de datos")
         # Abrir una nueva sesión de la base de datos en cada mensaje
-        async for db in database.get_db():  # Crear nueva sesión
+        async for db in get_db():  # Crear nueva sesión
             #print(f"{m.id};{temp.nodo};{temp.tipo};{temp.tiempo};{temp.dato}")
             await services.crear_temperatura(db, temp)
             print("Datos Guardados...")
@@ -61,9 +61,9 @@ async def main():
     client.on_connect = on_connect
     client.on_subscribe = on_subscribe
 
-    host = os.getenv("MQTT_HOST")
-    port = int(os.getenv("MQTT_PORT"))
-    keepalive = int(os.getenv("MQTT_KEEPALIVE"))
+    host = "localhost"
+    port = 1883
+    keepalive = 60
     if client.connect(host, port, keepalive) != 0:
         print("Ha ocurrido un problema al conectar con el broker MQTT")
         sys.exit(1)

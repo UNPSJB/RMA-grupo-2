@@ -34,9 +34,9 @@ class Nodo:
         qos: int = 1,
     ) -> None:
         if not self.cliente.is_connected():
-            host = os.getenv("MQTT_HOST")
-            port = int(os.getenv("MQTT_PORT"))
-            keepalive = int(os.getenv("MQTT_KEEPALIVE"))
+            host = "localhost"
+            port = 1883
+            keepalive = 60
             self.conectar(host, port, keepalive)
 
         while not self.stop_event.is_set():

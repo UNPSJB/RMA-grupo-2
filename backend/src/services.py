@@ -1,9 +1,9 @@
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.future import select
-from src import schemas, models
-from src.models import Usuario
+from backend.src import schemas, models
+from backend.src.models import Usuario
 from fastapi import HTTPException
-from database import SessionLocal
+from backend.database import SessionLocal
 import datetime
 
 
@@ -31,6 +31,7 @@ async def crear_temperatura(db: AsyncSession, temperatura: schemas.TemperaturaCr
             await db.refresh(new_temperatura)
     except Exception as e:
             await db.rollback()  
+            #print(f"Error al crear temperatura: {e}")  # Imprimir el error
             raise HTTPException(status_code=400, detail="Error al crear temperatura") from e
     return new_temperatura
 ## ----------------------- MEDICIONES
