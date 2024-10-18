@@ -1,9 +1,9 @@
 from fastapi import APIRouter, Depends, HTTPException
 from sqlalchemy.ext.asyncio import AsyncSession
-from database import get_db 
-from src import schemas, services
+from backend.database import get_db 
+from backend.src import schemas, services
 from sqlalchemy.future import select
-from src.models import Temperatura
+from backend.src.models import Temperatura
 from typing import List
 
 

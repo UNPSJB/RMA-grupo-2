@@ -76,7 +76,7 @@ const TableOne: React.FC = () => {
               <p className="text-black dark:text-white">{new Date(data.tiempo).toLocaleDateString()}</p>
             </div>
             <div className="flex items-center justify-center p-2.5 xl:p-5">
-              <p className="text-meta-3">{data.dato}°C</p>
+              <p className="text-meta-3">{data.dato =  Math.round(data.dato * 100) / 100}°C</p>
             </div>
             <div className="hidden items-center justify-center p-2.5 sm:flex xl:p-5">
               <p className="text-black dark:text-white">50</p> {/* Humedad aleatoria */}
