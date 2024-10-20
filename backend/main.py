@@ -1,4 +1,5 @@
-import os, asyncio
+import os, asyncio, sys
+sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), '../'))) #Ejecutar desde RMA-grupo-2
 from dotenv import load_dotenv
 from fastapi import FastAPI
 from fastapi.staticfiles import StaticFiles

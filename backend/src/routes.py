@@ -9,6 +9,8 @@ from typing import List
 
 router = APIRouter()
 
+## ----------------------- TEMPERATURA
+
 @router.post("/temperatura", response_model=schemas.TemperaturaCreate)
 async def create_temperatura(temperatura: schemas.TemperaturaCreate, db: AsyncSession = Depends(get_db)):
     try:
@@ -50,3 +52,12 @@ async def update_usuario(usuario_id: int, usuario: schemas.UsuarioUpdate, db: As
 @router.delete("/usuario/{usuario_id}")
 async def delete_usuario(usuario_id: int, db: AsyncSession = Depends(get_db)):
     return await services.eliminar_usuario(db, usuario_id)
+
+## ----------------------- NODO
+
+@router.post("/nodo", response_model=schemas.NodoCreate)
+async def crear_nodo(nodo: schemas.NodoCreate, db: AsyncSession = Depends(get_db)):
+    try:
+        return await services.crear_nodo(db, nodo)
+    except HTTPException as e:
+        raise HTTPException(status_code=400, detail=str(e))

@@ -36,6 +36,7 @@ class Medicion(Base):
     )
     bateria: Mapped[int] = mapped_column(Integer, nullable=True)
 
+## ----------------------- Usuario
 class Usuario(Base):
     __tablename__ = "usuario"
 
@@ -47,3 +48,10 @@ class Usuario(Base):
         DateTime(timezone=True),
         default=func.now()
     )
+
+## ----------------------- Nodo
+class Nodo(Base):
+    __tablename__ = "nodo"
+
+    id: Mapped[int] = mapped_column(Integer, primary_key=True, index=True, autoincrement=True)
+    nombre: Mapped[str] = mapped_column(String, index=True, nullable=False)

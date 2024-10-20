@@ -6,8 +6,6 @@ from fastapi import HTTPException
 from backend.database import SessionLocal
 import datetime
 
-
-
 async def get_db():
     db = SessionLocal()
     try:
@@ -16,7 +14,7 @@ async def get_db():
         db.close()
         
 
-############################################################ TEMPERATURA ############################################################
+## ----------------------- TEMPERATURA
 async def crear_temperatura(db: AsyncSession, temperatura: schemas.TemperaturaCreate) -> schemas.TemperaturaCreate:
     new_temperatura = models.Temperatura(        
         nodo=temperatura.nodo,
@@ -52,6 +50,22 @@ async def crear_medicion(db: AsyncSession, medicion: schemas.MedicionCreate) -> 
          await db.rollback()
          raise HTTPException(status_code=400, detail="Error al crear una nueva medicion") from errorEnBase
     return new_medicion
+
+## ----------------------- NODO
+async def crear_nodo(db: AsyncSession, nodo: schemas.NodoCreate) -> schemas.NodoCreate:
+    new_nodo = models.Nodo(        
+        nombre=nodo.nombre
+    )
+    print("Nodo creado")
+    try:
+        db.add(new_nodo)
+        await db.commit()
+        await db.refresh(new_nodo)
+    except Exception as errorEnBase:
+        await db.rollback()
+        raise HTTPException(status_code=400, detail="Error al crear una nuevo nuevo") from errorEnBase
+    return new_nodo 
+
 
 ## ----------------------- USUARIO
 async def crear_usuario(db: AsyncSession, usuario: schemas.UsuarioCreate) -> schemas.UsuarioCreate:

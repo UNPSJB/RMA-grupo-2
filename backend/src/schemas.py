@@ -31,7 +31,7 @@ class MedicionBase(BaseModel):
     tiempo: datetime.datetime
     bateria: Optional[int]
 
-class Medicion(BaseModel):
+class Medicion(MedicionBase):
     id:int
     nodo:int
     tipo: str
@@ -43,6 +43,21 @@ class Medicion(BaseModel):
         
 class MedicionCreate(MedicionBase):
     pass
+
+## ----------------------- NODO
+class NodoBase(BaseModel):
+    nombre:str
+
+class Nodo(NodoBase):        
+    id: int
+    nombre: str
+
+    class config:
+        orm_config = True
+
+class NodoCreate(NodoBase):
+    pass
+
 
 ## ----------------------- USUARIO
 class UsuarioBase(BaseModel):
