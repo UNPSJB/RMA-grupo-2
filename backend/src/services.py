@@ -51,20 +51,6 @@ async def crear_medicion(db: AsyncSession, medicion: schemas.MedicionCreate) -> 
          raise HTTPException(status_code=400, detail="Error al crear una nueva medicion") from errorEnBase
     return new_medicion
 
-## ----------------------- NODO
-async def crear_nodo(db: AsyncSession, nodo: schemas.NodoCreate) -> schemas.NodoCreate:
-    new_nodo = models.Nodo(        
-        nombre=nodo.nombre
-    )
-    print("Nodo creado")
-    try:
-        db.add(new_nodo)
-        await db.commit()
-        await db.refresh(new_nodo)
-    except Exception as errorEnBase:
-        await db.rollback()
-        raise HTTPException(status_code=400, detail="Error al crear una nuevo nuevo") from errorEnBase
-    return new_nodo 
 
 
 ## ----------------------- USUARIO
@@ -123,3 +109,47 @@ async def eliminar_usuario(db: AsyncSession, usuario_id: int) -> dict:
     else:
         raise HTTPException(status_code=404, detail="Usuario no encontrado")
 
+## ----------------------- NODO
+async def crear_nodo(db: AsyncSession, nodo: schemas.NodoCreate) -> schemas.NodoCreate:
+    new_nodo = models.Nodo(        
+        nombre=nodo.nombre
+    )
+    print("Nodo creado")
+    try:
+        db.add(new_nodo)
+        await db.commit()
+        await db.refresh(new_nodo)
+    except Exception as errorEnBase:
+        await db.rollback()
+        raise HTTPException(status_code=400, detail="Error al crear una nuevo nuevo") from errorEnBase
+    return new_nodo 
+
+async def leer_nodo(db: AsyncSession, nodo_id: int) -> schemas.Nodo:
+    result = await db.execute(select(models.Nodo).filter(models.Nodo.id == nodo_id))
+    db_nodo = result.scalar_one_or_none()
+    
+    if db_nodo is None:
+        raise HTTPException(status_code=404, detail="Nodo no encontrado")
+    
+    return db_nodo
+
+async def modificar_nodo(db: AsyncSession, nodo_id: int, nodo: schemas.NodoUpdate) -> schemas.NodoUpdate:
+    db_nodo = await leer_nodo(db, nodo_id)
+    
+    if db_nodo:
+        db_nodo.nombre = nodo.nombre
+        await db.commit()
+        await db.refresh(db_nodo)
+        return db_nodo
+    else:
+        raise HTTPException(status_code=404, detail="Nodo no encontrado")
+
+async def eliminar_nodo(db: AsyncSession, nodo_id: int) -> dict:
+    db_nodo = await leer_nodo(db, nodo_id)
+    
+    if db_nodo:
+        await db.delete(db_nodo)
+        await db.commit()
+        return {"detail": "Nodo eliminado"}
+    else:
+        raise HTTPException(status_code=404, detail="Nodo no encontrado")

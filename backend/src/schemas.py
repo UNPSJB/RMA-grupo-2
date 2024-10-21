@@ -58,6 +58,10 @@ class Nodo(NodoBase):
 class NodoCreate(NodoBase):
     pass
 
+class NodoUpdate(NodoBase):
+    nombre: str
+
+    
 
 ## ----------------------- USUARIO
 class UsuarioBase(BaseModel):
