@@ -1,4 +1,4 @@
-import os, asyncio, sys
+import os, asyncio, sys, subprocess
 sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), '../'))) #Ejecutar desde RMA-grupo-2
 from dotenv import load_dotenv
 from fastapi import FastAPI
@@ -8,6 +8,8 @@ from backend.database import engine, Base
 from backend.src.routes import router as routers
 from sqlalchemy.future import select
 from fastapi.middleware.cors import CORSMiddleware
+
+subprocess.run(['python', 'src/rma-generador/main.py'])
 
 load_dotenv()#.env
 DATABASE_URL = os.getenv("DB_URL")
@@ -46,5 +48,3 @@ async def main():
 
 if __name__ == "__main__":
     asyncio.run(main())
-
-
