@@ -4,6 +4,7 @@ from sqlalchemy.orm import Mapped, mapped_column
 from sqlalchemy.ext.declarative import declarative_base
 from sqlalchemy import func
 from backend.database import Base, engine
+from backend.database import Base, engine
 
 Base = declarative_base()
 
@@ -36,6 +37,7 @@ class Medicion(Base):
     )
     bateria: Mapped[int] = mapped_column(Integer, nullable=True)
 
+## ----------------------- Usuario
 class Usuario(Base):
     __tablename__ = "usuario"
 
@@ -56,3 +58,10 @@ class Nodo(Base):
     id: Mapped[int] = mapped_column(Integer, primary_key=True, index=True, autoincrement=False)
     posicionX : Mapped[int] = mapped_column(Integer, index=True, nullable=False)
     posicionY : Mapped[int] = mapped_column(Integer, index=True, nullable=False)
+
+## ----------------------- Nodo
+class Nodo(Base):
+    __tablename__ = "nodo"
+
+    id: Mapped[int] = mapped_column(Integer, primary_key=True, index=True, autoincrement=True)
+    nombre: Mapped[str] = mapped_column(String, index=True, nullable=False)

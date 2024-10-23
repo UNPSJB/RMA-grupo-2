@@ -9,6 +9,8 @@ from typing import List
 
 router = APIRouter()
 
+## ----------------------- TEMPERATURA
+
 @router.post("/temperatura", response_model=schemas.TemperaturaCreate)
 async def create_temperatura(temperatura: schemas.TemperaturaCreate, db: AsyncSession = Depends(get_db)):
     try:

@@ -21,7 +21,7 @@ const RMA: React.FC = () => {
         new Date(prev.tiempo) > new Date(current.tiempo) ? prev : current
       );
 
-      return ultimaTemp.dato; // Retorna el valor de "dato"
+      return ultimaTemp.dato = data.dato =  Math.round(ultimaTemp.dato * 100) / 100; // Retorna el valor de "dato"
     } catch (error) {
       console.error('Error al obtener la última temperatura:', error);
       setError('Error al cargar la última temperatura.');
@@ -37,7 +37,7 @@ const RMA: React.FC = () => {
 
     fetchUltimaTemperatura(); // Inicializa la primera carga
 
-    const intervalId = setInterval(fetchUltimaTemperatura, 600000); // Actualiza cada 10 minutos (600,000 ms)
+    const intervalId = setInterval(fetchUltimaTemperatura, 60000); // Actualiza cada 10 minutos (600,000 ms)
 
     return () => clearInterval(intervalId); // Limpia el intervalo al desmontar el componente
   }, []);
