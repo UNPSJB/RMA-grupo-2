@@ -17,7 +17,7 @@ const RMA: React.FC = () => {
 
       if (data.length === 0) return null;
 
-      const ultimaTemp = data.reduce((prev, current) => 
+      const ultimaTemp = data.reduce((prev: { tiempo: string | number | Date; }, current: { tiempo: string | number | Date; }) => 
         new Date(prev.tiempo) > new Date(current.tiempo) ? prev : current
       );
 

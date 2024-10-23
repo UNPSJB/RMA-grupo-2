@@ -93,3 +93,27 @@ class UsuarioUpdate(BaseModel):
         if not any(char.isupper() for char in contrasena):
             raise ValueError('La contraseña debe contener al menos una letra mayúscula.')
         return contrasena
+    
+##--------NODO
+
+class NodoBase(BaseModel):
+    id: int
+    posicionX: int
+    posicionY: int
+
+
+class Nodo(NodoBase):
+    id: int
+    posicionX: int
+    posicionY: int
+        
+    class Config:
+        orm_mode = True
+
+class NodoCreate(NodoBase):
+    pass
+
+class NodoUpdate(BaseModel):
+    id: int
+    posicionX: int
+    posicionY: int

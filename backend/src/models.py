@@ -3,7 +3,7 @@ from sqlalchemy import Integer, String, Float, DateTime
 from sqlalchemy.orm import Mapped, mapped_column
 from sqlalchemy.ext.declarative import declarative_base
 from sqlalchemy import func
-from database import Base, engine
+from backend.database import Base, engine
 
 Base = declarative_base()
 
@@ -47,3 +47,12 @@ class Usuario(Base):
         DateTime(timezone=True),
         default=func.now()
     )
+
+## ------------------- NODOS
+
+class Nodo(Base):
+    __tablename__ = "nodo"
+
+    id: Mapped[int] = mapped_column(Integer, primary_key=True, index=True, autoincrement=False)
+    posicionX : Mapped[int] = mapped_column(Integer, index=True, nullable=False)
+    posicionY : Mapped[int] = mapped_column(Integer, index=True, nullable=False)

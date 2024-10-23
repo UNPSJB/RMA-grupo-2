@@ -1,13 +1,13 @@
 import os
 import sys
-sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), '../../..'))) #Ejecutar desde RMA-grupo-2
+sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), '../../../..'))) #Ejecutar desde RMA-grupo-2
 import paho.mqtt.client as paho
 import asyncio
 from dotenv import load_dotenv
-from backend.database import *
 from backend.src import services
 from backend.src.schemas import TemperaturaCreate
 from pydantic import BaseModel
+from backend.database import *
 
 class Mensaje(BaseModel):
     id: int

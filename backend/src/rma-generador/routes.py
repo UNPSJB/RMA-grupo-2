@@ -3,7 +3,7 @@ from sqlalchemy.ext.asyncio import AsyncSession
 from backend.database import get_db 
 from backend.src import schemas, services
 from sqlalchemy.future import select
-from backend.src.models import Temperatura, Medicion, Nodo
+from backend.src.models import Temperatura
 from typing import List
 
 
@@ -50,24 +50,3 @@ async def update_usuario(usuario_id: int, usuario: schemas.UsuarioUpdate, db: As
 @router.delete("/usuario/{usuario_id}")
 async def delete_usuario(usuario_id: int, db: AsyncSession = Depends(get_db)):
     return await services.eliminar_usuario(db, usuario_id)
-
-## ---------------------- NODO
-
-@router.post("/nodo", response_model=schemas.NodoCreate)
-async def create_nodo(nodo: schemas.NodoCreate, db: AsyncSession = Depends(get_db)):
-    try:
-        return await services.crear_usuario(db, nodo)
-    except HTTPException as e:
-        raise HTTPException(status_code=400, detail=str(e))
-
-@router.get("/nodo/{nodo_id}", response_model=schemas.Nodo)
-async def get_nodo(nodo_id: int, db: AsyncSession = Depends(get_db)):
-    return await services.leer_nodo(db, nodo_id)
-
-@router.put("/nodo/{nodo_id}", response_model=schemas.Nodo)
-async def update_nodo(nodo_id: int, nodo: schemas.NodoUpdate, db: AsyncSession = Depends(get_db)):
-    return await services.modificar_nodo(db, nodo_id, nodo)
-
-@router.delete("/nodo/{nodo_id}")
-async def delete_nodo(nodo_id: int, db: AsyncSession = Depends(get_db)):
-    return await services.eliminar_nodo(db, nodo_id)

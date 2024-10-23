@@ -50,7 +50,7 @@ const TableTwo: React.FC = () => {
       <DataGrid
         rows={temperatureData}
         columns={columns}
-        pageSize={5}
+        pageSizeOptions=[5, 50, 100]
         rowsPerPageOptions={[5]}
         checkboxSelection
         sx={{
