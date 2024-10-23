@@ -1,7 +1,7 @@
 import { ApexOptions } from 'apexcharts';
 import React, { useState } from 'react';
 import ReactApexChart from 'react-apexcharts';
-//import Select from 'react-select';
+import Select from 'react-select';
 
 // Productos de ejemplo
 const allProducts = [
@@ -11,12 +11,6 @@ const allProducts = [
   { name: 'Nodo 4', data: [25, 20, 40, 18, 60, 22, 53, 47, 35, 25, 44, 55, 62, 20, 44, 38, 50, 64, 37, 50, 48, 64, 34, 56, 42] },
   { name: 'Nodo 5', data: [15, 25, 35, 45, 55, 20, 40, 60, 30, 50, 35, 45, 55, 60, 70, 20, 45, 55, 60, 65, 70, 25, 35, 45, 50] },
 ];
-
-// Opciones para react-select
-const productOptions = allProducts.map((product, index) => ({
-  value: index,
-  label: product.name,
-}));
 
 // Opciones del gráfico
 const options: ApexOptions = {
@@ -55,8 +49,14 @@ const options: ApexOptions = {
   },
 };
 
+// Opciones para `react-select`
+const productOptions = allProducts.map((product, index) => ({
+  value: index,
+  label: product.name,
+}));
+
 const ChartOne: React.FC = () => {
-  const [selectedProducts, setSelectedProducts] = useState<number[]>([0, 1]); // Por defecto, Product One y Product Two
+  const [selectedProducts, setSelectedProducts] = useState<number[]>([0, 1]); // Por defecto, Nodo 1 y Nodo 2
 
   // Manejar la selección del dropdown
   const handleProductSelect = (selectedOptions: any) => {
@@ -67,8 +67,14 @@ const ChartOne: React.FC = () => {
   return (
     <div className="col-span-12 rounded-sm border border-stroke bg-white px-5 pt-7.5 pb-5 shadow-default dark:border-strokedark dark:bg-boxdark sm:px-7.5 xl:col-span-8">
       <div className="flex justify-between items-center mb-5">
-        {/* Dropdown para seleccionar productos */}
-        
+        {/* Dropdown estilizado con react-select */}
+        <Select
+          isMulti
+          options={productOptions}
+          onChange={handleProductSelect}
+          className="w-full max-w-xs"
+          defaultValue={productOptions.slice(0, 2)} // Por defecto seleccionados Nodo 1 y Nodo 2
+        />
       </div>
 
       <div>
