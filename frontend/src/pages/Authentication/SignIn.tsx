@@ -1,4 +1,4 @@
-import React, { FormEvent } from 'react';
+import React, { FormEvent, useState } from 'react';
 import { Link } from 'react-router-dom';
 import Breadcrumb from '../../components/Breadcrumbs/Breadcrumb';
 import LogoDark from '../../images/logo/logo-dark.svg';
@@ -9,8 +9,47 @@ import { useNavigate } from 'react-router-dom';
 
 const SignIn: React.FC = () => {
   const navigate = useNavigate();
-  function handleSubmit(event: FormEvent<HTMLFormElement>): void {
+
+  const [formData, setFormData] = useState({
+    email: '',
+    password: '',
+  });
+
+  async function handleSubmit(event: FormEvent<HTMLFormElement>): Promise<void> {
     event.preventDefault();
+    if (!formData.email || !formData.password) {
+      alert("Por favor completa todos los campos.");
+      return;
+    }
+    const data = {
+      email: formData.email,
+      contrasena: formData.password,
+    };
+
+    try {
+      console.log("Datos enviados:", data);
+      const response = await fetch("http://localhost:8000/login", {
+        method: "POST", 
+        headers: {
+          "Content-Type": "application/json", // Indica que envías JSON
+        },
+        body: JSON.stringify(data), // Convierte el objeto a una cadena JSON
+      });
+
+      if (response.ok) {
+        const responseData = await response.json(); // Si la respuesta es correcta, obtienes los datos
+        console.log("Inicio de sesión exitoso:", responseData); // Manejo de la respuesta exitosa
+        // Aquí puedes guardar el token o los datos del usuario en el localStorage o en el estado
+        // localStorage.setItem('token', responseData.token); // Ejemplo de guardado de token
+      } else {
+        const errorData = await response.json(); // Si hay un error, obtienes los datos del error
+        console.error("Error del servidor:", errorData); // Manejo del error
+        alert("Correo electrónico o contraseña incorrectos.");
+      }
+    } catch (error) {
+      console.error("Error:", error); // Manejo de errores de red
+      alert("Hubo un error al iniciar sesión.");
+    }
     navigate('user/RMA');
   }
 

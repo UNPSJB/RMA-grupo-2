@@ -11,6 +11,29 @@ const TableNodos: React.FC = () => {
   const [nodosData, setNodosData] = useState<Nodo[]>([]);
   const [error, setError] = useState<string | null>(null);
 
+  const eliminarNodo = async (id: number): Promise<void> => {
+    try {
+      const response = await fetch("http://localhost:8000/usuario", {
+          method: "DELETE", 
+          headers: {
+              "Content-Type": "application/json", // Indica que envías JSON
+          },
+          body: JSON.stringify({ id }), // Convierte el id en un objeto JSON
+      });
+
+      if (response.ok) {
+          const responseData = await response.json(); // Si la respuesta es correcta, obtienes los datos
+          console.log("Nodo eliminado:", responseData); // Manejo de la respuesta exitosa
+      } else {
+          const errorData = await response.json(); // Si hay un error, obtienes los datos del error
+          console.error("Error del servidor:", errorData); // Manejo del error
+      }
+  } catch (error) {
+      console.error("Error:", error); // Manejo de errores de red
+  }
+
+  }
+
   useEffect(() => {
     const obtenerNodos = async () => {
       try {
@@ -64,6 +87,14 @@ const TableNodos: React.FC = () => {
             <div className="flex items-center justify-center p-2.5 xl:p-5">
               <p className="text-black dark:text-white">{new Date(data.posicionY).toLocaleDateString()}</p>
             </div>
+            <div className="flex items-center justify-center p-2.5 xl:p-5">
+            <button
+              className="bg-red-500 text-white px-4 py-2 rounded"
+              onClick={() => eliminarNodo(data.id)} // Llamada a la función de eliminar
+            >
+              Eliminar
+            </button>
+          </div>
           </div>
         ))}
       </div>
