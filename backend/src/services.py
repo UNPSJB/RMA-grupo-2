@@ -4,7 +4,6 @@ from backend.src import schemas, models
 from backend.src.models import Usuario, Nodo
 from fastapi import HTTPException
 from backend.database import SessionLocal
-from backend.database import SessionLocal
 from backend.src.datos import datos
 import datetime
 
@@ -15,30 +14,12 @@ async def get_db():
     finally:
         db.close()
         
-
-## ----------------------- TEMPERATURA
-async def crear_temperatura(db: AsyncSession, temperatura: schemas.TemperaturaCreate) -> schemas.TemperaturaCreate:
-    new_temperatura = models.Temperatura(        
-        nodo=temperatura.nodo,
-        tipo=temperatura.tipo,
-        dato=temperatura.dato,
-        tiempo=temperatura.tiempo
-    )
-    try:
-            db.add(new_temperatura)
-            await db.commit()  
-            await db.refresh(new_temperatura)
-    except Exception as e:
-            await db.rollback()  
-            #print(f"Error al crear temperatura: {e}")  # Imprimir el error
-            raise HTTPException(status_code=400, detail="Error al crear temperatura") from e
-    return new_temperatura
 ## ----------------------- MEDICIONES
 async def crear_medicion(db: AsyncSession, medicion: schemas.MedicionCreate) -> schemas.MedicionCreate:
     if(datos[new_medicion.tipo][0] <= new_medicion.dato <= datos[new_medicion.tipo[1]]):
-        mError = 0
+        mError = False
     else:
-        mError = 1
+        mError = True
     new_medicion = models.Medicion(        
         nodo=medicion.nodo,
         tipo=medicion.tipo,

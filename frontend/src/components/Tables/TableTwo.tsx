@@ -2,34 +2,36 @@ import React, { useEffect, useState } from 'react';
 import { DataGrid } from '@mui/x-data-grid';
 import axios from 'axios';
 
-interface Temperatura {
+interface Medicion {
   id: number;
   nodo: number;
   tipo: string;
   dato: number;
   tiempo: string; // Cambia a string si viene como formato ISO
+  bateria: string;
+  error: boolean;
 }
 
 const TableTwo: React.FC = () => {
-  const [temperatureData, setTemperatureData] = useState<Temperatura[]>([]);
+  const [medicionData, setMedicionData] = useState<Medicion[]>([]);
   const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
-    const obtenerTemperaturas = async () => {
+    const obtenerMediciones = async () => {
       try {
-        const response = await axios.get('http://localhost:8000/temperatura/');
-        const dataWithIds = response.data.map((item: Omit<Temperatura, 'id'>, index: number) => ({
+        const response = await axios.get('http://localhost:8000/medicion/');
+        const dataWithIds = response.data.map((item: Omit<Medicion, 'id'>, index: number) => ({
           ...item,
           id: index, // or any unique identifier if available
         }));
-        setTemperatureData(dataWithIds);
+        setMedicionData(dataWithIds);
       } catch (error) {
-        console.error('Error al obtener las temperaturas:', error);
+        console.error('Error al obtener las mediciones:', error);
         setError('Error al cargar los datos.');
       }
     };
 
-    obtenerTemperaturas();
+    obtenerMediciones();
   }, []);
 
   const columns = [
@@ -48,7 +50,7 @@ const TableTwo: React.FC = () => {
     <div style={{ height: 500, width: '100%' }}>
       <h1>DATOS MEDICIONES</h1>
       <DataGrid
-        rows={temperatureData}
+        rows={medicionData}
         columns={columns}
         pageSizeOptions={[5, 50, 100]}
         rowsPerPageOptions={[5]}

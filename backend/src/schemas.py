@@ -3,25 +3,6 @@ from pydantic import BaseModel, EmailStr, field_validator
 from typing import Optional
 import datetime
 
-class TemperaturaBase(BaseModel):
-    nodo: int
-    tipo: str
-    dato: float
-    tiempo: datetime.datetime
-
-class Temperatura(TemperaturaBase):
-    id: int
-    nodo: int
-    tipo: str
-    dato: float
-    tiempo: datetime.datetime
-
-    class Config:
-        orm_config = True
-
-class TemperaturaCreate(TemperaturaBase):
-    pass
-
 ## ----------------------- MEDICIONES
 class MedicionBase(BaseModel):
     id:int
@@ -30,7 +11,7 @@ class MedicionBase(BaseModel):
     dato: float
     tiempo: datetime.datetime
     bateria: Optional[int]
-    error: int
+    error: bool
 
 class Medicion(MedicionBase):
     id:int
@@ -39,7 +20,7 @@ class Medicion(MedicionBase):
     dato: float
     tiempo: datetime.datetime
     bateria: Optional[int]
-    error: int
+    error: bool
     class Config:
         orm_config = True
         

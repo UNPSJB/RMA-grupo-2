@@ -3,36 +3,27 @@ from sqlalchemy.ext.asyncio import AsyncSession
 from backend.database import get_db 
 from backend.src import schemas, services
 from sqlalchemy.future import select
-from backend.src.models import Temperatura, Medicion, Nodo
+from backend.src.models import Medicion, Nodo
 from typing import List
 
 
 router = APIRouter()
 
-## ----------------------- TEMPERATURA
-
-@router.post("/temperatura", response_model=schemas.TemperaturaCreate)
-async def create_temperatura(temperatura: schemas.TemperaturaCreate, db: AsyncSession = Depends(get_db)):
-    try:
-        return await services.crear_temperatura(db, temperatura)
-    except HTTPException as e:
-        raise HTTPException(status_code=400, detail=str(e))
-    
-@router.get("/temperatura/", response_model=List[schemas.TemperaturaCreate])
-async def read_temperaturas(db: AsyncSession = Depends(get_db)):
-    async with db.begin():
-        result = await db.execute(select(Temperatura))
-        temperaturas = result.scalars().all()
-    return temperaturas
 ## ----------------------- MEDICIONES
 
 @router.post("/medicion", response_model=schemas.MedicionCreate)
-async def create_temperatura(medicion: schemas.MedicionCreate, db: AsyncSession = Depends(get_db)):
+async def create_medicion(medicion: schemas.MedicionCreate, db: AsyncSession = Depends(get_db)):
     try:
         return await services.crear_medicion(db, medicion)
     except HTTPException as e:
         raise HTTPException(status_code=400, detail=str(e))
-
+    
+@router.get("/medicion/", response_model=List[schemas.MedicionCreate])
+async def read_mdiciones(db: AsyncSession = Depends(get_db)):
+    async with db.begin():
+        result = await db.execute(select(Medicion))
+        medicion = result.scalars().all()
+    return medicion
 ## ----------------------- USUARIO
 @router.post("/usuario", response_model=schemas.UsuarioCreate)
 async def create_usuario(usuario: schemas.UsuarioCreate, db: AsyncSession = Depends(get_db)):

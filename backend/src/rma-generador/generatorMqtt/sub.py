@@ -5,7 +5,7 @@ import paho.mqtt.client as paho
 import asyncio
 from dotenv import load_dotenv
 from backend.src import services
-from backend.src.schemas import TemperaturaCreate
+from backend.src.schemas import MedicionCreate
 from pydantic import BaseModel
 from backend.database import *
 
@@ -28,12 +28,12 @@ async def message_handling(client, userdata, message):
     #timport pdb; pdb.set_trace()
     try:
         m = Mensaje.model_validate_json(mensaje)
-        temp = TemperaturaCreate(nodo=m.id, dato=m.data, tiempo=m.time, tipo=m.type)
+        med = MedicionCreate(nodo=m.id, dato=m.data, tiempo=m.time, tipo=m.type)
         print("Guardando en la base de datos")
         # Abrir una nueva sesión de la base de datos en cada mensaje
         async for db in get_db():  # Crear nueva sesión
             #print(f"{m.id};{temp.nodo};{temp.tipo};{temp.tiempo};{temp.dato}")
-            await services.crear_temperatura(db, temp)
+            await services.crear_temperatura(db, med)
             print("Datos Guardados...")
     except Exception as e:
         print(e)

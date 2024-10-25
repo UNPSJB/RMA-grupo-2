@@ -7,37 +7,37 @@ import TableOne from '../../components/Tables/TableOne';
 import ChartLineaTemp from '../../components/Charts/ChartLineaTemp';
 
 const RMA: React.FC = () => {
-  const [ultimaTemperatura, setUltimaTemperatura] = useState<number | null>(null);
+  const [ultimaMedicion, setUltimaMedicion] = useState<number | null>(null);
   const [error, setError] = useState<string | null>(null);
 
-  const obtenerUltimaTemperatura = async () => {
+  const obtenerUltimaMedicion = async () => {
     try {
-      const response = await fetch('http://localhost:8000/temperatura/');
+      const response = await fetch('http://localhost:8000/medicion/');
       const data = await response.json();
 
       if (data.length === 0) return null;
 
-      const ultimaTemp = data.reduce((prev: { tiempo: string | number | Date; }, current: { tiempo: string | number | Date; }) => 
+      const ultimaMedi = data.reduce((prev: { tiempo: string | number | Date; }, current: { tiempo: string | number | Date; }) => 
         new Date(prev.tiempo) > new Date(current.tiempo) ? prev : current
       );
 
-      return ultimaTemp.dato = data.dato =  Math.round(ultimaTemp.dato * 100) / 100; // Retorna el valor de "dato"
+      return ultimaMedi.dato = data.dato =  Math.round(ultimaMedi.dato * 100) / 100; // Retorna el valor de "dato"
     } catch (error) {
-      console.error('Error al obtener la última temperatura:', error);
-      setError('Error al cargar la última temperatura.');
+      console.error('Error al obtener la última medicion:', error);
+      setError('Error al cargar la última medicion.');
       return null;
     }
   };
 
   useEffect(() => {
-    const fetchUltimaTemperatura = async () => {
-      const ultimaTemp = await obtenerUltimaTemperatura();
-      setUltimaTemperatura(ultimaTemp);
+    const fetchUltimaMedicion = async () => {
+      const ultimaMedi = await obtenerUltimaMedicion();
+      setUltimaMedicion(ultimaMedi);
     };
 
-    fetchUltimaTemperatura(); // Inicializa la primera carga
+    fetchUltimaMedicion(); // Inicializa la primera carga
 
-    const intervalId = setInterval(fetchUltimaTemperatura, 60000); // Actualiza cada 10 minutos (600,000 ms)
+    const intervalId = setInterval(fetchUltimaMedicion, 60000); // Actualiza cada 10 minutos (600,000 ms)
 
     return () => clearInterval(intervalId); // Limpia el intervalo al desmontar el componente
   }, []);
@@ -51,7 +51,7 @@ const RMA: React.FC = () => {
       <div className="grid grid-cols-1 gap-4 md:grid-cols-2 md:gap-6 xl:grid-cols-4 2xl:gap-7.5">
         <CardDataStats 
           title="Última temperatura registrada" 
-          total={ultimaTemperatura !== null ? `${ultimaTemperatura}°C` : 'Cargando...'} 
+          total={ultimaMedicion !== null ? `${ultimaMedicion}°C` : 'Cargando...'} 
           rate="1,5ºC" 
           levelUp
         >

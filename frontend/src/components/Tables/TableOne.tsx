@@ -1,48 +1,50 @@
 import React, { useEffect, useState } from 'react';
 import axios from 'axios';
 
-interface Temperatura {
+interface Medicion {
   id: number;
   nodo: number;
   tipo: string;
   dato: number;
   tiempo: string; // Cambia a string si viene como formato ISO
+  bateria: string;
+  error: boolean;
 }
 
 const TableOne: React.FC = () => {
-  const [temperatureData, setTemperatureData] = useState<Temperatura[]>([]);
+  const [medicionData, setMedicionData] = useState<Medicion[]>([]);
   const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
-    const obtenerTemperaturas = async () => {
+    const obtenerMediciones = async () => {
       try {
-        const response = await axios.get('http://localhost:8000/temperatura/');
-        const temperaturas = response.data;
-        const ultimasCinco = temperaturas
-          .sort((a: Temperatura, b: Temperatura) => new Date(b.tiempo).getTime() - new Date(a.tiempo).getTime())
+        const response = await axios.get('http://localhost:8000/medicion/');
+        const mediciones = response.data;
+        const ultimasCinco = mediciones
+          .sort((a: Medicion, b: Medicion) => new Date(b.tiempo).getTime() - new Date(a.tiempo).getTime())
           .slice(0, 5);
-        setTemperatureData(ultimasCinco);
+        setMedicionData(ultimasCinco);
       } catch (error) {
-        console.error('Error al obtener las temperaturas:', error);
+        console.error('Error al obtener las mediciones:', error);
         setError('Error al cargar los datos.');
       }
     };
 
-    obtenerTemperaturas();
+    obtenerMediciones();
   }, []);
 
   if (error) {
     return <div>{error}</div>;
   }
 
-  if (temperatureData.length === 0) {
+  if (medicionData.length === 0) {
     return <div>Cargando...</div>;
   }
 
   return (
     <div className="rounded-sm border border-stroke bg-white px-5 pt-6 pb-2.5 shadow-default dark:border-strokedark dark:bg-boxdark sm:px-7.5 xl:pb-1">
       <h4 className="mb-6 text-xl font-semibold text-black dark:text-white">
-        Ultimas 5 Temperatura Recibidas
+        Ultimas 5 Mediciones Recibidas
       </h4>
 
       <div className="flex flex-col">
@@ -64,7 +66,7 @@ const TableOne: React.FC = () => {
           </div>
         </div>
 
-        {temperatureData.map((data) => (
+        {medicionData.map((data) => (
           <div
             className={`grid grid-cols-3 sm:grid-cols-5 border-b border-stroke dark:border-strokedark`}
             key={data.id}
