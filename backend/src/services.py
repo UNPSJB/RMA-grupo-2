@@ -119,8 +119,8 @@ async def crear_nodo(db: AsyncSession, nodo: schemas.NodoCreate) -> schemas.Nodo
         raise HTTPException(status_code=400, detail="Ya existe ese nodo")
     new_nodo = models.Nodo(
         id = nodo.id,
-        posicionX = nodo.posicionX,
-        posicionY = nodo.posicionY
+        posicionX = nodo.posicionx,
+        posicionY = nodo.posiciony
     )
     print(f"Id: {new_nodo.id}, X: {new_nodo.posicionX}, Y: {new_nodo.posicionY}")
     try:

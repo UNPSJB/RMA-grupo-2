@@ -17,14 +17,14 @@ const SignIn: React.FC = () => {
 
   async function handleSubmit(event: FormEvent<HTMLFormElement>): Promise<void> {
     event.preventDefault();
-    if (!formData.email || !formData.password) {
-      alert("Por favor completa todos los campos.");
-      return;
-    }
     const data = {
       email: formData.email,
       contrasena: formData.password,
     };
+    if (formData.email == ""|| formData.password == "") {
+      alert("Por favor completa todos los campos.");
+      return;
+    }
 
     try {
       console.log("Datos enviados:", data);
@@ -211,8 +211,11 @@ const SignIn: React.FC = () => {
                   <div className="relative">
                     <input
                       type="email"
+                      name="email"
                       placeholder="user@example.com"
                       className="w-full rounded-lg border border-stroke bg-transparent py-4 pl-6 pr-10 text-black outline-none focus:border-primary focus-visible:shadow-none dark:border-form-strokedark dark:bg-form-input dark:text-white dark:focus:border-primary"
+                      onChange={(e) => setFormData({ ...formData, email: e.target.value })}
+                      value={formData.email}
                     />
 
                     <span className="absolute right-4 top-4">
@@ -242,8 +245,11 @@ const SignIn: React.FC = () => {
                   <div className="relative">
                     <input
                       type="password"
+                      name="password"
                       placeholder="contraseña"
                       className="w-full rounded-lg border border-stroke bg-transparent py-4 pl-6 pr-10 text-black outline-none focus:border-primary focus-visible:shadow-none dark:border-form-strokedark dark:bg-form-input dark:text-white dark:focus:border-primary"
+                      onChange={(e) => setFormData({ ...formData, password: e.target.value })}
+                      value={formData.password}
                     />
 
                     <span className="absolute right-4 top-4">

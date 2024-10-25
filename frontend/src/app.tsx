@@ -11,6 +11,7 @@ import Settings from './pages/Settings';
 import Tablas from './pages/Tablas';
 import DefaultLayout from './layout/DefaultLayout';
 import AuthLayout from './layout/AuthLayout';
+import PanelNodos from './pages/Admin/PanelNodos'
 
 function App() {
   const [loading, setLoading] = useState<boolean>(true);
@@ -39,6 +40,7 @@ function App() {
         <Route path="/user/RMA" element={<RMA />} />
         <Route path="/user/tablas" element={<Tablas />} />
         <Route path="/settings" element={<Settings />} />
+        <Route path="/admin/nodos" element={<PanelNodos />} />
       </Route>
     </Routes>
   );

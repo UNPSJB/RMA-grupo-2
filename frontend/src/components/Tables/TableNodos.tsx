@@ -3,8 +3,8 @@ import axios from 'axios';
 
 interface Nodo {
   id: number;
-  posicionX: number;
-  posicionY: string;
+  posicionx: number;
+  posiciony: number;
 }
 
 const TableNodos: React.FC = () => {
@@ -82,10 +82,10 @@ const TableNodos: React.FC = () => {
             key={data.id}
           >
             <div className="flex items-center gap-3 p-2.5 xl:p-5">
-              <p className="text-black dark:text-white">{data.posicionX}</p>
+              <p className="text-black dark:text-white">{data.posicionx}</p>
             </div>
             <div className="flex items-center justify-center p-2.5 xl:p-5">
-              <p className="text-black dark:text-white">{new Date(data.posicionY).toLocaleDateString()}</p>
+              <p className="text-black dark:text-white">{new Date(data.posiciony).toLocaleDateString()}</p>
             </div>
             <div className="flex items-center justify-center p-2.5 xl:p-5">
             <button

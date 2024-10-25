@@ -56,8 +56,8 @@ class Nodo(Base):
     __tablename__ = "nodo"
 
     id: Mapped[int] = mapped_column(Integer, primary_key=True, index=True, autoincrement=False)
-    posicionX : Mapped[int] = mapped_column(Integer, index=True, nullable=False)
-    posicionY : Mapped[int] = mapped_column(Integer, index=True, nullable=False)
+    posicionx : Mapped[int] = mapped_column(Integer, index=True, nullable=False)
+    posiciony : Mapped[int] = mapped_column(Integer, index=True, nullable=False)
 
 ## ----------------------- Nodo
 ##class Nodo(Base):

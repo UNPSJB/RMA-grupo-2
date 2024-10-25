@@ -7,8 +7,8 @@ const PanelNodos = () => {
 
   const [formData, setFormData] = useState({
     id: '',
-    posicionX: '',
-    posicionY: '',
+    posicionx: '',
+    posiciony: '',
   });
 
   const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
@@ -17,11 +17,11 @@ const PanelNodos = () => {
   // Aquí usas formData para construir el objeto que enviarás
   const data = {
     id: formData.id,  
-    posicionX: formData.posicionX,    
-    posicionY: formData.posicionY
+    posicionX: formData.posicionx,    
+    posicionY: formData.posiciony
   };
    
-  if (!formData.id || !formData.posicionX || !formData.posicionY ) {
+  if (!formData.id || !formData.posicionx || !formData.posiciony ) {
     alert("Por favor completa todos los campos.");
     return;
   }
@@ -104,8 +104,8 @@ const PanelNodos = () => {
                       type="number"
                       id='posicionX'
                       placeholder="Ingrese la posición X del nodo"
-                      onChange={(e) => setFormData({ ...formData, posicionX: e.target.value })}
-                      value={formData.posicionX}
+                      onChange={(e) => setFormData({ ...formData, posicionx: e.target.value })}
+                      value={formData.posicionx}
                       className="w-full rounded-lg border border-stroke bg-transparent py-4 pl-6 pr-10 text-black outline-none focus:border-primary focus-visible:shadow-none dark:border-form-strokedark dark:bg-form-input dark:text-white dark:focus:border-primary"
                     />
 
@@ -139,8 +139,8 @@ const PanelNodos = () => {
                       id='posicionY'
                       placeholder="Ingrese la posición Y del nodo"
                       className="w-full rounded-lg border border-stroke bg-transparent py-4 pl-6 pr-10 text-black outline-none focus:border-primary focus-visible:shadow-none dark:border-form-strokedark dark:bg-form-input dark:text-white dark:focus:border-primary"
-                      onChange={(e) => setFormData({ ...formData, posicionY: e.target.value })}
-                      value={formData.posicionY}
+                      onChange={(e) => setFormData({ ...formData, posiciony: e.target.value })}
+                      value={formData.posiciony}
                     />
 
                     <span className="absolute right-4 top-4">

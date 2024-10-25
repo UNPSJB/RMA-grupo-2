@@ -117,14 +117,14 @@ class UsuarioUpdate(BaseModel):
 
 class NodoBase(BaseModel):
     id: int
-    posicionX: int
-    posicionY: int
+    posicionx: float
+    posiciony: float
 
 
 class Nodo(NodoBase):
     id: int
-    posicionX: int
-    posicionY: int
+    posicionx: float
+    posiciony: float
         
     class Config:
         orm_mode = True
@@ -134,5 +134,5 @@ class NodoCreate(NodoBase):
 
 class NodoUpdate(BaseModel):
     id: int
-    posicionX: int
-    posicionY: int
+    posicionx: float
+    posiciony: float
