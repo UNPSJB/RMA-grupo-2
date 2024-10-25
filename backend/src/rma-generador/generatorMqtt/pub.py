@@ -24,7 +24,7 @@ class Nodo:
     id: int
     stop_event: threading.Event
     cliente: paho.Client = paho.Client()
-    frecuencia: int =10  # cada cuantos segundos publica mensajes?
+    frecuencia: int =5  # cada cuantos segundos publica mensajes?
 
     def publicar(
         self,
@@ -41,7 +41,7 @@ class Nodo:
 
         while not self.stop_event.is_set():
             if len(message) == 0:
-                message = str(random.uniform(22.0, 23.0))
+                message = str(random.uniform(12.0, 30.0))
 
             mensaje = self.formatear_mensaje(
                 topic,

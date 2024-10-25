@@ -36,6 +36,7 @@ class Medicion(Base):
         default=func.now()
     )
     bateria: Mapped[int] = mapped_column(Integer, nullable=True)
+    error: Mapped[int] = mapped_column(Integer, nullable=False)
 
 ## ----------------------- Usuario
 class Usuario(Base):

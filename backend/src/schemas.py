@@ -30,6 +30,7 @@ class MedicionBase(BaseModel):
     dato: float
     tiempo: datetime.datetime
     bateria: Optional[int]
+    error: int
 
 class Medicion(MedicionBase):
     id:int
@@ -38,6 +39,7 @@ class Medicion(MedicionBase):
     dato: float
     tiempo: datetime.datetime
     bateria: Optional[int]
+    error: int
     class Config:
         orm_config = True
         

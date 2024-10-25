@@ -9,11 +9,6 @@ from backend.src.routes import router as routers
 from sqlalchemy.future import select
 from fastapi.middleware.cors import CORSMiddleware
 
-async def proc1():
-    await subprocess.run(['python', 'src/rma-generador/main.py'])
-async def proc2():
-    await subprocess.run(['python', 'src/rma-generador/generatorMqtt/sub.py'])
-
 load_dotenv()#.env
 DATABASE_URL = os.getenv("DB_URL")
 ENV = os.getenv("ENV", "DEV")
@@ -47,11 +42,7 @@ app.add_middleware(
 
 
 async def main():
-    await asyncio.gather(
-        init_db(),
-        proc1(),
-        proc2() 
-    )
+    await init_db()
 
 if __name__ == "__main__":
     asyncio.run(main())

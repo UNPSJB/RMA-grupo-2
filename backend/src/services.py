@@ -5,6 +5,7 @@ from backend.src.models import Usuario, Nodo
 from fastapi import HTTPException
 from backend.database import SessionLocal
 from backend.database import SessionLocal
+from backend.src.datos import datos
 import datetime
 
 async def get_db():
@@ -23,7 +24,6 @@ async def crear_temperatura(db: AsyncSession, temperatura: schemas.TemperaturaCr
         dato=temperatura.dato,
         tiempo=temperatura.tiempo
     )
-    print(f"{new_temperatura.dato}, {new_temperatura.nodo}, {new_temperatura.tiempo}, {new_temperatura.tipo}")
     try:
             db.add(new_temperatura)
             await db.commit()  
@@ -35,14 +35,18 @@ async def crear_temperatura(db: AsyncSession, temperatura: schemas.TemperaturaCr
     return new_temperatura
 ## ----------------------- MEDICIONES
 async def crear_medicion(db: AsyncSession, medicion: schemas.MedicionCreate) -> schemas.MedicionCreate:
+    if(datos[new_medicion.tipo][0] <= new_medicion.dato <= datos[new_medicion.tipo[1]]):
+        mError = 0
+    else:
+        mError = 1
     new_medicion = models.Medicion(        
         nodo=medicion.nodo,
         tipo=medicion.tipo,
         dato=medicion.dato,
         tiempo=medicion.tiempo,
-        bateria=medicion.bateria
+        bateria=medicion.bateria,
+        error=mError
     )
-    print("Medicion creada")
     try:
          db.add(new_medicion)
          await db.commit()
@@ -51,8 +55,6 @@ async def crear_medicion(db: AsyncSession, medicion: schemas.MedicionCreate) -> 
          await db.rollback()
          raise HTTPException(status_code=400, detail="Error al crear una nueva medicion") from errorEnBase
     return new_medicion
-
-
 
 ## ----------------------- USUARIO
 async def crear_usuario(db: AsyncSession, usuario: schemas.UsuarioCreate) -> schemas.UsuarioCreate:
