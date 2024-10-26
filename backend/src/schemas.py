@@ -27,25 +27,6 @@ class Medicion(MedicionBase):
 class MedicionCreate(MedicionBase):
     pass
 
-## ----------------------- NODO
-class NodoBase(BaseModel):
-    nombre:str
-
-class Nodo(NodoBase):        
-    id: int
-    nombre: str
-
-    class config:
-        orm_config = True
-
-class NodoCreate(NodoBase):
-    pass
-
-class NodoUpdate(NodoBase):
-    nombre: str
-
-    
-
 ## ----------------------- USUARIO
 class UsuarioBase(BaseModel):
     nombre: str

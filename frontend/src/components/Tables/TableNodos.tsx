@@ -16,20 +16,20 @@ const TableNodos: React.FC = () => {
       const response = await fetch(`http://localhost:8000/nodo/${id}`, {
           method: "DELETE", 
           headers: {
-              "Content-Type": "application/json", // Indica que envías JSON
+              "Content-Type": "application/json",
           },
-          body: JSON.stringify({ id }), // Convierte el id en un objeto JSON
+          body: JSON.stringify({ id }), 
       });
       alert("Nodo eliminado con exito.");
       if (response.ok) {
-          const responseData = await response.json(); // Si la respuesta es correcta, obtienes los datos
-          console.log("Nodo eliminado:", responseData); // Manejo de la respuesta exitosa
+          const responseData = await response.json(); 
+          console.log("Nodo eliminado:", responseData);
       } else {
-          const errorData = await response.json(); // Si hay un error, obtienes los datos del error
-          console.error("Error del servidor:", errorData); // Manejo del error
+          const errorData = await response.json(); 
+          console.error("Error del servidor:", errorData);
       }
   } catch (error) {
-      console.error("Error:", error); // Manejo de errores de red
+      console.error("Error:", error); 
   }
 
   }

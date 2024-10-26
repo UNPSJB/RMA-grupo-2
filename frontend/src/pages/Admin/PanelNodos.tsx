@@ -12,9 +12,9 @@ const PanelNodos = () => {
   });
 
   const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
-    e.preventDefault(); // Previene el comportamiento predeterminado del formulario
+    e.preventDefault();
 
-  // Aquí usas formData para construir el objeto que enviarás
+  
   const data = {
     id: formData.id,  
     posicionx: formData.posicionx,    
@@ -26,7 +26,6 @@ const PanelNodos = () => {
     return;
   }
 
-  //console.log(dataToSend); // Imprimir datos a enviar
     try {
         console.log("Datos enviados:", data);
         const response = await fetch("http://localhost:8000/nodo", {
