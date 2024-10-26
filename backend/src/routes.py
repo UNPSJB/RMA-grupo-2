@@ -3,11 +3,13 @@ from sqlalchemy.ext.asyncio import AsyncSession
 from backend.database import get_db 
 from backend.src import schemas, services
 from sqlalchemy.future import select
-from backend.src.models import Medicion, Nodo
+from backend.src.models import Medicion, Nodo, Usuario
 from typing import List
+from passlib.context import CryptContext
 
 
 router = APIRouter()
+pwd_context = CryptContext(schemes=["bcrypt"], deprecated="auto")
 
 ## ----------------------- MEDICIONES
 
@@ -24,6 +26,14 @@ async def read_mdiciones(db: AsyncSession = Depends(get_db)):
         result = await db.execute(select(Medicion))
         medicion = result.scalars().all()
     return medicion
+## ----------------------- LOGIN
+@router.post("/login", response_model=schemas.Usuario)
+async def login(usuario: schemas.UsuarioLogin, db: AsyncSession = Depends(get_db)):
+    result = await db.execute(select(Usuario).where(Usuario.email == usuario.email))
+    user = result.scalar_one_or_none()   
+    if user is None or not pwd_context.verify(usuario.contrasena, user.contrasena):
+        raise HTTPException(status_code=401, detail="Correo electronico o contraseña incorrectos.")
+    return user
 ## ----------------------- USUARIO
 @router.post("/usuario", response_model=schemas.UsuarioCreate)
 async def create_usuario(usuario: schemas.UsuarioCreate, db: AsyncSession = Depends(get_db)):

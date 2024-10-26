@@ -12,16 +12,16 @@ const SignIn: React.FC = () => {
 
   const [formData, setFormData] = useState({
     email: '',
-    password: '',
+    contrasena: '',
   });
 
   async function handleSubmit(event: FormEvent<HTMLFormElement>): Promise<void> {
     event.preventDefault();
     const data = {
       email: formData.email,
-      contrasena: formData.password,
+      contrasena: formData.contrasena,
     };
-    if (formData.email == ""|| formData.password == "") {
+    if (formData.email == "" || formData.contrasena == "") {
       alert("Por favor completa todos los campos.");
       return;
     }
@@ -39,6 +39,7 @@ const SignIn: React.FC = () => {
       if (response.ok) {
         const responseData = await response.json(); // Si la respuesta es correcta, obtienes los datos
         console.log("Inicio de sesión exitoso:", responseData); // Manejo de la respuesta exitosa
+        navigate('user/RMA');
         // Aquí puedes guardar el token o los datos del usuario en el localStorage o en el estado
         // localStorage.setItem('token', responseData.token); // Ejemplo de guardado de token
       } else {
@@ -50,7 +51,6 @@ const SignIn: React.FC = () => {
       console.error("Error:", error); // Manejo de errores de red
       alert("Hubo un error al iniciar sesión.");
     }
-    navigate('user/RMA');
   }
 
   return (
@@ -248,8 +248,8 @@ const SignIn: React.FC = () => {
                       name="password"
                       placeholder="contraseña"
                       className="w-full rounded-lg border border-stroke bg-transparent py-4 pl-6 pr-10 text-black outline-none focus:border-primary focus-visible:shadow-none dark:border-form-strokedark dark:bg-form-input dark:text-white dark:focus:border-primary"
-                      onChange={(e) => setFormData({ ...formData, password: e.target.value })}
-                      value={formData.password}
+                      onChange={(e) => setFormData({ ...formData, contrasena: e.target.value })}
+                      value={formData.contrasena}
                     />
 
                     <span className="absolute right-4 top-4">

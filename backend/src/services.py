@@ -5,8 +5,10 @@ from backend.src.models import Usuario, Nodo
 from fastapi import HTTPException
 from backend.database import SessionLocal
 from backend.src.datos import datos
+from passlib.context import CryptContext
 import datetime
 
+pwd_context = CryptContext(schemes=["bcrypt"], deprecated="auto") #para encriptar pass
 async def get_db():
     db = SessionLocal()
     try:
@@ -43,17 +45,14 @@ async def crear_usuario(db: AsyncSession, usuario: schemas.UsuarioCreate) -> sch
     existing_user = result.scalars().first()
     if existing_user:
         raise HTTPException(status_code=400, detail="El email ya está en uso")
-    result = await db.execute(select(models.Usuario).filter(models.Usuario.contrasena == usuario.contrasena))
-    existing_user = result.scalars().first()
-    if existing_user:
-        raise HTTPException(status_code=400, detail="La contraseña ya está en uso")
+    hashed_password = pwd_context.hash(usuario.contrasena) #encripte la pass
     new_usuario = models.Usuario(
         nombre=usuario.nombre,
         email=usuario.email,
-        contrasena=usuario.contrasena,
+        contrasena=hashed_password, #Guardar la contraseña encriptada
         fecha_registro=datetime.datetime.now(datetime.timezone.utc)
     )
-    print(f"Nombre: {new_usuario.nombre}, Email: {new_usuario.email}, Fecha: {new_usuario.fecha_registro}")
+
     try:
         db.add(new_usuario)
         await db.commit()
@@ -61,6 +60,7 @@ async def crear_usuario(db: AsyncSession, usuario: schemas.UsuarioCreate) -> sch
     except Exception as e:
         await db.rollback()
         raise HTTPException(status_code=400, detail="Error al crear usuario") from e
+
     return new_usuario
 
 async def leer_usuario(db: AsyncSession, usuario_id: int) -> schemas.Usuario:
@@ -93,6 +93,12 @@ async def eliminar_usuario(db: AsyncSession, usuario_id: int) -> dict:
     else:
         raise HTTPException(status_code=404, detail="Usuario no encontrado")
 
+async def login_usuario(db: AsyncSession, usuario: schemas.UsuarioLogin):
+    result = await db.execute(select(Usuario).where(Usuario.email == usuario.email))
+    user = result.scalar_one_or_none()   
+    if user is None or not pwd_context.verify(usuario.contrasena, user.contrasena):
+        raise HTTPException(status_code=401, detail="Correo electronico o contraseña incorrectos.")
+    return user
 ##------------------NODO
 
 async def crear_nodo(db: AsyncSession, nodo: schemas.NodoCreate) -> schemas.NodoCreate:

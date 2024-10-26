@@ -7,7 +7,7 @@ import datetime
 class MedicionBase(BaseModel):
     id:int
     nodo:int
-    tipo: str
+    tipo: int
     dato: float
     tiempo: datetime.datetime
     bateria: Optional[int]
@@ -16,7 +16,7 @@ class MedicionBase(BaseModel):
 class Medicion(MedicionBase):
     id:int
     nodo:int
-    tipo: str
+    tipo: int
     dato: float
     tiempo: datetime.datetime
     bateria: Optional[int]
@@ -53,6 +53,7 @@ class UsuarioBase(BaseModel):
     contrasena: str
 
     # Validación de la contraseña utilizando field_validator
+    # (ESTO NO SE PUEDE HACER EN EL FRONT?, PARA NO ENVIAR CREACIONES QUE SE SABE QUE VAN A FALLAR)
     @field_validator('contrasena')
     def validar_contrasena(cls, contrasena):
         if len(contrasena) < 8:
@@ -64,7 +65,6 @@ class UsuarioBase(BaseModel):
         if not any(char.isupper() for char in contrasena):
             raise ValueError('La contraseña debe contener al menos una letra mayúscula.')
         return contrasena
-
 
 class Usuario(UsuarioBase):
     id: Optional[int]  # Hacer que id sea opcional
@@ -95,7 +95,10 @@ class UsuarioUpdate(BaseModel):
         if not any(char.isupper() for char in contrasena):
             raise ValueError('La contraseña debe contener al menos una letra mayúscula.')
         return contrasena
-    
+
+class UsuarioLogin(BaseModel):
+    email: EmailStr
+    contrasena: str
 ##--------NODO
 
 class NodoBase(BaseModel):
