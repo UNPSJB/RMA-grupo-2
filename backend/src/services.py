@@ -102,16 +102,10 @@ async def login_usuario(db: AsyncSession, usuario: schemas.UsuarioLogin):
 ##------------------NODO
 
 async def crear_nodo(db: AsyncSession, nodo: schemas.NodoCreate) -> schemas.NodoCreate:
-    result = await db.execute(select(models.Nodo).filter(models.Nodo.id == nodo.id))
-    existing_nodo = result.scalars().first()
-    if existing_nodo:
-        raise HTTPException(status_code=400, detail="Ya existe ese nodo")
     new_nodo = models.Nodo(
-        id = nodo.id,
-        posicionX = nodo.posicionx,
-        posicionY = nodo.posiciony
+        posicionx = nodo.posicionx,
+        posiciony = nodo.posiciony
     )
-    print(f"Id: {new_nodo.id}, X: {new_nodo.posicionX}, Y: {new_nodo.posicionY}")
     try:
         db.add(new_nodo)
         await db.commit()
@@ -133,9 +127,8 @@ async def modificar_nodo(db: AsyncSession, nodo_id: int, nodo: schemas.NodoUpdat
     db_nodo = await leer_nodo(db, nodo_id)
     
     if db_nodo:
-        db_nodo.id = nodo.id
-        db_nodo.posicionX = nodo.posicionX
-        db_nodo.posicionY = nodo.posicionY
+        db_nodo.posicionx = nodo.posicionx
+        db_nodo.posiciony = nodo.posiciony
         await db.commit()
         await db.refresh(db_nodo)
         return db_nodo
@@ -143,10 +136,15 @@ async def modificar_nodo(db: AsyncSession, nodo_id: int, nodo: schemas.NodoUpdat
         raise HTTPException(status_code=404, detail="Nodo no encontrado")
     
 async def eliminar_nodo(db: AsyncSession, nodo_id: int) -> dict:
-    db_nodo = await leer_usuario(db, nodo_id)
+    db_nodo = await leer_nodo(db, nodo_id)
     if db_nodo:
         await db.delete(db_nodo)
         await db.commit()
         return {"detail": "Nodo eliminado"}
     else:
         raise HTTPException(status_code=404, detail="Nodo no encontrado")
+    
+async def leer_todos_los_nodos(db: AsyncSession):
+    result = await db.execute(select(Nodo))  
+    return result.scalars().all() 
+

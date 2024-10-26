@@ -17,11 +17,11 @@ const PanelNodos = () => {
   // Aquí usas formData para construir el objeto que enviarás
   const data = {
     id: formData.id,  
-    posicionX: formData.posicionx,    
-    posicionY: formData.posiciony
+    posicionx: formData.posicionx,    
+    posiciony: formData.posiciony
   };
    
-  if (!formData.id || !formData.posicionx || !formData.posiciony ) {
+  if (!formData.posicionx || !formData.posiciony ) {
     alert("Por favor completa todos los campos.");
     return;
   }
@@ -29,7 +29,7 @@ const PanelNodos = () => {
   //console.log(dataToSend); // Imprimir datos a enviar
     try {
         console.log("Datos enviados:", data);
-        const response = await fetch("http://localhost:8000/usuario", {
+        const response = await fetch("http://localhost:8000/nodo", {
             method: "POST", 
             headers: {
                 "Content-Type": "application/json", // Indica que envías JSON
@@ -40,6 +40,7 @@ const PanelNodos = () => {
         if (response.ok) {
             const responseData = await response.json(); // Si la respuesta es correcta, obtienes los datos
             console.log("Nodo creado:", responseData); // Manejo de la respuesta exitosa
+            alert("Nodo creado con exito.");
         } else {
             const errorData = await response.json(); // Si hay un error, obtienes los datos del error
             console.error("Error del servidor:", errorData); // Manejo del error
@@ -56,20 +57,8 @@ const PanelNodos = () => {
       <div className="flex flex-col gap-10">
         <TableNodos />
         <form onSubmit={handleSubmit}>
-                <div className="mb-4">
-                  <label className="mb-2.5 block font-medium text-black dark:text-white">
-                    Id
-                  </label>
-                  
+                <div className="mb-4">                  
                   <div className="relative">
-                    <input
-                      type="text"
-                      id='id'
-                      placeholder="Ingrese el número de nodo"
-                      className="w-full rounded-lg border border-stroke bg-transparent py-4 pl-6 pr-10 text-black outline-none focus:border-primary focus-visible:shadow-none dark:border-form-strokedark dark:bg-form-input dark:text-white dark:focus:border-primary"
-                      onChange={(e) => setFormData({ ...formData, id: e.target.value })}
-                      value={formData.id}
-                    />
 
                     <span className="absolute right-4 top-4">
                       <svg
@@ -102,7 +91,8 @@ const PanelNodos = () => {
                   <div className="relative">
                     <input
                       type="number"
-                      id='posicionX'
+                      id='posicionx'
+                      name='posicionx'
                       placeholder="Ingrese la posición X del nodo"
                       onChange={(e) => setFormData({ ...formData, posicionx: e.target.value })}
                       value={formData.posicionx}
@@ -136,7 +126,8 @@ const PanelNodos = () => {
                   <div className="relative">
                     <input
                       type="number"
-                      id='posicionY'
+                      name='posiciony'
+                      id='posiciony'
                       placeholder="Ingrese la posición Y del nodo"
                       className="w-full rounded-lg border border-stroke bg-transparent py-4 pl-6 pr-10 text-black outline-none focus:border-primary focus-visible:shadow-none dark:border-form-strokedark dark:bg-form-input dark:text-white dark:focus:border-primary"
                       onChange={(e) => setFormData({ ...formData, posiciony: e.target.value })}

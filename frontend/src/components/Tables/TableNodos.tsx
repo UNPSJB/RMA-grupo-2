@@ -13,14 +13,14 @@ const TableNodos: React.FC = () => {
 
   const eliminarNodo = async (id: number): Promise<void> => {
     try {
-      const response = await fetch("http://localhost:8000/usuario", {
+      const response = await fetch(`http://localhost:8000/nodo/${id}`, {
           method: "DELETE", 
           headers: {
               "Content-Type": "application/json", // Indica que envías JSON
           },
           body: JSON.stringify({ id }), // Convierte el id en un objeto JSON
       });
-
+      alert("Nodo eliminado con exito.");
       if (response.ok) {
           const responseData = await response.json(); // Si la respuesta es correcta, obtienes los datos
           console.log("Nodo eliminado:", responseData); // Manejo de la respuesta exitosa
@@ -37,7 +37,7 @@ const TableNodos: React.FC = () => {
   useEffect(() => {
     const obtenerNodos = async () => {
       try {
-        const response = await axios.get('http://localhost:8000/nodo/');
+        const response = await axios.get('http://localhost:8000/nodos/');
         const nodos = response.data;
         setNodosData(nodos);
       } catch (error) {
@@ -76,26 +76,29 @@ const TableNodos: React.FC = () => {
           </div>
         </div>
 
-        {nodosData.map((data) => (
+        {nodosData.map((nodo) => (
           <div
             className={`grid grid-cols-3 sm:grid-cols-5 border-b border-stroke dark:border-strokedark`}
-            key={data.id}
+            key={nodo.id}
           >
-            <div className="flex items-center gap-3 p-2.5 xl:p-5">
-              <p className="text-black dark:text-white">{data.posicionx}</p>
-            </div>
-            <div className="flex items-center justify-center p-2.5 xl:p-5">
-              <p className="text-black dark:text-white">{new Date(data.posiciony).toLocaleDateString()}</p>
-            </div>
-            <div className="flex items-center justify-center p-2.5 xl:p-5">
-            <button
-              className="bg-red-500 text-white px-4 py-2 rounded"
-              onClick={() => eliminarNodo(data.id)} // Llamada a la función de eliminar
-            >
-              Eliminar
-            </button>
+          <div className="flex items-center gap-3 p-2.5 xl:p-5">
+              <p className="text-black dark:text-white">{nodo.id}</p>
           </div>
+          <div className="flex items-center gap-3 p-2.5 xl:p-5">
+            <p className="text-black dark:text-white">{nodo.posicionx}</p>
           </div>
+          <div className="flex items-center justify-center p-2.5 xl:p-5">
+            <p className="text-black dark:text-white">{nodo.posiciony}</p>
+          </div>
+          <div className="flex items-center justify-center p-2.5 xl:p-5">
+          <button
+            className="bg-red-500 text-white px-4 py-2 rounded"
+            onClick={() => eliminarNodo(nodo.id)} // Llamada a la función de eliminar
+          >
+            Eliminar
+          </button>
+        </div>
+        </div>
         ))}
       </div>
     </div>

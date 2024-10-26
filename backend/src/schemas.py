@@ -102,13 +102,12 @@ class UsuarioLogin(BaseModel):
 ##--------NODO
 
 class NodoBase(BaseModel):
-    id: int
     posicionx: float
     posiciony: float
 
 
 class Nodo(NodoBase):
-    id: int
+    id: Optional[int]
     posicionx: float
     posiciony: float
         
@@ -119,6 +118,5 @@ class NodoCreate(NodoBase):
     pass
 
 class NodoUpdate(BaseModel):
-    id: int
     posicionx: float
     posiciony: float

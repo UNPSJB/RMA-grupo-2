@@ -43,13 +43,6 @@ class Usuario(Base):
 class Nodo(Base):
     __tablename__ = "nodo"
 
-    id: Mapped[int] = mapped_column(Integer, primary_key=True, index=True, autoincrement=False)
-    posicionx : Mapped[int] = mapped_column(Integer, index=True, nullable=False)
-    posiciony : Mapped[int] = mapped_column(Integer, index=True, nullable=False)
-
-## ----------------------- Nodo
-##class Nodo(Base):
-  #  __tablename__ = "nodo"
-
-   # id: Mapped[int] = mapped_column(Integer, primary_key=True, index=True, autoincrement=True)
-    #nombre: Mapped[str] = mapped_column(String, index=True, nullable=False)
+    id: Mapped[int] = mapped_column(Integer, primary_key=True, index=True, autoincrement=True)
+    posicionx : Mapped[float] = mapped_column(Integer, index=True, nullable=False)
+    posiciony : Mapped[float] = mapped_column(Integer, index=True, nullable=False)

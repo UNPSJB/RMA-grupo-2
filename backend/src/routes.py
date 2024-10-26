@@ -59,7 +59,7 @@ async def delete_usuario(usuario_id: int, db: AsyncSession = Depends(get_db)):
 @router.post("/nodo", response_model=schemas.NodoCreate)
 async def create_nodo(nodo: schemas.NodoCreate, db: AsyncSession = Depends(get_db)):
     try:
-        return await services.crear_usuario(db, nodo)
+        return await services.crear_nodo(db, nodo)
     except HTTPException as e:
         raise HTTPException(status_code=400, detail=str(e))
 
@@ -74,3 +74,7 @@ async def update_nodo(nodo_id: int, nodo: schemas.NodoUpdate, db: AsyncSession =
 @router.delete("/nodo/{nodo_id}")
 async def delete_nodo(nodo_id: int, db: AsyncSession = Depends(get_db)):
     return await services.eliminar_nodo(db, nodo_id)
+
+@router.get("/nodos", response_model=List[schemas.Nodo])
+async def get_nodos(db: AsyncSession = Depends(get_db)):
+    return await services.leer_todos_los_nodos(db)
