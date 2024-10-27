@@ -11,7 +11,7 @@ from backend.database import *
 
 class Mensaje(BaseModel):
     id: int
-    type: str
+    type: int
     data: str
     time: str
 
@@ -23,17 +23,16 @@ MQTT_KEEPALIVE = 60
 TOPIC = "test_topic"
 
 async def message_handling(client, userdata, message):
-    print("Estoy en el subscriptor") 
     mensaje = message.payload.decode('utf-8').replace("\'", "\"")
     #timport pdb; pdb.set_trace()
     try:
         m = Mensaje.model_validate_json(mensaje)
-        med = MedicionCreate(nodo=m.id, dato=m.data, tiempo=m.time, tipo=m.type)
+        med = MedicionCreate(nodo=m.id, dato=m.data,tipo=m.type, tiempo=m.time, bateria=None, error=False)
         print("Guardando en la base de datos")
         # Abrir una nueva sesión de la base de datos en cada mensaje
         async for db in get_db():  # Crear nueva sesión
             #print(f"{m.id};{temp.nodo};{temp.tipo};{temp.tiempo};{temp.dato}")
-            await services.crear_temperatura(db, med)
+            await services.crear_medicion(db, med)
             print("Datos Guardados...")
     except Exception as e:
         print(e)
