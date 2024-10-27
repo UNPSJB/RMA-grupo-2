@@ -18,10 +18,8 @@ async def get_db():
         
 ## ----------------------- MEDICIONES
 async def crear_medicion(db: AsyncSession, medicion: schemas.MedicionCreate) -> schemas.MedicionCreate:
-    if(datos[new_medicion.tipo][0] <= new_medicion.dato <= datos[new_medicion.tipo[1]]):
-        mError = False
-    else:
-        mError = True
+    mError = not (datos[medicion.tipo][0] <= medicion.dato <= datos[medicion.tipo][1])
+
     new_medicion = models.Medicion(        
         nodo=medicion.nodo,
         tipo=medicion.tipo,
@@ -36,6 +34,7 @@ async def crear_medicion(db: AsyncSession, medicion: schemas.MedicionCreate) -> 
          await db.refresh(new_medicion)
     except Exception as errorEnBase:
          await db.rollback()
+         print(f"Error en la base de datos: {errorEnBase}")
          raise HTTPException(status_code=400, detail="Error al crear una nueva medicion") from errorEnBase
     return new_medicion
 

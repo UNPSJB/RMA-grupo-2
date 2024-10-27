@@ -5,7 +5,6 @@ import datetime
 
 ## ----------------------- MEDICIONES
 class MedicionBase(BaseModel):
-    id:int
     nodo:int
     tipo: int
     dato: float
@@ -14,7 +13,6 @@ class MedicionBase(BaseModel):
     error: bool
 
 class Medicion(MedicionBase):
-    id:int
     nodo:int
     tipo: int
     dato: float
