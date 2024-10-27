@@ -44,5 +44,7 @@ class Nodo(Base):
     __tablename__ = "nodo"
 
     id: Mapped[int] = mapped_column(Integer, primary_key=True, index=True, autoincrement=True)
+    nombre : Mapped[str] = mapped_column(String, index=True, nullable=False)
     posicionx : Mapped[float] = mapped_column(Float, index=True, nullable=False)
     posiciony : Mapped[float] = mapped_column(Float, index=True, nullable=False)
+    descripcion : Mapped[str] = mapped_column(String, index=True, nullable=True)
