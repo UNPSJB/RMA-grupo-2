@@ -3,38 +3,65 @@ import axios from 'axios';
 
 interface Nodo {
   id: number;
-  nombre:string;
+  nombre: string;
   posicionx: number;
   posiciony: number;
   descripcion: string;
 }
 
-const TableNodos: React.FC = () => {
+const TableNodos: React.FC<{ onEditUptMode: (nodo: Nodo) => void }> = ({
+  onEditUptMode,
+}) => {
+  interface onEditUptMode {
+    onEditUptMode: (nodo: Nodo) => void;
+  }
+
   const [nodosData, setNodosData] = useState<Nodo[]>([]);
   const [error, setError] = useState<string | null>(null);
 
   const eliminarNodo = async (id: number): Promise<void> => {
     try {
       const response = await fetch(`http://localhost:8000/nodo/${id}`, {
-          method: "DELETE", 
-          headers: {
-              "Content-Type": "application/json",
-          },
-          body: JSON.stringify({ id }), 
+        method: 'DELETE',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({ id }),
       });
-      alert("Nodo eliminado con exito.");
+      alert('Nodo eliminado con exito.');
       if (response.ok) {
-          const responseData = await response.json(); 
-          console.log("Nodo eliminado:", responseData);
+        const responseData = await response.json();
+        console.log('Nodo eliminado:', responseData);
       } else {
-          const errorData = await response.json(); 
-          console.error("Error del servidor:", errorData);
+        const errorData = await response.json();
+        console.error('Error del servidor:', errorData);
       }
-  } catch (error) {
-      console.error("Error:", error); 
-  }
+    } catch (error) {
+      console.error('Error:', error);
+    }
+  };
 
-  }
+  const modificarNodo = async (nodo: Nodo): Promise<void> => {
+    try {
+      const response = await fetch(`http://localhost:8000/nodo/${nodo.id}`, {
+        method: 'PUT',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({ nodo }),
+      });
+      if (response.ok) {
+        alert('Nodo modificado con exito.');
+        const responseData = await response.json();
+        console.log('Nodo modificado:', responseData);
+      } else {
+        const errorData = await response.json();
+        console.error('Error del servidor:', errorData);
+      }
+    } catch (error) {
+      console.error('Error:', error);
+    }
+  };
 
   useEffect(() => {
     const obtenerNodos = async () => {
@@ -64,20 +91,16 @@ const TableNodos: React.FC = () => {
       <h4 className="mb-6 text-xl font-semibold text-black dark:text-white">
         Nodos de la red
       </h4>
-
       <div className="flex flex-col">
         <div className="grid grid-cols-3 rounded-sm bg-gray-2 dark:bg-meta-4 sm:grid-cols-5">
           <div className="p-2.5 xl:p-5">
-            <h5 className="text-sm font-medium uppercase xsm:text-base">Nombre</h5>
+            <h5 className="text-sm font-medium uppercase xsm:text-base">Id</h5>
           </div>
           <div className="p-2.5 text-center xl:p-5">
             <h5 className="text-sm font-medium uppercase xsm:text-base">X</h5>
           </div>
           <div className="p-2.5 text-center xl:p-5">
             <h5 className="text-sm font-medium uppercase xsm:text-base">Y</h5>
-          </div>
-          <div className="p-2.5 text-center xl:p-5">
-            <h5 className="text-sm font-medium uppercase xsm:text-base">Descripcion</h5>
           </div>
         </div>
 
@@ -86,27 +109,30 @@ const TableNodos: React.FC = () => {
             className={`grid grid-cols-3 sm:grid-cols-5 border-b border-stroke dark:border-strokedark`}
             key={nodo.id}
           >
-          <div className="flex items-center gap-3 p-2.5 xl:p-5">
-              <p className="text-black dark:text-white">{nodo.nombre}</p>
+            <div className="flex items-center gap-3 p-2.5 xl:p-5">
+              <p className="text-black dark:text-white">{nodo.id}</p>
+            </div>
+            <div className="flex items-center gap-3 p-2.5 xl:p-5">
+              <p className="text-black dark:text-white">{nodo.posicionx}</p>
+            </div>
+            <div className="flex items-center justify-center p-2.5 xl:p-5">
+              <p className="text-black dark:text-white">{nodo.posiciony}</p>
+            </div>
+            <div className="flex items-center justify-center p-2.5 xl:p-5 space-x-5">
+              <button
+                className="bg-yellow-500 text-white px-4 py-2 rounded"
+                onClick={() => onEditUptMode(nodo)}
+              >
+                Editar
+              </button>
+              <button
+                className="bg-red-500 text-white px-4 py-2 rounded"
+                onClick={() => eliminarNodo(nodo.id)}
+              >
+                Eliminar
+              </button>
+            </div>
           </div>
-          <div className="flex items-center gap-3 p-2.5 xl:p-5">
-            <p className="text-black dark:text-white">{nodo.posicionx}</p>
-          </div>
-          <div className="flex items-center justify-center p-2.5 xl:p-5">
-            <p className="text-black dark:text-white">{nodo.posiciony}</p>
-          </div>
-          <div className="flex items-center justify-center p-2.5 xl:p-5">
-            <p className="text-black dark:text-white">{nodo.descripcion}</p>
-          </div>
-          <div className="flex items-center justify-center p-2.5 xl:p-5">
-          <button
-            className="bg-red-500 text-white px-4 py-2 rounded"
-            onClick={() => eliminarNodo(nodo.id)} // Llamada a la función de eliminar
-          >
-            Eliminar
-          </button>
-        </div>
-        </div>
         ))}
       </div>
     </div>
