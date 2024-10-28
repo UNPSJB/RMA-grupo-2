@@ -1,31 +1,32 @@
 from enum import auto, Enum
 
 datos = { #MIN MAX
-    '0': (0, 30), 
-    '1': (0, 30),  # Temperature
-    '2': (0, 30),  # Temperature #2
-    '3': (0, 30),  # Relative Humidity
-    '4': (0, 30),  # Atmospheric Pressure
-    '5': (0, 30),  # Light (lux)
-    '6': (0, 30),  # Soil Moisture
-    '7': (0, 30),  # Soil Moisture #2
-    '8': (0, 30),  # Soil Resistance
-    '9': (0, 30),  # Soil Resistance #2
-    '10': (0, 30),  # Oxygen
-    '11': (0, 30),  # Carbon Dioxide
-    '12': (0, 30),  # Wind Speed
-    '13': (0, 30),  # Rainfall
-    '14': (0, 30),  # Wind Direction
-    '15': (0, 30),  # Motion
-    '16': (0, 30),  # Voltage
-    '17': (0, 30),  # Voltage #2
-    '18': (0, 30),  # Current
-    '19': (0, 30),  # Current #2
-    '20' : (0, 30),  # Iterations
-    '21': (0, 30),  # GPS Latitude
-    '22': (0, 30),  # GPS Longitude
-    '23': (0, 30),  # GPS Altitude
-    '24': (0, 30)  # GPS HDOP
+    0: (0, 30), 
+    1: (0, 30),  # Temperature
+    2: (0, 30),  # Temperature #2
+    3: (0, 30),  # Relative Humidity
+    4: (0, 30),  # Atmospheric Pressure
+    5: (0, 30),  # Light (lux)
+    6: (0, 30),  # Soil Moisture
+    7: (0, 30),  # Soil Moisture #2
+    8: (0, 30),  # Soil Resistance
+    9: (0, 30),  # Soil Resistance #2
+    10: (0, 30),  # Oxygen
+    11: (0, 30),  # Carbon Dioxide
+    12: (0, 30),  # Wind Speed
+    13: (0, 30),  # Rainfall
+    14: (0, 30),  # Wind Direction
+    15: (0, 30),  # Motion
+    16: (0, 30),  # Voltage
+    17: (0, 30),  # Voltage #2
+    18: (0, 30),  # Current
+    19: (0, 30),  # Current #2
+    20 : (0, 30),  # Iterations
+    21: (0, 30),  # GPS Latitude
+    22: (0, 30),  # GPS Longitude
+    23: (0, 30),  # GPS Altitude
+    24: (0, 30),  # GPS HDOP
+    25: (0, 30), #Altura del suelo 
 #    'STATUS': (0, 0, 0), 
 #    'TEMP_T': (0, 0, 0),  # Temperature
 #    'TEMP2_T': (0, 0, 0),  # Temperature #2

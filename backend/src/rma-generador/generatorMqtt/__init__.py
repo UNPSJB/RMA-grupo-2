@@ -19,7 +19,7 @@ class TipoMensaje(Enum):
     RAINFALL_T = auto()  # Rainfall
     WINDHDG_T = auto()  # Wind Direction
     MOTION_T = auto()  # Motion
-    VOLTAGE_T = auto()  # Voltage
+    VOLTAGE_T = auto()  # Voltage Baterry
     VOLTAGE2_T = auto()  # Voltage #2
     CURRENT_T = auto()  # Current
     CURRENT2_T = auto()  # Current #2
@@ -28,3 +28,4 @@ class TipoMensaje(Enum):
     LONGITUDE_T = auto()  # GPS Longitude
     ALTITUDE_T = auto()  # GPS Altitude
     HDOP_T = auto()  # GPS HDOP
+    WATER_HEIGHT = auto() #Altura del agua

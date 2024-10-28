@@ -11,6 +11,7 @@ interface Medicion {
   error: boolean;
 }
 
+
 const TableOne: React.FC = () => {
   const [medicionData, setMedicionData] = useState<Medicion[]>([]);
   const [error, setError] = useState<string | null>(null);
@@ -59,10 +60,10 @@ const TableOne: React.FC = () => {
             <h5 className="text-sm font-medium uppercase xsm:text-base">Temperatura (°C)</h5>
           </div>
           <div className="hidden p-2.5 text-center sm:block xl:p-5">
-            <h5 className="text-sm font-medium uppercase xsm:text-base">Humedad (%)</h5>
+            <h5 className="text-sm font-medium uppercase xsm:text-base">Bateria (%)</h5>
           </div>
           <div className="hidden p-2.5 text-center sm:block xl:p-5">
-            <h5 className="text-sm font-medium uppercase xsm:text-base">Estado</h5>
+            <h5 className="text-sm font-medium uppercase xsm:text-base">Tipo</h5>
           </div>
         </div>
 
@@ -81,7 +82,7 @@ const TableOne: React.FC = () => {
               <p className="text-meta-3">{data.dato =  Math.round(data.dato * 100) / 100}°C</p>
             </div>
             <div className="hidden items-center justify-center p-2.5 sm:flex xl:p-5">
-              <p className="text-black dark:text-white">50</p> {/* Humedad aleatoria */}
+              <p className="text-black dark:text-white">{data.bateria}%</p> {/* Humedad aleatoria */}
             </div>
             <div className="hidden items-center justify-center p-2.5 sm:flex xl:p-5">
               <p className="text-black dark:text-white">{data.tipo}</p> {/* Mostrar tipo normalmente */}

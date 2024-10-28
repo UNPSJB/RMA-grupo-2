@@ -19,7 +19,6 @@ async def get_db():
 ## ----------------------- MEDICIONES
 async def crear_medicion(db: AsyncSession, medicion: schemas.MedicionCreate) -> schemas.MedicionCreate:
     mError = not (datos[medicion.tipo][0] <= medicion.dato <= datos[medicion.tipo][1])
-
     new_medicion = models.Medicion(        
         nodo=medicion.nodo,
         tipo=medicion.tipo,
