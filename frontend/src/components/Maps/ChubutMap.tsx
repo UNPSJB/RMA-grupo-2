@@ -20,7 +20,7 @@ interface Nodo {
 }
 
 const nodos: Nodo[] = [
-  { id: 1, nombre: 'Arroyo Sagmata', lat: -43.8230, lng: -65.6230 }, // Arroyo Saguamanta
+  { id: 1, nombre: 'Cuenca Sagmata', lat: -43.538333, lng: -66.4 }, // Arroyo Saguamanta
   { id: 2, nombre: 'Boca Toma', lat: -43.4400, lng: -65.9100 }, // Boca Toma
 ];
 
