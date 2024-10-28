@@ -19,7 +19,7 @@ if __name__ == "__main__":
         "-n",
         "--nodos",
         type=int,
-        default=1,
+        default=11,
         help="Cantidad de nodos para la cual generar datos. (default=1)",
     )
 
@@ -34,8 +34,10 @@ if __name__ == "__main__":
     print(f"{len(lista_nodos)} nodo/s creado/s. Publicando...")
 
     for nodo in lista_nodos:
-        thread = threading.Thread(
-            target=nodo.publicar,
-            args=("test_topic", TipoMensaje.TEMP_T),
-        )
-        thread.start()
+        tipo_mensaje = [TipoMensaje.TEMP_T,TipoMensaje.WATER_HEIGHT,TipoMensaje.VOLTAGE_T]
+        for tipo in  tipo_mensaje:
+            thread = threading.Thread(
+                target=nodo.publicar,
+                args=("test_topic",tipo,),
+            )
+            thread.start()

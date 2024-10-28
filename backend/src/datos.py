@@ -25,7 +25,8 @@ datos = { #MIN MAX
     21: (0, 30),  # GPS Latitude
     22: (0, 30),  # GPS Longitude
     23: (0, 30),  # GPS Altitude
-    24: (0, 30)  # GPS HDOP
+    24: (0, 30),  # GPS HDOP
+    25: (0, 30), #Altura del suelo 
 #    'STATUS': (0, 0, 0), 
 #    'TEMP_T': (0, 0, 0),  # Temperature
 #    'TEMP2_T': (0, 0, 0),  # Temperature #2
