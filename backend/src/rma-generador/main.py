@@ -12,7 +12,6 @@ def signal_handler(sig, frame):
     print("Deteniendo nodos...")
     stop_event.set()
 
-
 if __name__ == "__main__":
 
     parser = argparse.ArgumentParser()

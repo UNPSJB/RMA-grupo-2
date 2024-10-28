@@ -1,10 +1,11 @@
-import os, asyncio
+import os, asyncio, sys, subprocess
+sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), '../'))) #Ejecutar desde RMA-grupo-2
 from dotenv import load_dotenv
 from fastapi import FastAPI
 from fastapi.staticfiles import StaticFiles
-from database import engine, Base   
+from backend.database import engine, Base
 #from src.models import Producto
-from src.routes import router as routers
+from backend.src.routes import router as routers
 from sqlalchemy.future import select
 from fastapi.middleware.cors import CORSMiddleware
 
@@ -25,13 +26,15 @@ async def init_db():
         await conn.run_sync(Base.metadata.create_all) # Crear todas las tablas
 
 #Conexion con el frontend
+'''
 origins = [
     "http://localhost:5173"
 ]
+'''
 
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=origins,  # Permitir el origen de tu frontend
+    allow_origins=["*"],  # Permitir el origen de tu frontend
     allow_credentials=True,
     allow_methods=["*"],  # Permitir todos los métodos HTTP
     allow_headers=["*"],  # Permitir todos los headers
@@ -43,4 +46,3 @@ async def main():
 
 if __name__ == "__main__":
     asyncio.run(main())
-

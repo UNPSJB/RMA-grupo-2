@@ -1,9 +1,9 @@
-import React, { useState, ReactNode } from 'react';
+import React, {useState, ReactNode } from 'react';
 import Header from '../components/Header/index';
-import Sidebar from '../components/Sidebar/index';
 import { useOutlet } from "react-router-dom"; // Importar useOutlet
 
-const DefaultLayout: React.FC = () => {
+const AuthLayout: React.FC = () => {
+
   const [sidebarOpen, setSidebarOpen] = useState(false);
   const outlet = useOutlet();
   return (
@@ -11,7 +11,7 @@ const DefaultLayout: React.FC = () => {
       {/* <!-- ===== Page Wrapper Start ===== --> */}
       <div className="flex h-screen overflow-hidden">
         {/* <!-- ===== Sidebar Start ===== --> */}
-        <Sidebar sidebarOpen={sidebarOpen} setSidebarOpen={setSidebarOpen} />
+        {/*<Sidebar sidebarOpen={sidebarOpen} setSidebarOpen={setSidebarOpen} />*/}
         {/* <!-- ===== Sidebar End ===== --> */}
 
         {/* <!-- ===== Content Area Start ===== --> */}
@@ -35,4 +35,4 @@ const DefaultLayout: React.FC = () => {
   );
 };
 
-export default DefaultLayout;
+export default AuthLayout;

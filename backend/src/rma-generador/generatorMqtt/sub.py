@@ -1,38 +1,38 @@
 import os
 import sys
+sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), '../../../..'))) #Ejecutar desde RMA-grupo-2
 import paho.mqtt.client as paho
 import asyncio
-import database
 from dotenv import load_dotenv
-from src import services
-from src.schemas import TemperaturaCreate
+from backend.src import services
+from backend.src.schemas import MedicionCreate
 from pydantic import BaseModel
+from backend.database import *
 
 class Mensaje(BaseModel):
     id: int
-    type: str
+    type: int
     data: str
     time: str
 
 load_dotenv()
 
-MQTT_HOST = os.getenv("MQTT_HOST", "localhost")
-MQTT_PORT = int(os.getenv("MQTT_PORT", 1883))
-MQTT_KEEPALIVE = int(os.getenv("MQTT_KEEPALIVE", 60))
-TOPIC = os.getenv("MQTT_TOPIC")
+MQTT_HOST = "localhost"
+MQTT_PORT = 1883
+MQTT_KEEPALIVE = 60
+TOPIC = "test_topic"
 
 async def message_handling(client, userdata, message):
-    print("Estoy en el subscriptor") 
     mensaje = message.payload.decode('utf-8').replace("\'", "\"")
     #timport pdb; pdb.set_trace()
     try:
         m = Mensaje.model_validate_json(mensaje)
-        temp = TemperaturaCreate(nodo=m.id, dato=m.data, tiempo=m.time, tipo=m.type)
+        med = MedicionCreate(nodo=m.id, dato=m.data,tipo=m.type, tiempo=m.time, bateria=None, error=False)
         print("Guardando en la base de datos")
         # Abrir una nueva sesión de la base de datos en cada mensaje
-        async for db in database.get_db():  # Crear nueva sesión
+        async for db in get_db():  # Crear nueva sesión
             #print(f"{m.id};{temp.nodo};{temp.tipo};{temp.tiempo};{temp.dato}")
-            await services.crear_temperatura(db, temp)
+            await services.crear_medicion(db, med)
             print("Datos Guardados...")
     except Exception as e:
         print(e)
@@ -61,9 +61,9 @@ async def main():
     client.on_connect = on_connect
     client.on_subscribe = on_subscribe
 
-    host = os.getenv("MQTT_HOST")
-    port = int(os.getenv("MQTT_PORT"))
-    keepalive = int(os.getenv("MQTT_KEEPALIVE"))
+    host = "localhost"
+    port = 1883
+    keepalive = 60
     if client.connect(host, port, keepalive) != 0:
         print("Ha ocurrido un problema al conectar con el broker MQTT")
         sys.exit(1)

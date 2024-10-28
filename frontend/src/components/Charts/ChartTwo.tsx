@@ -83,7 +83,6 @@ const ChartTwo: React.FC = () => {
       <div className="mb-4 justify-between gap-4 sm:flex">
         <div>
           <h4 className="text-xl font-semibold text-black dark:text-white">
-            Temperatura de la semana
           </h4>
         </div>
         <div>
