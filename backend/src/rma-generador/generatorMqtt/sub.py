@@ -14,7 +14,6 @@ class Mensaje(BaseModel):
     type: int
     data: str
     time: str
-
 load_dotenv()
 
 MQTT_HOST = "localhost"
@@ -31,7 +30,6 @@ async def message_handling(client, userdata, message):
         print("Guardando en la base de datos")
         # Abrir una nueva sesión de la base de datos en cada mensaje
         async for db in get_db():  # Crear nueva sesión
-            #print(f"{m.id};{temp.nodo};{temp.tipo};{temp.tiempo};{temp.dato}")
             await services.crear_medicion(db, med)
             print("Datos Guardados...")
     except Exception as e:
