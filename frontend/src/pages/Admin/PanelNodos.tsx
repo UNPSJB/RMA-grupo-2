@@ -31,6 +31,10 @@ const PanelNodos = () => {
     setIsEdit(true);
   };
 
+  const toggleEditMode = () => {
+    setIsEdit(false);
+  };
+
   const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
 
@@ -62,7 +66,6 @@ const PanelNodos = () => {
       });
       if (response.ok) {
         const responseData = await response.json();
-        setIsEdit(false);
         setFormData({
           id: '',
           nombre: '',
@@ -71,6 +74,7 @@ const PanelNodos = () => {
           descripcion: '',
         });
         alert(isEdit ? 'Nodo Actualizado' : 'Nodo creado');
+        setIsEdit(false);
       } else {
         const errorData = await response.json();
         console.error('Error del servidor:', errorData);
@@ -117,7 +121,7 @@ const PanelNodos = () => {
             </label>
             <div className="relative">
               <input
-                type="string"
+                type="text"
                 id="nombre"
                 name="nombre"
                 placeholder="Ingrese el nombre del nodo"
@@ -271,6 +275,15 @@ const PanelNodos = () => {
             >
               {isEdit ? 'Modificar Nodo' : 'Crear Nodo'}
             </button>
+            {isEdit && ( 
+                <button
+                    type="button"
+                    onClick={toggleEditMode}
+                    className="mt-2 w-full cursor-pointer rounded-lg border p-4 text-white bg-red-500 hover:bg-red-600"
+                >
+                    Cancelar Modificación
+                </button>
+            )}
           </div>
         </form>
       </div>

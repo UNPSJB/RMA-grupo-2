@@ -12,9 +12,6 @@ interface Nodo {
 const TableNodos: React.FC<{ onEditUptMode: (nodo: Nodo) => void }> = ({
   onEditUptMode,
 }) => {
-  interface onEditUptMode {
-    onEditUptMode: (nodo: Nodo) => void;
-  }
 
   const [nodosData, setNodosData] = useState<Nodo[]>([]);
   const [error, setError] = useState<string | null>(null);
@@ -62,7 +59,7 @@ const TableNodos: React.FC<{ onEditUptMode: (nodo: Nodo) => void }> = ({
       console.error('Error:', error);
     }
   };
-
+  
   useEffect(() => {
     const obtenerNodos = async () => {
       try {
