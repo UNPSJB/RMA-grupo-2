@@ -9,14 +9,21 @@ interface Nodo {
   descripcion: string;
 }
 
-const TableNodos: React.FC<{ onEditUptMode: (nodo: Nodo) => void }> = ({
+interface TableNodosProps {
+  nodos: Nodo[];
+  setNodos: (nodos: Nodo[]) => void;
+  onEditUptMode: (nodo: Nodo) => void;
+}
+
+const TableNodos: React.FC<TableNodosProps> = ({
+  nodos,
+  setNodos,
   onEditUptMode,
 }) => {
-
-  const [nodosData, setNodosData] = useState<Nodo[]>([]);
+  //const [nodosData, setNodosData] = useState<Nodo[]>([]);
   const [error, setError] = useState<string | null>(null);
 
-  const eliminarNodo = async (id: number): Promise<void> => {
+  const deleteNodo = async (id: number): Promise<void> => {
     try {
       const response = await fetch(`http://localhost:8000/nodo/${id}`, {
         method: 'DELETE',
@@ -25,8 +32,9 @@ const TableNodos: React.FC<{ onEditUptMode: (nodo: Nodo) => void }> = ({
         },
         body: JSON.stringify({ id }),
       });
-      alert('Nodo eliminado con exito.');
       if (response.ok) {
+        alert('Nodo eliminado con exito.');
+        setNodos(nodos.filter((nodo) => nodo.id !== id));
         const responseData = await response.json();
         console.log('Nodo eliminado:', responseData);
       } else {
@@ -38,48 +46,11 @@ const TableNodos: React.FC<{ onEditUptMode: (nodo: Nodo) => void }> = ({
     }
   };
 
-  const modificarNodo = async (nodo: Nodo): Promise<void> => {
-    try {
-      const response = await fetch(`http://localhost:8000/nodo/${nodo.id}`, {
-        method: 'PUT',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({ nodo }),
-      });
-      if (response.ok) {
-        alert('Nodo modificado con exito.');
-        const responseData = await response.json();
-        console.log('Nodo modificado:', responseData);
-      } else {
-        const errorData = await response.json();
-        console.error('Error del servidor:', errorData);
-      }
-    } catch (error) {
-      console.error('Error:', error);
-    }
-  };
-  
-  useEffect(() => {
-    const obtenerNodos = async () => {
-      try {
-        const response = await axios.get('http://localhost:8000/nodos/');
-        const nodos = response.data;
-        setNodosData(nodos);
-      } catch (error) {
-        console.error('Error al obtener los nodos:', error);
-        setError('Error al cargar los datos.');
-      }
-    };
-
-    obtenerNodos();
-  }, []);
-
   if (error) {
     return <div>{error}</div>;
   }
 
-  if (nodosData.length === 0) {
+  if (nodos.length === 0) {
     return <div>Cargando...</div>;
   }
 
@@ -101,7 +72,7 @@ const TableNodos: React.FC<{ onEditUptMode: (nodo: Nodo) => void }> = ({
           </div>
         </div>
 
-        {nodosData.map((nodo) => (
+        {nodos.map((nodo) => (
           <div
             className={`grid grid-cols-3 sm:grid-cols-5 border-b border-stroke dark:border-strokedark`}
             key={nodo.id}
@@ -124,7 +95,7 @@ const TableNodos: React.FC<{ onEditUptMode: (nodo: Nodo) => void }> = ({
               </button>
               <button
                 className="bg-red-500 text-white px-4 py-2 rounded"
-                onClick={() => eliminarNodo(nodo.id)}
+                onClick={() => deleteNodo(nodo.id)}
               >
                 Eliminar
               </button>

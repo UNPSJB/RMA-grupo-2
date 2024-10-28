@@ -1,6 +1,7 @@
 import Breadcrumb from '../../components/Breadcrumbs/Breadcrumb';
 import TableNodos from '../../components/Tables/TableNodos';
-import React, { useState } from 'react';
+import React, { useEffect, useState } from 'react';
+import axios from 'axios';
 
 interface Nodo {
   id: number;
@@ -12,6 +13,7 @@ interface Nodo {
 
 const PanelNodos = () => {
   const [isEdit, setIsEdit] = useState(false);
+  const [nodos, setNodos] = useState<Nodo[]>([]);
   const [formData, setFormData] = useState({
     id: '',
     nombre: '',
@@ -23,16 +25,23 @@ const PanelNodos = () => {
   const onEditUptMode = (nodo: Nodo) => {
     setFormData({
       id: nodo.id.toString(),
-      nombre: nodo.nombre.toString(),
+      nombre: nodo.nombre,
       posicionx: nodo.posicionx.toString(),
       posiciony: nodo.posiciony.toString(),
-      descripcion: nodo.descripcion.toString(),
+      descripcion: nodo.descripcion,
     });
     setIsEdit(true);
   };
 
   const toggleEditMode = () => {
     setIsEdit(false);
+    setFormData({
+      id: '',
+      nombre: '',
+      posicionx: '',
+      posiciony: '',
+      descripcion: '',
+    });
   };
 
   const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
@@ -65,7 +74,6 @@ const PanelNodos = () => {
         body: JSON.stringify(data),
       });
       if (response.ok) {
-        const responseData = await response.json();
         setFormData({
           id: '',
           nombre: '',
@@ -73,8 +81,10 @@ const PanelNodos = () => {
           posiciony: '',
           descripcion: '',
         });
-        alert(isEdit ? 'Nodo Actualizado' : 'Nodo creado');
         setIsEdit(false);
+        obtenerNodos();
+        toggleEditMode();
+        alert(isEdit ? 'Nodo Actualizado' : 'Nodo creado');
       } else {
         const errorData = await response.json();
         console.error('Error del servidor:', errorData);
@@ -84,11 +94,30 @@ const PanelNodos = () => {
     }
   };
 
+  const obtenerNodos = async () => {
+    try {
+      const response = await axios.get('http://localhost:8000/nodos/');
+      const nodos = response.data;
+      setNodos(nodos);
+    } catch (error) {
+      console.error('Error al obtener los nodos:', error);
+      alert('Error al cargar los datos.');
+    }
+  };
+
+  useEffect(() => {
+    obtenerNodos();
+  }, []);
+
   return (
     <>
       <Breadcrumb pageName="Nodos" />
       <div className="flex flex-col gap-10">
-        <TableNodos onEditUptMode={onEditUptMode} />
+        <TableNodos
+          nodos={nodos}
+          setNodos={setNodos}
+          onEditUptMode={onEditUptMode}
+        />
         <form onSubmit={handleSubmit}>
           <div className="mb-4">
             <div className="relative">
@@ -275,14 +304,14 @@ const PanelNodos = () => {
             >
               {isEdit ? 'Modificar Nodo' : 'Crear Nodo'}
             </button>
-            {isEdit && ( 
-                <button
-                    type="button"
-                    onClick={toggleEditMode}
-                    className="mt-2 w-full cursor-pointer rounded-lg border p-4 text-white bg-red-500 hover:bg-red-600"
-                >
-                    Cancelar Modificación
-                </button>
+            {isEdit && (
+              <button
+                type="button"
+                onClick={toggleEditMode}
+                className="mt-2 w-full cursor-pointer rounded-lg border p-4 text-white bg-red-500 hover:bg-red-600"
+              >
+                Cancelar Modificación
+              </button>
             )}
           </div>
         </form>
