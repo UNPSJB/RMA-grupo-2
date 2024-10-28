@@ -3,8 +3,10 @@ import axios from 'axios';
 
 interface Nodo {
   id: number;
+  nombre:string;
   posicionx: number;
   posiciony: number;
+  descripcion: string;
 }
 
 const TableNodos: React.FC = () => {
@@ -66,13 +68,16 @@ const TableNodos: React.FC = () => {
       <div className="flex flex-col">
         <div className="grid grid-cols-3 rounded-sm bg-gray-2 dark:bg-meta-4 sm:grid-cols-5">
           <div className="p-2.5 xl:p-5">
-            <h5 className="text-sm font-medium uppercase xsm:text-base">Id</h5>
+            <h5 className="text-sm font-medium uppercase xsm:text-base">Nombre</h5>
           </div>
           <div className="p-2.5 text-center xl:p-5">
             <h5 className="text-sm font-medium uppercase xsm:text-base">X</h5>
           </div>
           <div className="p-2.5 text-center xl:p-5">
             <h5 className="text-sm font-medium uppercase xsm:text-base">Y</h5>
+          </div>
+          <div className="p-2.5 text-center xl:p-5">
+            <h5 className="text-sm font-medium uppercase xsm:text-base">Descripcion</h5>
           </div>
         </div>
 
@@ -82,13 +87,16 @@ const TableNodos: React.FC = () => {
             key={nodo.id}
           >
           <div className="flex items-center gap-3 p-2.5 xl:p-5">
-              <p className="text-black dark:text-white">{nodo.id}</p>
+              <p className="text-black dark:text-white">{nodo.nombre}</p>
           </div>
           <div className="flex items-center gap-3 p-2.5 xl:p-5">
             <p className="text-black dark:text-white">{nodo.posicionx}</p>
           </div>
           <div className="flex items-center justify-center p-2.5 xl:p-5">
             <p className="text-black dark:text-white">{nodo.posiciony}</p>
+          </div>
+          <div className="flex items-center justify-center p-2.5 xl:p-5">
+            <p className="text-black dark:text-white">{nodo.descripcion}</p>
           </div>
           <div className="flex items-center justify-center p-2.5 xl:p-5">
           <button

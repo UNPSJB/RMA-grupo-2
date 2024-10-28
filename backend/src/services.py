@@ -102,7 +102,9 @@ async def login_usuario(db: AsyncSession, usuario: schemas.UsuarioLogin):
 async def crear_nodo(db: AsyncSession, nodo: schemas.NodoCreate) -> schemas.NodoCreate:
     new_nodo = models.Nodo(
         posicionx = nodo.posicionx,
-        posiciony = nodo.posiciony
+        posiciony = nodo.posiciony,
+        nombre = nodo.nombre,
+        descripcion = nodo.descripcion
     )
     try:
         db.add(new_nodo)
@@ -127,6 +129,8 @@ async def modificar_nodo(db: AsyncSession, nodo_id: int, nodo: schemas.NodoUpdat
     if db_nodo:
         db_nodo.posicionx = nodo.posicionx
         db_nodo.posiciony = nodo.posiciony
+        db_nodo.nombre = nodo.nombre
+        db_nodo.descripcion = nodo.descripcion
         await db.commit()
         await db.refresh(db_nodo)
         return db_nodo

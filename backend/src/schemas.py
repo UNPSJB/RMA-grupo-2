@@ -83,12 +83,16 @@ class UsuarioLogin(BaseModel):
 class NodoBase(BaseModel):
     posicionx: float
     posiciony: float
+    nombre: str
+    descripcion: str
 
 
 class Nodo(NodoBase):
     id: Optional[int]
     posicionx: float
     posiciony: float
+    nombre: str
+    descripcion: str
         
     class Config:
         orm_mode = True
@@ -99,3 +103,5 @@ class NodoCreate(NodoBase):
 class NodoUpdate(BaseModel):
     posicionx: float
     posiciony: float
+    nombre: str
+    descripcion: str
