@@ -1,3 +1,4 @@
+from os import getenv
 from fastapi import APIRouter, Depends, HTTPException
 from sqlalchemy.ext.asyncio import AsyncSession
 from backend.database import get_db 
@@ -6,6 +7,7 @@ from sqlalchemy.future import select
 from backend.src.models import Medicion, Nodo, Usuario
 from typing import List
 from passlib.context import CryptContext
+import jwt
 
 
 router = APIRouter()
@@ -33,7 +35,8 @@ async def login(usuario: schemas.UsuarioLogin, db: AsyncSession = Depends(get_db
     user = result.scalar_one_or_none()   
     if user is None or not pwd_context.verify(usuario.contrasena, user.contrasena):
         raise HTTPException(status_code=401, detail="Correo electronico o contraseña incorrectos.")
-    return user
+    token = jwt.encode(user, getenv("TOKEN_KEY"), algorithm='HS256')
+    return token
 ## ----------------------- USUARIO
 @router.post("/usuario", response_model=schemas.UsuarioCreate)
 async def create_usuario(usuario: schemas.UsuarioCreate, db: AsyncSession = Depends(get_db)):

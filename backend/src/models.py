@@ -37,6 +37,7 @@ class Usuario(Base):
         DateTime(timezone=True),
         default=func.now()
     )
+    rol: Mapped[str] = mapped_column(String, index=True, nullable=False)
 
 ## ------------------- NODOS
 
