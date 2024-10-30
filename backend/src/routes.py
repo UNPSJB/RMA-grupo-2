@@ -32,11 +32,16 @@ async def read_mdiciones(db: AsyncSession = Depends(get_db)):
 
 @router.post("/login", response_model=schemas.Usuario)
 async def login(usuario: schemas.UsuarioLogin, db: AsyncSession = Depends(get_db)):
-    result = await db.execute(select(Usuario).where(Usuario.email == usuario.email))
-    user = result.scalar_one_or_none()   
+
+    user = await db.scalars(select(Usuario).where(Usuario.email == usuario.email))
+    user = user.first()
+    print(f"{user=}")
+    ##user = result.scalar_one_or_none()  
+
     if user is None or not pwd_context.verify(usuario.contrasena, user.contrasena):
         raise HTTPException(status_code=401, detail="Correo electronico o contraseña incorrectos.")
-    token = jwt.encode(user, getenv("TOKEN_KEY"), algorithm='HS256')
+    serialized_user = schemas.Usuario.model_validate(user).model_dump_json()
+    token = jwt.encode(serialized_user, getenv("TOKEN_KEY"), algorithm='HS256')
     return token
 
 ## ----------------------- USUARIO
