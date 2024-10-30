@@ -55,8 +55,6 @@ if __name__ == "__main__":
 
 ## ------------------- LATITUD
 
-    '''
-    '''
     for nodo in lista_nodos:
         t_gps_lat = [TipoMensaje.LATITUDE_T,TipoMensaje.LATITUDE_T,TipoMensaje.VOLTAGE_T]
         for tipo in  t_gps_lat:

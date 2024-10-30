@@ -5,13 +5,16 @@ import App from './app';
 //import App from './App';
 import './css/style.css';
 import './css/satoshi.css';
-//import 'jsvectormap/dist/css/jsvectormap.css';
+import 'global'
+//import 'jsvectmap/dist/css/jsvectormap.css';
 import 'flatpickr/dist/flatpickr.min.css';
+import jwt from 'jsonwebtoken'
 
 ReactDOM.createRoot(document.getElementById('root') as HTMLElement).render(
   <React.StrictMode>
-    <Router>
-      <App />
-    </Router>
+  <Router>
+  <App />
+  </Router>
   </React.StrictMode>,
 );
+
