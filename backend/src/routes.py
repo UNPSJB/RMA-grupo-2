@@ -9,7 +9,6 @@ from typing import List
 from passlib.context import CryptContext
 import jwt
 
-
 router = APIRouter()
 pwd_context = CryptContext(schemes=["bcrypt"], deprecated="auto")
 
@@ -28,7 +27,9 @@ async def read_mdiciones(db: AsyncSession = Depends(get_db)):
         result = await db.execute(select(Medicion))
         medicion = result.scalars().all()
     return medicion
+
 ## ----------------------- LOGIN
+
 @router.post("/login", response_model=schemas.Usuario)
 async def login(usuario: schemas.UsuarioLogin, db: AsyncSession = Depends(get_db)):
     result = await db.execute(select(Usuario).where(Usuario.email == usuario.email))
@@ -37,7 +38,9 @@ async def login(usuario: schemas.UsuarioLogin, db: AsyncSession = Depends(get_db
         raise HTTPException(status_code=401, detail="Correo electronico o contraseña incorrectos.")
     token = jwt.encode(user, getenv("TOKEN_KEY"), algorithm='HS256')
     return token
+
 ## ----------------------- USUARIO
+
 @router.post("/usuario", response_model=schemas.UsuarioCreate)
 async def create_usuario(usuario: schemas.UsuarioCreate, db: AsyncSession = Depends(get_db)):
     try:

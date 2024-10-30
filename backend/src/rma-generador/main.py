@@ -32,12 +32,47 @@ if __name__ == "__main__":
         for i in range(args.nodos)
     ]
     print(f"{len(lista_nodos)} nodo/s creado/s. Publicando...")
+    
+## ------------------- TEMPERATURA    
+    for nodo in lista_nodos:
+        t_temp = [TipoMensaje.TEMP_T,TipoMensaje.TEMP_T,TipoMensaje.VOLTAGE_T]
+        for tipo in  t_temp:
+            thread = threading.Thread(
+                target=nodo.publicar,
+                args=("test_topic",tipo,),
+            )
+
+## ------------------- ALTURA
 
     for nodo in lista_nodos:
-        tipo_mensaje = [TipoMensaje.TEMP_T,TipoMensaje.WATER_HEIGHT,TipoMensaje.VOLTAGE_T]
-        for tipo in  tipo_mensaje:
+        t_alt = [TipoMensaje.WATER_HEIGHT,TipoMensaje.WATER_HEIGHT,TipoMensaje.VOLTAGE_T]
+        for tipo in  t_alt:
             thread = threading.Thread(
                 target=nodo.publicar,
                 args=("test_topic",tipo,),
             )
             thread.start()
+
+## ------------------- LATITUD
+
+    '''
+    '''
+    for nodo in lista_nodos:
+        t_gps_lat = [TipoMensaje.LATITUDE_T,TipoMensaje.LATITUDE_T,TipoMensaje.VOLTAGE_T]
+        for tipo in  t_gps_lat:
+            thread = threading.Thread(
+                target=nodo.publicar,
+                args=("test_topic",tipo,),
+            )
+            thread.start()
+## ------------------- LONGITUD
+    '''
+    for nodo in lista_nodos:
+        t_gps_long = [TipoMensaje.LATITUDE_T,TipoMensaje.WATER_HEIGHT,TipoMensaje.VOLTAGE_T]
+        for tipo in  t_gps_long:
+            thread = threading.Thread(
+                target=nodo.publicar,
+                args=("test_topic",tipo,),
+            )
+            thread.start()
+    '''

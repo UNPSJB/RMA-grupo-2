@@ -27,7 +27,7 @@ async def message_handling(client, userdata, message):
     try:
         m = Mensaje.model_validate_json(mensaje)
         med = MedicionCreate(nodo=m.id, dato=m.data,tipo=m.type, tiempo=m.time, bateria=None, error=False)
-        print(f"Guardando en la base de datos {med.nodo}--{med.tipo}--{med.dato}--{med.bateria}--{med.error}")
+        # print(f"Guardando en la base de datos {med.nodo}--{med.tipo}--{med.dato}--{med.bateria}--{med.error}")
         # Abrir una nueva sesión de la base de datos en cada mensaje
         async for db in get_db():  # Crear nueva sesión
             await services.crear_medicion(db, med)
