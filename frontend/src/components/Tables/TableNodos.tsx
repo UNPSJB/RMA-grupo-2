@@ -59,9 +59,12 @@ const TableNodos: React.FC<TableNodosProps> = ({
         Nodos de la red
       </h4>
       <div className="flex flex-col" style={{maxHeight: '400px', overflowY: 'scroll'}}>
-        <div className="grid grid-cols-3 rounded-sm bg-gray-2 dark:bg-meta-4 sm:grid-cols-5">
+        <div className="grid grid-cols-3 rounded-sm bg-gray-2 dark:bg-meta-4 sm:grid-cols-5 sticky top-0 z-10">
           <div className="p-2.5 xl:p-5">
             <h5 className="text-sm font-medium uppercase xsm:text-base">Id</h5>
+          </div>
+          <div className="p-2.5 xl:p-5">
+            <h5 className="text-sm font-medium uppercase xsm:text-base">Nombre</h5>
           </div>
           <div className="p-2.5 text-center xl:p-5">
             <h5 className="text-sm font-medium uppercase xsm:text-base">X</h5>
@@ -80,11 +83,14 @@ const TableNodos: React.FC<TableNodosProps> = ({
               <p className="text-black dark:text-white">{nodo.id}</p>
             </div>
             <div className="flex items-center gap-3 p-2.5 xl:p-5">
+              <p className="text-black dark:text-white">{nodo.nombre}</p>
+            </div>
+            <div className="flex items-center gap-3 p-2.5 xl:p-5">
               <p className="text-black dark:text-white">{nodo.posicionx}</p>
             </div>
             <div className="flex items-center justify-center p-2.5 xl:p-5">
               <p className="text-black dark:text-white">{nodo.posiciony}</p>
-            </div>
+            </div>            
             <div className="flex items-center justify-center p-2.5 xl:p-5 space-x-5">
               <button
                 className="bg-yellow-500 text-white px-4 py-2 rounded"
