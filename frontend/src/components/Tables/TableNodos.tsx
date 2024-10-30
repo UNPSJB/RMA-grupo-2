@@ -1,5 +1,4 @@
 import React, { useEffect, useState } from 'react';
-import axios from 'axios';
 
 interface Nodo {
   id: number;
@@ -20,7 +19,7 @@ const TableNodos: React.FC<TableNodosProps> = ({
   setNodos,
   onEditUptMode,
 }) => {
-  //const [nodosData, setNodosData] = useState<Nodo[]>([]);
+
   const [error, setError] = useState<string | null>(null);
 
   const deleteNodo = async (id: number): Promise<void> => {
@@ -59,7 +58,7 @@ const TableNodos: React.FC<TableNodosProps> = ({
       <h4 className="mb-6 text-xl font-semibold text-black dark:text-white">
         Nodos de la red
       </h4>
-      <div className="flex flex-col">
+      <div className="flex flex-col" style={{maxHeight: '400px', overflowY: 'scroll'}}>
         <div className="grid grid-cols-3 rounded-sm bg-gray-2 dark:bg-meta-4 sm:grid-cols-5">
           <div className="p-2.5 xl:p-5">
             <h5 className="text-sm font-medium uppercase xsm:text-base">Id</h5>
