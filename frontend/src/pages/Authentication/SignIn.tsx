@@ -4,7 +4,9 @@ import Breadcrumb from '../../components/Breadcrumbs/Breadcrumb';
 import LogoDark from '../../images/logo/logo-dark.svg';
 import Logo from '../../images/logo/logo.svg';
 import { useNavigate } from 'react-router-dom';
-
+import { useAuth } from '../../AuthContext';
+import jwt from 'jsonwebtoken';
+import dotenv from 'dotenv';
 
 
 const SignIn: React.FC = () => {
@@ -37,8 +39,13 @@ const SignIn: React.FC = () => {
       });
 
       if (response.ok) {
-        const responseData = await response.json(); // Si la respuesta es correcta, obtienes los datos
-        console.log("Inicio de sesión exitoso:", responseData); // Manejo de la respuesta exitosa
+        const token = await response.json(); // Si la respuesta es correcta, obtienes los datos
+        const { setToken } = useAuth();
+        setToken(token);
+        dotenv.config();
+        const TOKEN_KEY: string = process.env.TOKEN_KEY!; // Usar afirmación no nula
+        console.log("Inicio de sesión exitoso:"); // Manejo de la respuesta exitosa
+        const payload = jwt.verify(token, TOKEN_KEY, { algorithms: ['HS256'] })
         navigate('user/RMA');
         // Aquí puedes guardar el token o los datos del usuario en el localStorage o en el estado
         // localStorage.setItem('token', responseData.token); // Ejemplo de guardado de token

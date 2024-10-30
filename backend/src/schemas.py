@@ -51,6 +51,7 @@ class Usuario(UsuarioBase):
     email: EmailStr  # Validación del formato del email
     contrasena: str
     fecha_registro: datetime.datetime
+    rol: str
         
     class Config:
         orm_mode = True
