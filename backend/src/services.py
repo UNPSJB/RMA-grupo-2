@@ -1,4 +1,5 @@
 from sqlalchemy.ext.asyncio import AsyncSession
+from sqlalchemy import Enum
 from sqlalchemy.future import select
 from backend.src import schemas, models
 from backend.src.models import Usuario, Nodo
@@ -82,6 +83,7 @@ async def modificar_usuario(db: AsyncSession, usuario_id: int, usuario: schemas.
     else:
         raise HTTPException(status_code=404, detail="Usuario no encontrado")
     
+
 async def eliminar_usuario(db: AsyncSession, usuario_id: int) -> dict:
     db_usuario = await leer_usuario(db, usuario_id)
     if db_usuario:
@@ -97,6 +99,10 @@ async def login_usuario(db: AsyncSession, usuario: schemas.UsuarioLogin):
     if user is None or not pwd_context.verify(usuario.contrasena, user.contrasena):
         raise HTTPException(status_code=401, detail="Correo electronico o contraseña incorrectos.")
     return user
+
+async def leer_todos_los_usuarios(db: AsyncSession):
+    result = await db.execute(select(Usuario))  
+    return result.scalars().all() 
 ##------------------NODO
 
 async def crear_nodo(db: AsyncSession, nodo: schemas.NodoCreate) -> schemas.NodoCreate:

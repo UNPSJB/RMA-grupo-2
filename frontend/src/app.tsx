@@ -13,6 +13,7 @@ import Tablas from './pages/Tablas';
 import DefaultLayout from './layout/DefaultLayout';
 import AuthLayout from './layout/AuthLayout';
 import PanelNodos from './pages/Admin/PanelNodos'
+import PanelUsuarios from './pages/Admin/PanelUsuarios';
 
 function App() {
   const [loading, setLoading] = useState<boolean>(true);
@@ -42,6 +43,7 @@ function App() {
         <Route path="/user/tablas" element={<Tablas />} />
         <Route path="/settings" element={<Settings />} />
         <Route path="/admin/nodos" element={<PanelNodos />} />
+        <Route path="/admin/usuarios" element={<PanelUsuarios />} />
       </Route>
     </Routes>
   );

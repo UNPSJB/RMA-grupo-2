@@ -2,7 +2,6 @@ import React, { useEffect, useState } from 'react';
 import CardDataStats from '../../components/CardDataStats';
 import ChartOne from '../../components/Charts/ChartOne';
 import ChartTwo from '../../components/Charts/ChartTwo';
-import ChatCard from '../../components/Chat/ChatCard';
 import TableOne from '../../components/Tables/TableOne';
 import ChartLineaTemp from '../../components/Charts/ChartLineaTemp';
 import ChubutMap from '../../components/Maps/ChubutMap';
