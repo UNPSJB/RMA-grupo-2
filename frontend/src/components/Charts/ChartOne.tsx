@@ -1,7 +1,8 @@
 import { ApexOptions } from 'apexcharts';
 import React, { useEffect, useState } from 'react';
 import ReactApexChart from 'react-apexcharts';
-import Select from 'react-select';
+import Select, {MultiValue, ActionMeta} from 'react-select';
+import axios from 'axios';
 
 const allProducts = [
   { name: 'Nodo 1', data: [] }, // Comenzamos con un array vacío
@@ -27,6 +28,11 @@ const options: ApexOptions = {
   dataLabels: { enabled: false },
 };
 
+interface OptionType {
+  value: number;
+  label: string;
+}
+
 const ChartOne: React.FC = () => {
   const [nodo1Data, setNodo1Data] = useState<number[]>([]);
   const [selectedProducts, setSelectedProducts] = useState<number[]>([0, 1]);
@@ -34,20 +40,21 @@ const ChartOne: React.FC = () => {
   useEffect(() => {
     const fetchNodo1Data = async () => {
       try {
-        const response = await fetch('/temperatura/');
-        if (!response.ok) {
+        const response = await axios.get('http://localhost:8000/mediciones/');
+        const data = await response.data;  
+        if ( data.length === 0 ) return null;
+        
+        if (!response.request) {
           throw new Error('Error en la respuesta de la red');
         }
-
-        const temperaturas = await response.json();
-        console.log('Temperaturas:', temperaturas); // Verifica aquí
-
-        if (!Array.isArray(temperaturas)) {
+        const lastMeasurin = await response.data;        
+        console.log(data);
+        if (!Array.isArray(lastMeasurin)) {
           throw new Error('La respuesta no es un array');
         }
 
         // Filtramos y extraemos solo los datos para el nodo 1 (asumiendo que es nodo 0)
-        const datosNodo1 = temperaturas
+        const datosNodo1 = lastMeasurin
           .filter((temp) => temp.id === 0) // Cambia aquí si necesitas filtrar por otra clave
           .map((temp) => parseFloat(temp.data)); // Convertimos a número
 
@@ -57,7 +64,6 @@ const ChartOne: React.FC = () => {
         console.error('Error al obtener datos del Nodo 1:', error);
       }
     };
-
     fetchNodo1Data();
   }, []);
 
@@ -71,20 +77,26 @@ const ChartOne: React.FC = () => {
   ];
 
   // Manejar la selección del dropdown
-  const handleProductSelect = (selectedOptions: any) => {
-    const selectedValues = selectedOptions ? selectedOptions.map((option: any) => option.value) : [];
+  const handleProductSelect = (selectedOptions: MultiValue<OptionType>, actionMeta: ActionMeta<OptionType>) => {
+    const selectedValues = selectedOptions ? selectedOptions.map((option) => option.value) : [];
     setSelectedProducts(selectedValues);
   };
+
+
+  const selectOptions: OptionType[] = series.map((product, index) => ({
+    value: index,
+    label: product.name,
+  }));
 
   return (
     <div className="col-span-12 rounded-sm border border-stroke bg-white px-5 pt-7.5 pb-5 shadow-default dark:border-strokedark dark:bg-boxdark sm:px-7.5 xl:col-span-8">
       <div className="flex justify-between items-center mb-5">
         <Select
           isMulti
-          options={series.map((product, index) => ({ value: index, label: product.name }))}
+          options={selectOptions}
           onChange={handleProductSelect}
           className="w-full max-w-xs"
-          defaultValue={series.slice(0, 2)} // Por defecto seleccionados Nodo 1 y Nodo 2
+          defaultValue={selectOptions.slice(0,2)} // Por defecto seleccionados Nodo 1 y Nodo 2
         />
       </div>
 

@@ -19,7 +19,7 @@ const TableOne: React.FC = () => {
   useEffect(() => {
     const obtenerMediciones = async () => {
       try {
-        const response = await axios.get('http://localhost:8000/medicion/');
+        const response = await axios.get('http://localhost:8000/mediciones/');
         const mediciones = response.data;
         const ultimasCinco = mediciones
           .sort((a: Medicion, b: Medicion) => new Date(b.tiempo).getTime() - new Date(a.tiempo).getTime())
@@ -67,25 +67,25 @@ const TableOne: React.FC = () => {
           </div>
         </div>
 
-        {medicionData.map((data) => (
+        {medicionData.map(item => (
           <div
             className={`grid grid-cols-3 sm:grid-cols-5 border-b border-stroke dark:border-strokedark`}
-            key={data.id}
+            key={item.id}
           >
             <div className="flex items-center gap-3 p-2.5 xl:p-5">
-              <p className="text-black dark:text-white">{data.nodo}</p>
+              <p className="text-black dark:text-white">{item.nodo}</p>
             </div>
             <div className="flex items-center justify-center p-2.5 xl:p-5">
-              <p className="text-black dark:text-white">{new Date(data.tiempo).toLocaleDateString()}</p>
+              <p className="text-black dark:text-white">{new Date(item.tiempo).toLocaleDateString()}</p>
             </div>
             <div className="flex items-center justify-center p-2.5 xl:p-5">
-              <p className="text-meta-3">{data.dato =  Math.round(data.dato * 100) / 100}°C</p>
+              <p className="text-meta-3">{item.dato =  Math.round(item.dato * 100) / 100}°C</p>
             </div>
             <div className="hidden items-center justify-center p-2.5 sm:flex xl:p-5">
-              <p className="text-black dark:text-white">{data.bateria}%</p> {/* Humedad aleatoria */}
+              <p className="text-black dark:text-white">{item.bateria}%</p> {/* Humedad aleatoria */}
             </div>
             <div className="hidden items-center justify-center p-2.5 sm:flex xl:p-5">
-              <p className="text-black dark:text-white">{data.tipo}</p> {/* Mostrar tipo normalmente */}
+              <p className="text-black dark:text-white">{item.tipo}</p> {/* Mostrar tipo normalmente */}
             </div>
           </div>
         ))}

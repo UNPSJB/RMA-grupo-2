@@ -2,7 +2,7 @@ from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy import Enum
 from sqlalchemy.future import select
 from backend.src import schemas, models
-from backend.src.models import Usuario, Nodo
+from backend.src.models import Usuario, Nodo, Medicion
 from fastapi import HTTPException
 from backend.database import SessionLocal
 from backend.src.datos import datos
@@ -38,6 +38,18 @@ async def crear_medicion(db: AsyncSession, medicion: schemas.MedicionCreate) -> 
          raise HTTPException(status_code=400, detail="Error al crear una nueva medicion") from errorEnBase
     return new_medicion
 
+async def leer_medicion(db: AsyncSession, medicion_id: int) -> schemas.Medicion:
+    async with db.begin:
+        result = await db.execute(select(Medicion).filter(Medicion.id == medicion_id))
+        db_medicion = result.scalar_one_or_none()
+        if db_medicion is None:
+            raise HTTPException(status_code=404, detail="Medicion no existe")
+        return db_medicion
+
+async def leer_mediciones(db: AsyncSession):
+    result = await db.execute(select(Medicion))  
+    return result.scalars().all() 
+
 ## ----------------------- USUARIO
 async def crear_usuario(db: AsyncSession, usuario: schemas.UsuarioCreate) -> schemas.UsuarioCreate:
     result = await db.execute(select(models.Usuario).filter(models.Usuario.email == usuario.email))
@@ -63,7 +75,7 @@ async def crear_usuario(db: AsyncSession, usuario: schemas.UsuarioCreate) -> sch
     return new_usuario
 
 async def leer_usuario(db: AsyncSession, usuario_id: int) -> schemas.Usuario:
-    async with db.begin():
+    async with db.begin:
         result = await db.execute(select(Usuario).filter(Usuario.id == usuario_id))
         db_usuario = result.scalar_one_or_none()
         if db_usuario is None:
@@ -83,7 +95,6 @@ async def modificar_usuario(db: AsyncSession, usuario_id: int, usuario: schemas.
     else:
         raise HTTPException(status_code=404, detail="Usuario no encontrado")
     
-
 async def eliminar_usuario(db: AsyncSession, usuario_id: int) -> dict:
     db_usuario = await leer_usuario(db, usuario_id)
     if db_usuario:
@@ -155,4 +166,3 @@ async def eliminar_nodo(db: AsyncSession, nodo_id: int) -> dict:
 async def leer_todos_los_nodos(db: AsyncSession):
     result = await db.execute(select(Nodo))  
     return result.scalars().all() 
-

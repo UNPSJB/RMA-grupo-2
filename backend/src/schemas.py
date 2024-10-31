@@ -13,12 +13,14 @@ class MedicionBase(BaseModel):
     error: bool
 
 class Medicion(MedicionBase):
+    id: int
     nodo:int
     tipo: int
     dato: float
     tiempo: datetime.datetime
     bateria: Optional[int]
     error: bool
+
     class Config:
         orm_config = True
         
