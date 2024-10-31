@@ -4,6 +4,13 @@ from sqlalchemy.orm import Mapped, mapped_column
 from sqlalchemy.ext.declarative import declarative_base
 from sqlalchemy import func
 from backend.database import Base, engine
+from sqlalchemy import Enum
+import enum
+
+class RolEnum(enum.Enum):
+    admin = "admin"
+    default = "default"
+    investigador = "investigador"
 
 Base = declarative_base()
 
@@ -37,7 +44,7 @@ class Usuario(Base):
         DateTime(timezone=True),
         default=func.now()
     )
-    rol: Mapped[str] = mapped_column(String, index=True, nullable=False)
+    rol: Mapped[RolEnum] = mapped_column(Enum(RolEnum, name='rol'), index=True, nullable=False)
 
 ## ------------------- NODOS
 

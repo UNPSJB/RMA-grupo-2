@@ -3,6 +3,7 @@ import React, { useEffect, useState } from 'react';
 import axios from 'axios';
 import TableUsuarios from '../../components/Tables/TableUsuarios';
 
+
 interface Usuario {
   id: number; // Asegúrate de que id sea obligatorio
   nombre: string;
@@ -24,7 +25,7 @@ const handleUpdateRole = async (id: number, newRole: string) => {
   }
 
   try {
-    const url = `http://localhost:8000/usuario/${id}/rol`;
+    const url = `http://localhost:8000/usuario/${id}`;
     const response = await fetch(url, {
       method: 'PUT',
       headers: {
