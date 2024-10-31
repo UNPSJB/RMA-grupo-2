@@ -2,6 +2,13 @@ from pydantic import BaseModel, EmailStr, field_validator
 #from datetime import datetime
 from typing import Optional
 import datetime
+import enum
+from sqlalchemy import Enum
+
+class RolEnum(enum.Enum):
+    admin = "admin"
+    default = "default"
+    investigador = "investigador"
 
 ## ----------------------- MEDICIONES
 class MedicionBase(BaseModel):
@@ -77,6 +84,9 @@ class UsuarioUpdate(BaseModel):
         if not any(char.isupper() for char in contrasena):
             raise ValueError('La contraseña debe contener al menos una letra mayúscula.')
         return contrasena
+    
+class UsuarioUpdateRol(BaseModel):
+    rol: RolEnum
 
 class UsuarioLogin(BaseModel):
     email: EmailStr

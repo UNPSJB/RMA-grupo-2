@@ -52,9 +52,13 @@ async def create_usuario(usuario: schemas.UsuarioCreate, db: AsyncSession = Depe
 async def get_usuario(usuario_id: int, db: AsyncSession = Depends(get_db)):
     return await services.leer_usuario(db, usuario_id)
 
-@router.put("/usuario/{usuario_id}", response_model=schemas.Usuario)
+@router.put("/usuario/{usuario_id}/update", response_model=schemas.Usuario)
 async def update_usuario(usuario_id: int, usuario: schemas.UsuarioUpdate, db: AsyncSession = Depends(get_db)):
     return await services.modificar_usuario(db, usuario_id, usuario)
+
+@router.put("/usuario/{usuario_id}", response_model=schemas.Usuario)
+async def update_usuario(usuario_id: int, usuario: schemas.UsuarioUpdateRol, db: AsyncSession = Depends(get_db)):
+    return await services.modificar_rol_usuario(db, usuario_id, usuario)
 
 @router.delete("/usuario/{usuario_id}")
 async def delete_usuario(usuario_id: int, db: AsyncSession = Depends(get_db)):

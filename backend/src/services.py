@@ -94,7 +94,19 @@ async def modificar_usuario(db: AsyncSession, usuario_id: int, usuario: schemas.
         return db_usuario
     else:
         raise HTTPException(status_code=404, detail="Usuario no encontrado")
+     
+
+async def modificar_rol_usuario(db: AsyncSession, usuario_id: int, usuario: schemas.UsuarioUpdateRol) -> schemas.Usuario:
+    db_usuario = await leer_usuario(db, usuario_id)
     
+    if db_usuario:
+        db_usuario.rol = usuario.rol.value
+        await db.commit()
+        await db.refresh(db_usuario)
+        return db_usuario
+    else:
+        raise HTTPException(status_code=404, detail="Usuario no encontrado")
+
 async def eliminar_usuario(db: AsyncSession, usuario_id: int) -> dict:
     db_usuario = await leer_usuario(db, usuario_id)
     if db_usuario:
