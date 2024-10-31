@@ -66,10 +66,9 @@ const RMA: React.FC = () => {
 
   useEffect(() => {
     const fetchLastMeasurin = async () => {
-      console.log(TipoMensaje.TEMP_T)
+      console.log(TipoMensaje.TEMP_T);
       const lastTemp = await getLastMeasurin(TipoMensaje.TEMP_T);
       setLastMeasuring(lastTemp);
-
     };
 
     fetchLastMeasurin(); // Inicializa la primera carga
