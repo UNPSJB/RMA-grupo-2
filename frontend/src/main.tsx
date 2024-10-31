@@ -8,7 +8,6 @@ import './css/satoshi.css';
 import 'global'
 //import 'jsvectmap/dist/css/jsvectormap.css';
 import 'flatpickr/dist/flatpickr.min.css';
-import jwt from 'jsonwebtoken'
 
 ReactDOM.createRoot(document.getElementById('root') as HTMLElement).render(
   <React.StrictMode>

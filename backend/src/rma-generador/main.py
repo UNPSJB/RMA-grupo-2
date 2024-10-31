@@ -19,7 +19,7 @@ if __name__ == "__main__":
         "-n",
         "--nodos",
         type=int,
-        default=11,
+        default=5,
         help="Cantidad de nodos para la cual generar datos. (default=1)",
     )
 
@@ -33,19 +33,24 @@ if __name__ == "__main__":
     ]
     print(f"{len(lista_nodos)} nodo/s creado/s. Publicando...")
     
+    # Visualizar tipos
+    #for tipo in TipoMensaje:
+    #    print(tipo.name, tipo.value)
+    
 ## ------------------- TEMPERATURA    
+    
     for nodo in lista_nodos:
-        t_temp = [TipoMensaje.TEMP_T,TipoMensaje.TEMP_T,TipoMensaje.VOLTAGE_T]
+        t_temp = [TipoMensaje.TEMP_T,TipoMensaje.TEMP_T,TipoMensaje.TEMP_T]
         for tipo in  t_temp:
             thread = threading.Thread(
                 target=nodo.publicar,
                 args=("test_topic",tipo,),
             )
-
+            thread.start()
 ## ------------------- ALTURA
 
     for nodo in lista_nodos:
-        t_alt = [TipoMensaje.WATER_HEIGHT,TipoMensaje.WATER_HEIGHT,TipoMensaje.VOLTAGE_T]
+        t_alt = [TipoMensaje.WATER_HEIGHT,TipoMensaje.WATER_HEIGHT,TipoMensaje.WATER_HEIGHT]
         for tipo in  t_alt:
             thread = threading.Thread(
                 target=nodo.publicar,
@@ -54,7 +59,7 @@ if __name__ == "__main__":
             thread.start()
 
 ## ------------------- LATITUD
-
+    '''
     for nodo in lista_nodos:
         t_gps_lat = [TipoMensaje.LATITUDE_T,TipoMensaje.LATITUDE_T,TipoMensaje.VOLTAGE_T]
         for tipo in  t_gps_lat:
@@ -63,6 +68,7 @@ if __name__ == "__main__":
                 args=("test_topic",tipo,),
             )
             thread.start()
+    '''
 ## ------------------- LONGITUD
     '''
     for nodo in lista_nodos:

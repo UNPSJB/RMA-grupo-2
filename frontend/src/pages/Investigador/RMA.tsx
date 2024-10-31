@@ -2,27 +2,61 @@ import React, { useEffect, useState } from 'react';
 import CardDataStats from '../../components/CardDataStats';
 import ChartOne from '../../components/Charts/ChartOne';
 import ChartTwo from '../../components/Charts/ChartTwo';
-import ChatCard from '../../components/Chat/ChatCard';
+//import ChatCard from '../../components/Chat/ChatCard';
 import TableOne from '../../components/Tables/TableOne';
 import ChartLineaTemp from '../../components/Charts/ChartLineaTemp';
 import ChubutMap from '../../components/Maps/ChubutMap';
 
-const RMA: React.FC = () => {
-  const [ultimaMedicion, setUltimaMedicion] = useState<number | null>(null);
-  const [error, setError] = useState<string | null>(null);
 
-  const obtenerUltimaMedicion = async () => {
+enum TipoMensaje {
+  //STATUS: ''
+  TEMP_T = 'temperature',  
+  TEMP2_T = 'temperatureTwo', 
+  HUMIDITY_T = 'RelativeHumidity',
+  PRESSURE_T = 'AtmospherucPressure',
+  LIGHT_T = 'Light', 
+  SOIL_T = 'soilMoisture',  
+  SOIL2_T = 'soilMoistureTwo', 
+  SOILR_T = 'soilResistance', 
+  SOILR2_T = 'soilResistanceTwo',  
+  OXYGEN_T = 'oxygen',  
+  CO2_T = 'carbonDioxide',
+  WINDSPD_T = 'windSpeed', 
+  RAINFALL_T = 'rainFall',
+  WINDHDG_T = 'windDirection',
+  MOTION_T = 'motion',
+  VOLTAGE_T = 'voltageBaterry', 
+  VOLTAGE2_T = 'voltageTwo', 
+  CURRENT_T = 'current' ,
+  CURRENT2_T = 'currentTwo', 
+  IT_T = 'iterations' ,
+  LATITUDE_T = 'gpsLatitude',
+  LONGITUDE_T = 'gpsLongitude',
+  ALTITUDE_T = 'gpsAltitude' ,
+  HDOP_T = 'gpsHDOP',
+  WATER_HEIGHT = 'heightWater', 
+}
+
+const RMA: React.FC = () => {
+  const [LastMeasurin, setLastMeasuring] = useState<number | null>(null);
+  const [error, setError] = useState<string | null>(null);
+  //const [LastHeight, setLastHeight] = useState<number | null>(null);
+
+  const getLastMeasurin = async (tipo: TipoMensaje) => {
     try {
       const response = await fetch('http://localhost:8000/medicion/');
+      
       const data = await response.json();
-
       if (data.length === 0) return null;
 
-      const ultimaMedi = data.reduce((prev: { tiempo: string | number | Date; }, current: { tiempo: string | number | Date; }) => 
+      const filter = data.filter((item: { type:string } ) => item.type = tipo);
+      if (filter.length === 0) return null;
+
+      const lastMeasurin = filter.reduce((prev: { tiempo: string | number | Date; }, current: { tiempo: string | number | Date; }) => 
         new Date(prev.tiempo) > new Date(current.tiempo) ? prev : current
       );
 
-      return Math.round(ultimaMedi.dato * 100) / 100; // Retorna el valor de "dato"
+      return Math.round(lastMeasurin.dato * 100) / 100; // Retorna el valor de "dato"
     } catch (error) {
       console.error('Error al obtener la última medicion:', error);
       setError('Error al cargar la última medicion.');
@@ -31,13 +65,15 @@ const RMA: React.FC = () => {
   };
 
   useEffect(() => {
-    const fetchUltimaMedicion = async () => {
-      const ultimaMedi = await obtenerUltimaMedicion();
-      setUltimaMedicion(ultimaMedi);
+    const fetchLastMeasurin = async () => {
+      console.log(TipoMensaje.TEMP_T)
+      const lastTemp = await getLastMeasurin(TipoMensaje.TEMP_T);
+      setLastMeasuring(lastTemp);
+
     };
 
-    fetchUltimaMedicion(); // Inicializa la primera carga
-    const intervalId = setInterval(fetchUltimaMedicion, 60000); // Actualiza cada minuto (60000 ms)
+    fetchLastMeasurin(); // Inicializa la primera carga
+    const intervalId = setInterval(fetchLastMeasurin, 60000); // Actualiza cada minuto (60000 ms)
 
     return () => clearInterval(intervalId); // Limpia el intervalo al desmontar el componente
   }, []);
@@ -51,7 +87,7 @@ const RMA: React.FC = () => {
       <div className="grid grid-cols-1 gap-4 md:grid-cols-2 md:gap-6 xl:grid-cols-4 2xl:gap-7.5">
         <CardDataStats 
           title="Última temperatura registrada" 
-          total={ultimaMedicion !== null ? `${ultimaMedicion}°C` : 'Cargando...'} 
+          total={LastMeasurin !== null ? `${LastMeasurin}°C` : 'Cargando...'} 
           rate="1,5ºC" 
           levelUp
         >
@@ -76,7 +112,7 @@ const RMA: React.FC = () => {
   
         <CardDataStats
           title="Última Altura Registrada" 
-          total={ultimaMedicion !== null ? `${(Math.random() * 10).toFixed(4)}` : 'Cargando...'} 
+          total={LastMeasurin !== null ? `${(Math.random() * 10).toFixed(4)}` : 'Cargando...'} 
           rate="0" 
           levelUp
         >
@@ -108,7 +144,6 @@ const RMA: React.FC = () => {
           <TableOne />
         </div>
       </div>
-      
       <div className="mt-4 grid grid-cols-12 gap-4 md:mt-6 md:gap-6 2xl:mt-7.5 2xl:gap-7.5">
         <div className="col-span-12">
           <h1 className="text-xl font-bold mb-4">Mapa de Nodos en Chubut</h1>
@@ -119,7 +154,5 @@ const RMA: React.FC = () => {
       </div>
     </>
   );
-  
 };
-
 export default RMA;

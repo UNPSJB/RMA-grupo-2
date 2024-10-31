@@ -28,4 +28,4 @@ class TipoMensaje(Enum):
     LONGITUDE_T = auto()  # GPS Longitude
     ALTITUDE_T = auto()  # GPS Altitude
     HDOP_T = auto()  # GPS HDOP
-    WATER_HEIGHT = auto() #Altura del agua
+    WATER_HEIGHT = auto() #Altura del agua<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<
