@@ -60,6 +60,10 @@ async def update_usuario(usuario_id: int, usuario: schemas.UsuarioUpdate, db: As
 async def delete_usuario(usuario_id: int, db: AsyncSession = Depends(get_db)):
     return await services.eliminar_usuario(db, usuario_id)
 
+@router.get("/usuarios", response_model=List[schemas.Usuario])
+async def get_usuarios(db: AsyncSession = Depends(get_db)):
+    return await services.leer_todos_los_usuarios(db)
+
 ## ---------------------- NODO
 
 @router.post("/nodo", response_model=schemas.NodoCreate)
