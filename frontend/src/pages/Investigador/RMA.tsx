@@ -37,61 +37,70 @@ enum TipoMensaje {
 }
 
 const RMA: React.FC = () => {
-  const [LastMeasurin, setLastMeasuring] = useState<number | null>(null);
+  const [lastMeasurement, setLastMeasurement] = useState<{ temperature: number | null; height: number | null }>({ temperature: null, height: null });
   const [error, setError] = useState<string | null>(null);
-  //const [LastHeight, setLastHeight] = useState<number | null>(null);
 
-  const getLastMeasurin = async () => {
+  const getLastMeasurement = async (type:TipoMensaje) => {
     try {
       const response = await axios.get('http://localhost:8000/mediciones/');
-      const data = response.data;    
-      console.log("Datos recibidos",data);  
-      
-      if (!Array.isArray(data) || data.length === 0) return null; // Verifica que sea un array
+      const data = response.data;
 
-      const dataTemp = data.filter(dato => dato.tipo == TipoMensaje.TEMP_T);
-      console.log("Datos filtrados por tipo TEMP_T:", dataTemp); // Log para ver datos filtrados
-      if (dataTemp.length === 0) return null;
+      if (!Array.isArray(data) || data.length === 0) return null;
 
-      const lastTemp = dataTemp.reduce(
-        (prev: { tiempo: string | number | Date; }, current: { tiempo: string | number | Date; }) => 
-          new Date(prev.tiempo) > new Date(current.tiempo) ? prev : current
-      );
-      console.log("Ultima medicion:",lastTemp);
+      let lastData;
+
+      if (type === TipoMensaje.TEMP_T) {
+        const dataTemp = data.filter(dato => dato.tipo === TipoMensaje.TEMP_T);
+        if (dataTemp.length === 0) return null;
+        
+        lastData = dataTemp.reduce((prev, current) => new Date(prev.tiempo) > new Date(current.tiempo) ? prev : current);
+        return Math.round(lastData.dato * 100) / 100; // Return the rounded temperature value
+      }
+
+      if (type === TipoMensaje.WATER_HEIGHT) {
+        const dataHeight = data.filter(dato => dato.tipo === TipoMensaje.WATER_HEIGHT);
+        if (dataHeight.length === 0) return null;
+
+        lastData = dataHeight.reduce((prev, current) => new Date(prev.tiempo) > new Date(current.tiempo) ? prev : current);
+        return Math.round(lastData.dato * 100) / 100; // Return the rounded height value
+      }
       
-      return Math.round(lastTemp.dato * 100) / 100; // Retorna el valor de "dato"
     } catch (error) {
-      console.error('Error al obtener la última medicion:', error);
-      setError('Error al cargar la última medicion.');
+      console.error('Error al obtener la última medición:', error);
+      setError('Error al cargar la última medición.');
       return null;
     }
+    return null;
   };
-  
+
   useEffect(() => {
-    const fetchLastMeasurin = async () => {
-    const lastTemp = await getLastMeasurin();
-    console.log(lastTemp);
+    const fetchLastMeasurement = async () => {
+      const lastTemp = await getLastMeasurement(TipoMensaje.TEMP_T);
+      const lastHeight = await getLastMeasurement(TipoMensaje.WATER_HEIGHT);
 
-    setLastMeasuring(lastTemp);
-
+      setLastMeasurement({ 
+        temperature: lastTemp !== null ? lastTemp : null, 
+        height: lastHeight !== null ? lastHeight : null 
+      });
     };
 
-    fetchLastMeasurin(); // Inicializa la primera carga
-    const intervalId = setInterval(fetchLastMeasurin, 60000); // Actualiza cada minuto (60000 ms)
+    fetchLastMeasurement(); // Initial fetch
+    const intervalId = setInterval(fetchLastMeasurement, 60000); // Update every minute
 
-    return () => clearInterval(intervalId); // Limpia el intervalo al desmontar el componente
+    return () => clearInterval(intervalId); // Clean up interval on unmount
   }, []);
 
   if (error) {
     return <div>{error}</div>;
   }
 
+  
   return (
     <>
       <div className="grid grid-cols-1 gap-4 md:grid-cols-2 md:gap-6 xl:grid-cols-4 2xl:gap-7.5">
         <CardDataStats 
           title="Última temperatura registrada" 
-          total={LastMeasurin !== null ? `${LastMeasurin}°C` : 'Cargando...'} 
+          total={lastMeasurement.temperature !== null ? `${lastMeasurement.temperature}°C` : 'Cargando...'} 
           rate="1,5ºC" 
           levelUp
         >
@@ -116,7 +125,7 @@ const RMA: React.FC = () => {
   
         <CardDataStats
           title="Última Altura Registrada" 
-          total={LastMeasurin !== null ? `${(Math.random() * 10).toFixed(4)}` : 'Cargando...'} 
+          total={lastMeasurement.height !== null ? `${lastMeasurement.height}` : 'Cargando...'} 
           rate="0" 
           levelUp
         >
