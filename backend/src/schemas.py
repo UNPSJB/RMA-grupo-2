@@ -1,5 +1,5 @@
 from pydantic import BaseModel, EmailStr, field_validator
-#from datetime import datetime
+# from datetime import datetime
 from typing import Optional
 import datetime
 
@@ -21,7 +21,7 @@ class Medicion(MedicionBase):
     error: bool
     class Config:
         orm_config = True
-        
+
 class MedicionCreate(MedicionBase):
     pass
 
@@ -45,16 +45,17 @@ class UsuarioBase(BaseModel):
             raise ValueError('La contraseña debe contener al menos una letra mayúscula.')
         return contrasena
 
-class Usuario(UsuarioBase):
+class Usuario(BaseModel):
     id: Optional[int]  # Hacer que id sea opcional
     nombre: str
     email: EmailStr  # Validación del formato del email
     contrasena: str
     fecha_registro: datetime.datetime
     rol: str
-        
-    class Config:
-        orm_mode = True
+
+    # class Config:
+    #     orm_mode = True # esto ya no se hace así. https://docs.pydantic.dev/latest/migration/#changes-to-dataclasses
+    model_config = {"from_attributes": True} # ahora se usa así (la opción tiene otro nombre)
 
 class UsuarioCreate(UsuarioBase):
     pass
@@ -96,7 +97,7 @@ class Nodo(NodoBase):
     descripcion: str
         
     class Config:
-        orm_mode = True
+        orm_mode = True # TODO: modificar para que quede como el schema Usuario 
 
 class NodoCreate(NodoBase):
     pass
@@ -106,3 +107,6 @@ class NodoUpdate(BaseModel):
     posiciony: float
     nombre: str
     descripcion: str
+
+class Token(BaseModel):
+    access_token: str
