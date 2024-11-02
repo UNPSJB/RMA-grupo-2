@@ -56,3 +56,4 @@ class Nodo(Base):
     posicionx : Mapped[float] = mapped_column(Float, index=True, nullable=False)
     posiciony : Mapped[float] = mapped_column(Float, index=True, nullable=False)
     descripcion : Mapped[str] = mapped_column(String, index=True, nullable=True)
+    bateria: Mapped[float] = mapped_column(Float, index=True, nullable=True)

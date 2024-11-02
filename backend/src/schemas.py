@@ -91,6 +91,7 @@ class UsuarioUpdateRol(BaseModel):
 class UsuarioLogin(BaseModel):
     email: EmailStr
     contrasena: str
+
 ##--------NODO
 
 class NodoBase(BaseModel):
@@ -98,7 +99,7 @@ class NodoBase(BaseModel):
     posiciony: float
     nombre: str
     descripcion: str
-
+    bateria: Optional[float]
 
 class Nodo(NodoBase):
     id: Optional[int]
@@ -106,6 +107,7 @@ class Nodo(NodoBase):
     posiciony: float
     nombre: str
     descripcion: str
+    bateria: Optional[float]
         
     class Config:
         orm_mode = True
@@ -118,3 +120,4 @@ class NodoUpdate(BaseModel):
     posiciony: float
     nombre: str
     descripcion: str
+    bateria: Optional[float]

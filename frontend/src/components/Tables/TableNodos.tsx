@@ -1,4 +1,5 @@
 import React, { useEffect, useState } from 'react';
+import { BsWindowSidebar } from 'react-icons/bs';
 
 interface Nodo {
   id: number;
@@ -94,13 +95,21 @@ const TableNodos: React.FC<TableNodosProps> = ({
             <div className="flex items-center justify-center p-2.5 xl:p-5 space-x-5">
               <button
                 className="bg-yellow-500 text-white px-4 py-2 rounded"
-                onClick={() => onEditUptMode(nodo)}
+                onClick={() => {
+                  if(window.confirm("¿Seguro que quiere modificar este nodo?")){
+                    onEditUptMode(nodo)};
+                  }
+                }
               >
                 Editar
               </button>
               <button
                 className="bg-red-500 text-white px-4 py-2 rounded"
-                onClick={() => deleteNodo(nodo.id)}
+                onClick={() => {
+                  if (window.confirm("¿Seguro de que desea eliminar el nodo seleccionado ?")) {
+                    deleteNodo(nodo.id);
+                  }
+                }}
               >
                 Eliminar
               </button>

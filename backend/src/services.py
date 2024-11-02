@@ -133,7 +133,8 @@ async def crear_nodo(db: AsyncSession, nodo: schemas.NodoCreate) -> schemas.Nodo
         posicionx = nodo.posicionx,
         posiciony = nodo.posiciony,
         nombre = nodo.nombre,
-        descripcion = nodo.descripcion
+        descripcion = nodo.descripcion,
+        bateria = nodo.bateria
     )
     try:
         db.add(new_nodo)
