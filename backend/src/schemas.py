@@ -99,7 +99,7 @@ class NodoBase(BaseModel):
     posiciony: float
     nombre: str
     descripcion: str
-    bateria: Optional[float]
+    
 
 class Nodo(NodoBase):
     id: Optional[int]
@@ -108,16 +108,15 @@ class Nodo(NodoBase):
     nombre: str
     descripcion: str
     bateria: Optional[float]
-        
+
     class Config:
         orm_mode = True
 
 class NodoCreate(NodoBase):
     pass
 
-class NodoUpdate(BaseModel):
+class NodoUpdate(NodoBase):
     posicionx: float
     posiciony: float
     nombre: str
-    descripcion: str
-    bateria: Optional[float]
+    descripcion: str    

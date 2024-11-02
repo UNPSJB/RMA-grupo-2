@@ -8,7 +8,7 @@ interface Nodo {
   nombre: string;
   posicionx: number;
   posiciony: number;
-  descripcion: string;
+  descripcion: string;  
 }
 
 const PanelNodos = () => {
@@ -19,7 +19,7 @@ const PanelNodos = () => {
     nombre: '',
     posicionx: '',
     posiciony: '',
-    descripcion: '',
+    descripcion: '',    
   });
 
   const onEditUptMode = (nodo: Nodo) => {
@@ -28,7 +28,7 @@ const PanelNodos = () => {
       nombre: nodo.nombre,
       posicionx: nodo.posicionx.toString(),
       posiciony: nodo.posiciony.toString(),
-      descripcion: nodo.descripcion,
+      descripcion: nodo.descripcion,      
     });
     setIsEdit(true);
   };
@@ -40,7 +40,7 @@ const PanelNodos = () => {
       nombre: '',
       posicionx: '',
       posiciony: '',
-      descripcion: '',
+      descripcion: '',      
     });
   };
 
@@ -52,20 +52,23 @@ const PanelNodos = () => {
       nombre: formData.nombre,
       posicionx: formData.posicionx,
       posiciony: formData.posiciony,
-      descripcion: formData.descripcion,
+      descripcion: formData.descripcion,      
     };
 
     if (!formData.posicionx || !formData.posiciony || !formData.nombre) {
       alert('Por favor completa todos los campos.');
       return;
     }
-
     try {
       const url = isEdit
         ? `http://localhost:8000/nodo/${data.id}`
         : 'http://localhost:8000/nodo';
       const method = isEdit ? 'PUT' : 'POST';
-
+      if(isEdit){
+        const confirmEdit = window.confirm('¿Estás seguro que desea modificar el nodo?')
+          if(!confirmEdit)
+            return;
+      }
       const response = await fetch(url, {
         method,
         headers: {
@@ -79,7 +82,7 @@ const PanelNodos = () => {
           nombre: '',
           posicionx: '',
           posiciony: '',
-          descripcion: '',
+          descripcion: '',          
         });
         setIsEdit(false);
         obtenerNodos();

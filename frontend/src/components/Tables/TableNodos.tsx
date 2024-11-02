@@ -6,7 +6,7 @@ interface Nodo {
   nombre: string;
   posicionx: number;
   posiciony: number;
-  descripcion: string;
+  descripcion: string;  
 }
 
 interface TableNodosProps {
@@ -85,7 +85,7 @@ const TableNodos: React.FC<TableNodosProps> = ({
             </div>
             <div className="flex items-center gap-3 p-2.5 xl:p-5">
               <p className="text-black dark:text-white">{nodo.nombre}</p>
-            </div>
+            </div>            
             <div className="flex items-center gap-3 p-2.5 xl:p-5">
               <p className="text-black dark:text-white">{nodo.posicionx}</p>
             </div>
@@ -95,11 +95,7 @@ const TableNodos: React.FC<TableNodosProps> = ({
             <div className="flex items-center justify-center p-2.5 xl:p-5 space-x-5">
               <button
                 className="bg-yellow-500 text-white px-4 py-2 rounded"
-                onClick={() => {
-                  if(window.confirm("¿Seguro que quiere modificar este nodo?")){
-                    onEditUptMode(nodo)};
-                  }
-                }
+                onClick={() => {onEditUptMode(nodo)}}
               >
                 Editar
               </button>
