@@ -13,6 +13,7 @@ import DefaultLayout from './layout/DefaultLayout';
 import AuthLayout from './layout/AuthLayout';
 import PanelNodos from './pages/Admin/PanelNodos'
 import PanelUsuarios from './pages/Admin/PanelUsuarios';
+import AdminMain from './pages/Admin/AdminMain';
 
 function App() {
   const [loading, setLoading] = useState<boolean>(true);
@@ -43,6 +44,7 @@ function App() {
         <Route path="/settings" element={<Settings />} />
         <Route path="/admin/nodos" element={<PanelNodos />} />
         <Route path="/admin/usuarios" element={<PanelUsuarios />} />
+        <Route path="/admin" element={<AdminMain />} />
       </Route>
     </Routes>
   );
