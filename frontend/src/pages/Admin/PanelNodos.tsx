@@ -53,8 +53,8 @@ const PanelNodos = () => {
     setLng(lng);
   };
 
-  const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
-    e.preventDefault();
+  const handleSubmit = async () => {
+    //e.preventDefault();
 
     const data = {
       id: formData.id,
@@ -120,9 +120,16 @@ const PanelNodos = () => {
   console.log(lat, lng)
 
   useEffect(() => {
+    if (lat !== null && lng !== null) {
+      setFormData((prevFormData) => ({
+        ...prevFormData,
+        posicionx: lat.toString(),
+        posiciony: lng.toString(),
+      }));
+    }
     obtenerNodos();
-  }, []);
-
+  }, [lat, lng]);
+  
 
   return (
     <>
@@ -330,11 +337,14 @@ const PanelNodos = () => {
             )}
           </div>
           <AdminMaps onLocationChange={handleLocationChange}/>
-            <button onClick={handleSubmit} className="btn btn-primary" >
+            <button 
+              type='button'
+              onClick={() => handleSubmit()} 
+              className="mt-2 w-full cursor-pointer rounded-lg border p-4 text-white bg-red-500 hover:bg-red-600"
+              >
               Enviar Coordenadas
             </button>
         </form>
-
       </div>
     </>
   );
