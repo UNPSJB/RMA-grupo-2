@@ -39,7 +39,14 @@ const AdminMaps: React.FC<{
       {/* Renderiza un marcador por cada nodo */}
       {nodos.map((nodo) => (
         <Marker key={nodo.id} position={[nodo.posicionx, nodo.posiciony]}>
-          <Popup>{nodo.nombre}, {nodo.descripcion}</Popup>          
+           <Popup>
+            <div>
+              <strong>{nodo.nombre}</strong>
+              <p><strong>Latitud:</strong> {nodo.posicionx}</p>
+              <p><strong >Longitud:</strong> {nodo.posiciony}</p>
+              <p><strong>Descripción:</strong><p> {nodo.descripcion}</p></p>
+            </div>
+          </Popup>   
         </Marker>
       ))}
       {/* Solo muestra el marcador de posición seleccionada después de un clic */}

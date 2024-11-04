@@ -68,10 +68,10 @@ const TableNodos: React.FC<TableNodosProps> = ({
             <h5 className="text-sm font-medium uppercase xsm:text-base">Nombre</h5>
           </div>
           <div className="p-2.5 text-center xl:p-5">
-            <h5 className="text-sm font-medium uppercase xsm:text-base">X</h5>
+            <h5 className="text-sm font-medium uppercase xsm:text-base">Latitud</h5>
           </div>
           <div className="p-2.5 text-center xl:p-5">
-            <h5 className="text-sm font-medium uppercase xsm:text-base">Y</h5>
+            <h5 className="text-sm font-medium uppercase xsm:text-base">Longitud</h5>
           </div>
           <div className="p-2.5 text-center xl:p-5">
             <h5 className="text-sm font-medium uppercase xsm:text-base">Descripción</h5>
