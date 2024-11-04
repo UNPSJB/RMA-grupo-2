@@ -87,6 +87,7 @@ const PanelNodos = () => {
         body: JSON.stringify(data),
       });
       if (response.ok) {
+        const newNode = await response.json();
         setFormData({
           id: '',
           nombre: '',
@@ -96,6 +97,7 @@ const PanelNodos = () => {
         });
         setIsEdit(false);
         obtenerNodos();
+        setNodos((prevNodos) => [...prevNodos, newNode]); // Añade el nodo nuevo a nodos
         toggleEditMode();
         alert(isEdit ? 'Nodo Actualizado' : 'Nodo creado');
       } else {
@@ -336,7 +338,7 @@ const PanelNodos = () => {
               </button>
             )}
           </div>
-          <AdminMaps onLocationChange={handleLocationChange}/>            
+          <AdminMaps onLocationChange={handleLocationChange} nodos={nodos} />
         </form>
       </div>
     </>

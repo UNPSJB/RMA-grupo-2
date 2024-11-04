@@ -2,9 +2,19 @@ import React, { useState } from 'react';
 import { MapContainer, TileLayer, Marker, Popup, useMapEvents } from 'react-leaflet';
 import 'leaflet/dist/leaflet.css';
 
-const AdminMaps: React.FC<{ onLocationChange: (lat: number, lng: number) => void }> = ({ onLocationChange }) => {
-  const position: [number, number] = [-43.306843, -65.395059];
-  const [markerPosition, setMarkerPosition] = useState<[number, number]>(position);
+interface Nodo {
+  id: number;
+  nombre: string
+  posicionx: number;
+  posiciony: number;
+}
+
+const AdminMaps: React.FC<{ 
+  onLocationChange: (lat: number, lng: number) => void,
+  nodos: Nodo[]
+}> = ({ onLocationChange, nodos }) => {
+  const initialPosition: [number, number] = [-43.306843, -65.395059];
+  const [markerPosition, setMarkerPosition] = useState<[number, number]>(initialPosition);
   
   const MapClickHandler = () => {
     useMapEvents({
@@ -18,15 +28,19 @@ const AdminMaps: React.FC<{ onLocationChange: (lat: number, lng: number) => void
   };
 
   return (
-    <MapContainer center={position} zoom={13} style={{ height: "400px", width: "100%" }}>
+    <MapContainer center={initialPosition} zoom={13} style={{ height: "400px", width: "100%" }}>
       <TileLayer
         url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"
-        attribution='&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors'
+        attribution='&copy; OpenStreetMap contributors'
       />
+      {/* Renderiza un marcador por cada nodo */}
+      {nodos.map((nodo) => (
+        <Marker key={nodo.id} position={[nodo.posicionx, nodo.posiciony]}>
+          <Popup>{nodo.nombre}</Popup>
+        </Marker>
+      ))}
       <Marker position={markerPosition}>
-        <Popup>
-          Ubicación seleccionada.
-        </Popup>
+        <Popup>Ubicación seleccionada.</Popup>
       </Marker>
       <MapClickHandler />
     </MapContainer>
@@ -34,3 +48,4 @@ const AdminMaps: React.FC<{ onLocationChange: (lat: number, lng: number) => void
 };
 
 export default AdminMaps;
+
