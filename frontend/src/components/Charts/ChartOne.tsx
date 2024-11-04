@@ -1,7 +1,7 @@
 import { ApexOptions } from 'apexcharts';
 import React, { useEffect, useState } from 'react';
 import ReactApexChart from 'react-apexcharts';
-import Select, {MultiValue, ActionMeta} from 'react-select';
+import Select, { MultiValue, ActionMeta } from 'react-select';
 import axios from 'axios';
 
 const allProducts = [
@@ -13,15 +13,15 @@ const allProducts = [
 ];
 
 const options: ApexOptions = {
-  legend: { show: false },
+  legend: { show: true },
   chart: { type: 'area', height: 350 },
   xaxis: {
-    categories: Array.from({ length: 25 }, (_, i) => i.toString()),
+    categories: Array.from({ length: 25 }, (_, i) => i.toString()), // Mantener las categorías fijas
     labels: { show: true },
     title: { text: 'Hora' },
   },
   yaxis: {
-    labels: { show: true },
+    labels: { show: true, formatter: (val) => Math.round(val).toString() },
     title: { text: 'Temperatura (ºC)' },
   },
   markers: { size: 5, colors: ['#3C50E0'] },
@@ -41,35 +41,36 @@ const ChartOne: React.FC = () => {
     const fetchNodo1Data = async () => {
       try {
         const response = await axios.get('http://localhost:8000/mediciones/');
-        const data = await response.data;  
-        if ( data.length === 0 ) return null;
-        
-        if (!response.request) {
-          throw new Error('Error en la respuesta de la red');
-        }
-        const lastMeasurin = await response.data;        
-        console.log(data);
-        if (!Array.isArray(lastMeasurin)) {
-          throw new Error('La respuesta no es un array');
-        }
+        const data = response.data;
 
-        // Filtramos y extraemos solo los datos para el nodo 1 (asumiendo que es nodo 0)
-        const datosNodo1 = lastMeasurin
-          .filter((temp) => temp.id === 0) // Cambia aquí si necesitas filtrar por otra clave
-          .map((temp) => parseFloat(temp.data)); // Convertimos a número
+        // Agrupar y calcular el promedio de temperaturas por hora
+        const groupedData: { [key: string]: number[] } = {};
+        data.forEach((item: any) => {
+          const date = new Date(item.tiempo).getHours(); // Obtener solo la hora
+          if (!groupedData[date]) {
+            groupedData[date] = [];
+          }
+          groupedData[date].push(parseFloat(item.dato)); // Convertir a número
+        });
 
-        console.log('Datos del Nodo 1:', datosNodo1); // Verifica aquí
-        setNodo1Data(datosNodo1); // Actualizamos el estado
+        // Calcular promedios por hora (de 0 a 23)
+        const averageData = Array.from({ length: 24 }, (_, i) => {
+          const values = groupedData[i] || [];
+          return values.length ? values.reduce((sum, val) => sum + val, 0) / values.length : 0; // Promedio o 0 si no hay datos
+        });
+
+        setNodo1Data(averageData); // Actualizamos el estado con los promedios
       } catch (error) {
         console.error('Error al obtener datos del Nodo 1:', error);
       }
     };
+
     fetchNodo1Data();
   }, []);
 
   // Combinamos los datos del nodo 1 con los datos falsos de otros nodos
   const series = [
-    { name: 'Nodo 1', data: nodo1Data.length > 0 ? nodo1Data : [0] }, // Datos reales del nodo 1
+    { name: 'Nodo 1', data: nodo1Data.length > 0 ? nodo1Data : Array(24).fill(0) }, // Datos promediados del nodo 1
     { name: 'Nodo 2', data: allProducts[1].data }, // Datos falsos
     { name: 'Nodo 3', data: allProducts[2].data }, // Datos falsos
     { name: 'Nodo 4', data: allProducts[3].data }, // Datos falsos
@@ -81,7 +82,6 @@ const ChartOne: React.FC = () => {
     const selectedValues = selectedOptions ? selectedOptions.map((option) => option.value) : [];
     setSelectedProducts(selectedValues);
   };
-
 
   const selectOptions: OptionType[] = series.map((product, index) => ({
     value: index,
@@ -96,13 +96,13 @@ const ChartOne: React.FC = () => {
           options={selectOptions}
           onChange={handleProductSelect}
           className="w-full max-w-xs"
-          defaultValue={selectOptions.slice(0,2)} // Por defecto seleccionados Nodo 1 y Nodo 2
+          defaultValue={selectOptions.slice(0, 2)} // Por defecto seleccionados Nodo 1 y Nodo 2
         />
       </div>
 
       <ReactApexChart
         options={options}
-        series={selectedProducts.map((index) => series[index])} // Usamos series en lugar de allProducts
+        series={selectedProducts.map((index) => series[index])}
         type="area"
         height={350}
       />
@@ -111,4 +111,3 @@ const ChartOne: React.FC = () => {
 };
 
 export default ChartOne;
-
