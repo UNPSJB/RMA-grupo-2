@@ -1,6 +1,7 @@
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy import Enum
 from sqlalchemy.future import select
+from sqlalchemy import and_
 from backend.src import schemas, models
 from backend.src.models import Usuario, Nodo, Medicion
 from fastapi import HTTPException
@@ -49,6 +50,23 @@ async def leer_medicion(db: AsyncSession, medicion_id: int) -> schemas.Medicion:
 async def leer_mediciones(db: AsyncSession):
     result = await db.execute(select(Medicion))  
     return result.scalars().all() 
+
+async def leer_mediciones_filtro(db: AsyncSession, tipo: int, idNodo: int, fechaDesde: datetime, fechaHasta:datetime):
+    query = select(Medicion).where(
+        and_(
+            Medicion.tipo == tipo,
+            Medicion.idNodo == idNodo,
+            Medicion.fecha >= fechaDesde,
+            Medicion.fecha <= fechaHasta
+        )
+    )
+    result = await db.execute(select(query))
+    datos = {
+        "valores": [medicion.valor for medicion in result],
+        "fechas": [medicion.fecha for medicion in result]
+    }
+    return datos
+
 
 ## ----------------------- USUARIO
 async def crear_usuario(db: AsyncSession, usuario: schemas.UsuarioCreate) -> schemas.UsuarioCreate:
