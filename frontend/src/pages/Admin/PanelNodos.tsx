@@ -1,6 +1,8 @@
 import Breadcrumb from '../../components/Breadcrumbs/Breadcrumb';
 import TableNodos from '../../components/Tables/TableNodos';
+import AdminMaps from '../Admin/AdminMaps'
 import React, { useEffect, useState } from 'react';
+
 import axios from 'axios';
 
 interface Nodo {
@@ -14,6 +16,8 @@ interface Nodo {
 const PanelNodos = () => {
   const [isEdit, setIsEdit] = useState(false);
   const [nodos, setNodos] = useState<Nodo[]>([]);
+  const [lat, setLat] = useState<number | null>(null);
+  const [lng, setLng] = useState<number | null>(null);
   const [formData, setFormData] = useState({
     id: '',
     nombre: '',
@@ -44,6 +48,11 @@ const PanelNodos = () => {
     });
   };
 
+  const handleLocationChange = (lat: number, lng: number) => {
+    setLat(lat);
+    setLng(lng);
+  };
+
   const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
 
@@ -59,6 +68,7 @@ const PanelNodos = () => {
       alert('Por favor completa todos los campos.');
       return;
     }
+    
     try {
       const url = isEdit
         ? `http://localhost:8000/nodo/${data.id}`
@@ -107,10 +117,12 @@ const PanelNodos = () => {
       alert('Error al cargar los datos.');
     }
   };
+  console.log(lat, lng)
 
   useEffect(() => {
     obtenerNodos();
   }, []);
+
 
   return (
     <>
@@ -317,7 +329,12 @@ const PanelNodos = () => {
               </button>
             )}
           </div>
+          <AdminMaps onLocationChange={handleLocationChange}/>
+            <button onClick={handleSubmit} className="btn btn-primary" >
+              Enviar Coordenadas
+            </button>
         </form>
+
       </div>
     </>
   );
