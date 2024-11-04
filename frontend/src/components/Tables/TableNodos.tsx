@@ -60,10 +60,7 @@ const TableNodos: React.FC<TableNodosProps> = ({
         Nodos de la red
       </h4>
       <div className="flex flex-col" style={{maxHeight: '400px', overflowY: 'scroll'}}>
-        <div className="grid grid-cols-3 rounded-sm bg-gray-2 dark:bg-meta-4 sm:grid-cols-5 sticky top-0 z-10">
-          <div className="p-2.5 xl:p-5">
-            <h5 className="text-sm font-medium uppercase xsm:text-base">Id</h5>
-          </div>
+        <div className="grid grid-cols-3 rounded-sm bg-gray-2 dark:bg-meta-4 sm:grid-cols-5 sticky top-0 z-10">          
           <div className="p-2.5 xl:p-5">
             <h5 className="text-sm font-medium uppercase xsm:text-base">Nombre</h5>
           </div>
@@ -82,10 +79,7 @@ const TableNodos: React.FC<TableNodosProps> = ({
           <div
             className={`grid grid-cols-3 sm:grid-cols-5 border-b border-stroke dark:border-strokedark`}
             key={nodo.id}
-          >
-            <div className="flex items-center gap-3 p-2.5 xl:p-5">
-              <p className="text-black dark:text-white">{nodo.id}</p>
-            </div>
+          >            
             <div className="flex items-center gap-3 p-2.5 xl:p-5">
               <p className="text-black dark:text-white">{nodo.nombre}</p>
             </div>            
