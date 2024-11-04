@@ -317,6 +317,7 @@ const PanelNodos = () => {
               </span>
             </div>
           </div>
+          <AdminMaps onLocationChange={handleLocationChange} nodos={nodos} />
           <div className="mb-5">
             <button
               type="submit"
@@ -338,7 +339,7 @@ const PanelNodos = () => {
               </button>
             )}
           </div>
-          <AdminMaps onLocationChange={handleLocationChange} nodos={nodos} />
+          
         </form>
       </div>
     </>

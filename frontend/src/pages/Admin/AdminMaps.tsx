@@ -4,9 +4,10 @@ import 'leaflet/dist/leaflet.css';
 
 interface Nodo {
   id: number;
-  nombre: string
+  nombre: string;
   posicionx: number;
   posiciony: number;
+  descripcion: string;
 }
 
 const AdminMaps: React.FC<{ 
@@ -15,12 +16,14 @@ const AdminMaps: React.FC<{
 }> = ({ onLocationChange, nodos }) => {
   const initialPosition: [number, number] = [-43.306843, -65.395059];
   const [markerPosition, setMarkerPosition] = useState<[number, number]>(initialPosition);
-  
+  const [hasClicked, setHasClicked] = useState(false);
+
   const MapClickHandler = () => {
     useMapEvents({
       click(e) {
         const { lat, lng } = e.latlng;
         setMarkerPosition([lat, lng]);
+        setHasClicked(true);
         onLocationChange(lat, lng); 
       }
     });
@@ -36,16 +39,24 @@ const AdminMaps: React.FC<{
       {/* Renderiza un marcador por cada nodo */}
       {nodos.map((nodo) => (
         <Marker key={nodo.id} position={[nodo.posicionx, nodo.posiciony]}>
-          <Popup>{nodo.nombre}</Popup>
+           <Popup>
+            <div>
+              <strong>{nodo.nombre}</strong>
+              <p><strong>Latitud:</strong> {nodo.posicionx}</p>
+              <p><strong >Longitud:</strong> {nodo.posiciony}</p>
+              <p><strong>Descripción:</strong><p> {nodo.descripcion}</p></p>
+            </div>
+          </Popup>   
         </Marker>
       ))}
-      <Marker position={markerPosition}>
-        <Popup>Ubicación seleccionada.</Popup>
-      </Marker>
+      {/* Solo muestra el marcador de posición seleccionada después de un clic */}
+      {hasClicked && (
+        <Marker position={markerPosition}>
+          <Popup>Ubicación seleccionada.</Popup>
+        </Marker>
+      )}
       <MapClickHandler />
     </MapContainer>
   );
 };
-
 export default AdminMaps;
-
