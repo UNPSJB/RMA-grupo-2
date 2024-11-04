@@ -53,8 +53,8 @@ const PanelNodos = () => {
     setLng(lng);
   };
 
-  const handleSubmit = async () => {
-    //e.preventDefault();
+  const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
+    e.preventDefault();
 
     const data = {
       id: formData.id,
@@ -336,14 +336,7 @@ const PanelNodos = () => {
               </button>
             )}
           </div>
-          <AdminMaps onLocationChange={handleLocationChange}/>
-            <button 
-              type='button'
-              onClick={() => handleSubmit()} 
-              className="mt-2 w-full cursor-pointer rounded-lg border p-4 text-white bg-red-500 hover:bg-red-600"
-              >
-              Enviar Coordenadas
-            </button>
+          <AdminMaps onLocationChange={handleLocationChange}/>            
         </form>
       </div>
     </>
