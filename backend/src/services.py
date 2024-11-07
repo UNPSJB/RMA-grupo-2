@@ -6,10 +6,9 @@ from backend.src.models import Usuario, Nodo, Medicion
 from fastapi import HTTPException
 from backend.database import SessionLocal
 from backend.src.datos import datos
-from passlib.context import CryptContext
 import datetime
+from backend.src.auth import pwd_context
 
-pwd_context = CryptContext(schemes=["bcrypt"], deprecated="auto") #para encriptar pass
 async def get_db():
     db = SessionLocal()
     try:
@@ -61,7 +60,8 @@ async def crear_usuario(db: AsyncSession, usuario: schemas.UsuarioCreate) -> sch
         nombre=usuario.nombre,
         email=usuario.email,
         contrasena=hashed_password, #Guardar la contraseña encriptada
-        fecha_registro=datetime.datetime.now(datetime.timezone.utc)
+        fecha_registro=datetime.datetime.now(datetime.timezone.utc),
+        rol="default"
     )
 
     try:

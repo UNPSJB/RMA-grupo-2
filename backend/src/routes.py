@@ -6,11 +6,10 @@ from backend.src import schemas, services
 from sqlalchemy.future import select
 from backend.src.models import Medicion, Nodo, Usuario
 from typing import List
-from passlib.context import CryptContext
-import jwt
+from backend.src.auth import pwd_context
 
 router = APIRouter()
-pwd_context = CryptContext(schemes=["bcrypt"], deprecated="auto")
+
 
 ## ----------------------- MEDICIONES
 
