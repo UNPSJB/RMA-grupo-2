@@ -51,13 +51,13 @@ async def leer_mediciones(db: AsyncSession):
     result = await db.execute(select(Medicion))  
     return result.scalars().all() 
 
-async def leer_mediciones_filtro(db: AsyncSession, tipo: int, idNodo: int, fechaDesde: datetime, fechaHasta:datetime):
+async def leer_mediciones_filtro(db: AsyncSession, filtros: schemas.MedicionFiltro):
     query = select(Medicion).where(
         and_(
-            Medicion.tipo == tipo,
-            Medicion.idNodo == idNodo,
-            Medicion.fecha >= fechaDesde,
-            Medicion.fecha <= fechaHasta
+            Medicion.tipo == filtros.tipo,
+            Medicion.nodo == filtros.nodo,
+            Medicion.fecha >= filtros.fechaDesde,
+            Medicion.fecha <= filtros.fechaHasta
         )
     )
     result = await db.execute(select(query))

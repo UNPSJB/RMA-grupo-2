@@ -1,7 +1,9 @@
 import { ApexOptions } from 'apexcharts';
 import React, { useEffect, useState } from 'react';
 import ReactApexChart from 'react-apexcharts';
-import Select, { MultiValue, ActionMeta } from 'react-select';
+import Select, { MultiValue, ActionMeta, SingleValue } from 'react-select';
+import DatePicker from 'react-datepicker';
+import "react-datepicker/dist/react-datepicker.css";
 import axios from 'axios';
 
 const allProducts = [
@@ -28,11 +30,6 @@ const options: ApexOptions = {
   dataLabels: { enabled: false },
 };
 
-interface OptionType {
-  value: number;
-  label: string;
-}
-
 const ChartOne: React.FC = () => {
   const [nodo1Data, setNodo1Data] = useState<number[]>([]);
   const [selectedProducts, setSelectedProducts] = useState<number[]>([0, 1]);
@@ -40,7 +37,7 @@ const ChartOne: React.FC = () => {
   useEffect(() => {
     const fetchNodo1Data = async () => {
       try {
-        const response = await axios.get('http://localhost:8000/mediciones/');
+        const response = await axios.get('http://localhost:8000/medicion/filtrar');
         const data = response.data;
 
         // Agrupar y calcular el promedio de temperaturas por hora
@@ -77,37 +74,116 @@ const ChartOne: React.FC = () => {
     { name: 'Nodo 5', data: allProducts[4].data }, // Datos falsos
   ];
 
-  // Manejar la selección del dropdown
-  const handleProductSelect = (selectedOptions: MultiValue<OptionType>, actionMeta: ActionMeta<OptionType>) => {
-    const selectedValues = selectedOptions ? selectedOptions.map((option) => option.value) : [];
-    setSelectedProducts(selectedValues);
+  const selectNodeOptions = [
+    { value: 1, label: "Nodo 1" },
+    { value: 2, label: "Nodo 2" },
+    { value: 3, label: "Nodo 3" },
+  ];
+  const selectDataTypeOptions = [
+    { value: 1, label: "Temperatura" },
+    { value: 2, label: "Humedad" },
+    { value: 3, label: "Presión" },
+  ];
+
+  const [selectedNode, setSelectedNode] = useState(selectNodeOptions[0].value);
+  const [selectedDataType, setSelectedDataType] = useState(selectDataTypeOptions[0].value);
+  const [startDate, setStartDate] = useState(new Date());
+  const [endDate, setEndDate] = useState(new Date());
+
+  const handleNodeSelect = (selectedOption: SingleValue<{ value: number; label: string }>) => {
+    if(selectedOption != null){
+      setSelectedNode(selectedOption.value);
+    }
   };
 
-  const selectOptions: OptionType[] = series.map((product, index) => ({
-    value: index,
-    label: product.name,
-  }));
+  const handleDataTypeSelect = (selectedOption: SingleValue<{ value: number; label: string }>) => {
+    if(selectedOption != null){
+      setSelectedDataType(selectedOption.value);
+    }
+  };
 
+  const handleSearch = async () => {
+
+    // Llamada a la función que obtiene los datos con los filtros
+    const filtro = {
+      nodo: selectedNode,
+      tipo: selectedDataType,
+      fechaDesde: startDate,
+      fechaHasta: endDate
+    }
+    const data = await fetch('http://localhost:8000/medicion/filtrar', {
+      method: "POST",
+      headers: {"Content-Type": "application/json",},
+      body: JSON.stringify(filtro),
+    });
+    
+
+  }
   return (
     <div className="col-span-12 rounded-sm border border-stroke bg-white px-5 pt-7.5 pb-5 shadow-default dark:border-strokedark dark:bg-boxdark sm:px-7.5 xl:col-span-8">
       <div className="flex justify-between items-center mb-5">
+        {/* Selector de Nodo */}
         <Select
-          isMulti
-          options={selectOptions}
-          onChange={handleProductSelect}
+          options={selectNodeOptions}
+          onChange={handleNodeSelect}
           className="w-full max-w-xs"
-          defaultValue={selectOptions.slice(0, 2)} // Por defecto seleccionados Nodo 1 y Nodo 2
+          defaultValue={selectNodeOptions[0]} // Valor por defecto Nodo 1
         />
+
+        {/* Selector de Tipo de Dato */}
+        <Select
+          options={selectDataTypeOptions}
+          onChange={handleDataTypeSelect}
+          className="w-full max-w-xs"
+          defaultValue={selectDataTypeOptions[0]} // Valor por defecto, por ejemplo Temperatura
+        />
+
+        {/* Selector de Rango de Fechas */}
+        <div className="flex space-x-2">
+          <DatePicker
+            selected={startDate}
+            onChange={(date) => setStartDate(date)}
+            selectsStart
+            startDate={startDate}
+            endDate={endDate}
+            placeholderText="Fecha Desde"
+            className="w-full max-w-xs"
+          />
+          <DatePicker
+            selected={endDate}
+            onChange={(date) => setEndDate(date)}
+            selectsEnd
+            startDate={startDate}
+            endDate={endDate}
+            minDate={startDate}
+            placeholderText="Fecha Hasta"
+            className="w-full max-w-xs"
+          />
+          <button
+          onClick={handleSearch}
+          className="bg-blue-500 text-white px-4 py-2 rounded-md hover:bg-blue-600"
+        >
+          Buscar
+        </button>
+        </div>
       </div>
 
+      {/* Gráfico */}
       <ReactApexChart
-        options={options}
-        series={selectedProducts.map((index) => series[index])}
+        options={{
+          ...options,
+          xaxis: { categories: fechas }, // Ajusta con las fechas
+        }}
+        series={[{
+          name: selectedDataType,
+          data: valores  // Ajusta con los valores de las mediciones filtradas
+        }]}
         type="area"
         height={350}
       />
     </div>
   );
 };
+
 
 export default ChartOne;

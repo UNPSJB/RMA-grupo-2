@@ -1,5 +1,7 @@
+import datetime
 from os import getenv
 from fastapi import APIRouter, Depends, HTTPException
+from sqlalchemy import and_
 from sqlalchemy.ext.asyncio import AsyncSession
 from backend.database import get_db
 from backend.src import schemas, services
@@ -32,11 +34,17 @@ async def read_mdiciones(db: AsyncSession = Depends(get_db)):
         medicion = result.scalars().all()
     return medicion
 
+@router.get("/medicion/filtrar", response_model=dict[str, list])
+async def leer_mediciones_filtro(filtros: schemas.MedicionFiltro, db: AsyncSession = Depends(get_db)):
+    try:
+        return await services.leer_mediciones_filtro(db, filtros)
+    except HTTPException as e:
+        raise HTTPException(status_code=400, detail=str(e))
 
 ## ----------------------- LOGIN
 
 
-@router.post("/login", response_model=schemas.Token)
+@router.post("/login", response_model=str)
 async def login(usuario: schemas.UsuarioLogin, db: AsyncSession = Depends(get_db)):
     result = await db.execute(select(Usuario).where(Usuario.email == usuario.email))
     user = result.scalar_one_or_none()
@@ -47,7 +55,7 @@ async def login(usuario: schemas.UsuarioLogin, db: AsyncSession = Depends(get_db
     user_schema = schemas.Usuario.model_validate(user) # convertimos obj Usuario a schema Usuario
     serialized_user = user_schema.model_dump_json() # convertimos schema a un string de un json
     token = jwt.encode({"sub": serialized_user}, getenv("TOKEN_KEY"), algorithm="HS256") # codificamos el json dentro del token
-    return schemas.Token(access_token=token)
+    return token
 
 
 ## ----------------------- USUARIO
