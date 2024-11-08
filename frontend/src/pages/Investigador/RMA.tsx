@@ -7,7 +7,6 @@ import ChartLineaTemp from '../../components/Charts/ChartLineaTemp';
 import ChubutMap from '../../components/Maps/ChubutMap';
 import axios from 'axios';
 
-
 enum TipoMensaje {
   TEMP_T = 1,  
   TEMP2_T = 2, 
@@ -37,10 +36,13 @@ enum TipoMensaje {
 }
 
 const RMA: React.FC = () => {
-  const [lastMeasurement, setLastMeasurement] = useState<{ temperature: number | null; height: number | null }>({ temperature: null, height: null });
+  const [lastMeasurement, setLastMeasurement] = useState<{ temperature: { value: number | null; nodo: number | null }; height: { value: number | null; nodo: number | null } }>({
+    temperature: { value: null, nodo: null },
+    height: { value: null, nodo: null },
+  });
   const [error, setError] = useState<string | null>(null);
 
-  const getLastMeasurement = async (type:TipoMensaje) => {
+  const getLastMeasurement = async (type: TipoMensaje) => {
     try {
       const response = await axios.get('http://localhost:8000/medicion/');
       const data = response.data;
@@ -52,9 +54,9 @@ const RMA: React.FC = () => {
       if (type === TipoMensaje.TEMP_T) {
         const dataTemp = data.filter(dato => dato.tipo === TipoMensaje.TEMP_T);
         if (dataTemp.length === 0) return null;
-        
+
         lastData = dataTemp.reduce((prev, current) => new Date(prev.tiempo) > new Date(current.tiempo) ? prev : current);
-        return Math.round(lastData.dato * 100) / 100; // Return the rounded temperature value
+        return { value: Math.round(lastData.dato * 100) / 100, nodo: lastData.nodo }; // Return temperature and nodo
       }
 
       if (type === TipoMensaje.WATER_HEIGHT) {
@@ -62,7 +64,7 @@ const RMA: React.FC = () => {
         if (dataHeight.length === 0) return null;
 
         lastData = dataHeight.reduce((prev, current) => new Date(prev.tiempo) > new Date(current.tiempo) ? prev : current);
-        return Math.round(lastData.dato * 100) / 100; // Return the rounded height value
+        return { value: Math.round(lastData.dato * 100) / 100, nodo: lastData.nodo }; // Return height and nodo
       }
       
     } catch (error) {
@@ -79,8 +81,8 @@ const RMA: React.FC = () => {
       const lastHeight = await getLastMeasurement(TipoMensaje.WATER_HEIGHT);
 
       setLastMeasurement({ 
-        temperature: lastTemp !== null ? lastTemp : null, 
-        height: lastHeight !== null ? lastHeight : null 
+        temperature: lastTemp !== null ? lastTemp : { value: null, nodo: null }, 
+        height: lastHeight !== null ? lastHeight : { value: null, nodo: null },
       });
     };
 
@@ -94,15 +96,13 @@ const RMA: React.FC = () => {
     return <div>{error}</div>;
   }
 
-  
   return (
     <>
       <div className="grid grid-cols-1 gap-4 md:grid-cols-2 md:gap-6 xl:grid-cols-4 2xl:gap-7.5">
         <CardDataStats 
-          title="Última temperatura registrada" 
-          total={lastMeasurement.temperature !== null ? `${lastMeasurement.temperature}°C` : 'Cargando...'} 
-          rate="1,5ºC" 
-          levelUp
+          title={`Última temperatura registrada (Nodo ${lastMeasurement.temperature.nodo || 'N/A'})`} 
+          total={lastMeasurement.temperature.value !== null ? `${lastMeasurement.temperature.value}°C` : 'Cargando...'} 
+          rate= '' 
         >
           <svg
             className="fill-primary dark:fill-white"
@@ -124,10 +124,9 @@ const RMA: React.FC = () => {
         </CardDataStats>
   
         <CardDataStats
-          title="Última Altura Registrada" 
-          total={lastMeasurement.height !== null ? `${lastMeasurement.height}` : 'Cargando...'} 
-          rate="0" 
-          levelUp
+          title={`Última altura registrada (Nodo ${lastMeasurement.height.nodo || 'N/A'})`} 
+          total={lastMeasurement.height.value !== null ? `${lastMeasurement.height.value} m` : 'Cargando...'} 
+          rate="" 
         >
           <svg
             className="fill-primary dark:fill-white"
@@ -168,4 +167,5 @@ const RMA: React.FC = () => {
     </>
   );
 };
+
 export default RMA;
