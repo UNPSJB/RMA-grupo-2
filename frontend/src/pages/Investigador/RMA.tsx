@@ -42,7 +42,7 @@ const RMA: React.FC = () => {
 
   const getLastMeasurement = async (type:TipoMensaje) => {
     try {
-      const response = await axios.get('http://localhost:8000/mediciones/');
+      const response = await axios.get('http://localhost:8000/medicion/');
       const data = response.data;
 
       if (!Array.isArray(data) || data.length === 0) return null;

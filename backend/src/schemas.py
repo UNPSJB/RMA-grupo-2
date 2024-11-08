@@ -34,7 +34,7 @@ class Medicion(MedicionBase):
 class MedicionCreate(MedicionBase):
     pass
 
-class MedicionFiltro():
+class MedicionFiltro(BaseModel):
     nodo: int
     tipo: int
     fechaDesde: datetime.datetime

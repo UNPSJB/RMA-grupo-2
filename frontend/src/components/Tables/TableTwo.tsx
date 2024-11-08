@@ -25,7 +25,7 @@ const TableTwo: React.FC = () => {
   useEffect(() => {
     const obtenerMediciones = async () => {
       try {
-        const response = await axios.get('http://localhost:8000/mediciones/');
+        const response = await axios.get('http://localhost:8000/medicion/');
         setMedicionData(response.data);
         setFilteredData(response.data);
       } catch (error) {

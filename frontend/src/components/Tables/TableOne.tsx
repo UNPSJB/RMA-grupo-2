@@ -19,7 +19,7 @@ const TableOne: React.FC = () => {
   useEffect(() => {
     const obtenerMediciones = async () => {
       try {
-        const response = await axios.get('http://localhost:8000/mediciones/');
+        const response = await axios.get('http://localhost:8000/medicion/');
         const mediciones = response.data;
         const ultimasCinco = mediciones
           .sort((a: Medicion, b: Medicion) => new Date(b.tiempo).getTime() - new Date(a.tiempo).getTime())

@@ -14,27 +14,32 @@ const allProducts = [
   { name: 'Nodo 5', data: [15, 25, 35, 45, 55, 20, 40, 60, 30, 50, 35, 45, 55, 60, 70, 20, 45, 55, 60, 65, 70, 25, 35, 45, 50] },
 ];
 
-const options: ApexOptions = {
-  legend: { show: true },
-  chart: { type: 'area', height: 350 },
-  xaxis: {
-    categories: Array.from({ length: 25 }, (_, i) => i.toString()), // Mantener las categorías fijas
-    labels: { show: true },
-    title: { text: 'Hora' },
-  },
-  yaxis: {
-    labels: { show: true, formatter: (val) => Math.round(val).toString() },
-    title: { text: 'Temperatura (ºC)' },
-  },
-  markers: { size: 5, colors: ['#3C50E0'] },
-  dataLabels: { enabled: false },
-};
+
 
 const ChartOne: React.FC = () => {
   const [nodo1Data, setNodo1Data] = useState<number[]>([]);
   const [selectedProducts, setSelectedProducts] = useState<number[]>([0, 1]);
+  const [fechas, setFechas] = useState<string[]>([]);
+  const [valores, setValores] = useState<number[]>([]);
 
-  useEffect(() => {
+  const options: ApexOptions = {
+    legend: { show: true },
+    chart: { type: 'area', height: 350 },
+    xaxis: {
+      categories: Array.from({ length: fechas.length }, (_, i) => i.toString()), // Mantener las categorías fijas
+      labels: { show: true },
+      title: { text: 'Hora' },
+    },
+    yaxis: {
+      labels: { show: true, formatter: (val) => Math.round(val).toString() },
+      title: { text: 'Temperatura (ºC)' },
+    },
+    markers: { size: 5, colors: ['#3C50E0'] },
+    dataLabels: { enabled: false },
+  };
+
+
+  /*useEffect(() => {
     const fetchNodo1Data = async () => {
       try {
         const response = await axios.get('http://localhost:8000/medicion/filtrar');
@@ -72,7 +77,7 @@ const ChartOne: React.FC = () => {
     { name: 'Nodo 3', data: allProducts[2].data }, // Datos falsos
     { name: 'Nodo 4', data: allProducts[3].data }, // Datos falsos
     { name: 'Nodo 5', data: allProducts[4].data }, // Datos falsos
-  ];
+  ];*/
 
   const selectNodeOptions = [
     { value: 1, label: "Nodo 1" },
@@ -111,11 +116,16 @@ const ChartOne: React.FC = () => {
       fechaDesde: startDate,
       fechaHasta: endDate
     }
-    const data = await fetch('http://localhost:8000/medicion/filtrar', {
+    const response = await fetch('http://localhost:8000/medicion/filtrar', {
       method: "POST",
       headers: {"Content-Type": "application/json",},
       body: JSON.stringify(filtro),
     });
+    if (response.ok){
+      const data = await response.json();
+      setFechas(data.fechas);
+      setValores(data.valores);
+    }
     
 
   }
@@ -175,7 +185,7 @@ const ChartOne: React.FC = () => {
           xaxis: { categories: fechas }, // Ajusta con las fechas
         }}
         series={[{
-          name: selectedDataType,
+          name: selectDataTypeOptions[selectedDataType].label,
           data: valores  // Ajusta con los valores de las mediciones filtradas
         }]}
         type="area"
