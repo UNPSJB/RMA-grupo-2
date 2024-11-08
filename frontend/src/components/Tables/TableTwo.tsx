@@ -2,7 +2,6 @@ import React, { useEffect, useState } from 'react';
 import axios from 'axios';
 
 interface Medicion {
-  id: number;
   nodo: number;
   tipo: number; 
   dato: number;
@@ -86,7 +85,6 @@ const TableTwo: React.FC = () => {
   const downloadCSV = () => {
 
     const headers = [
-      'ID', 
       'Nodo', 
       'Tipo de Medición', 
       'Dato (con unidad)', 
@@ -94,7 +92,6 @@ const TableTwo: React.FC = () => {
     ];
 
     const rows = filteredData.map(item => [
-      item.id,
       item.nodo,
       item.tipo === 1 || item.tipo === 2 ? 'Temperatura' : item.tipo === 25 ? 'Altura' : 'Otro',
       `${Math.round(item.dato * 100) / 100}${item.tipo === 1 || item.tipo === 2 ? ' °C' : item.tipo === 25 ? ' m' : ''}`,
@@ -107,7 +104,6 @@ const TableTwo: React.FC = () => {
       })
     ]);
   
- 
     const csvContent = [headers, ...rows]
       .map(row => row.map(value => `"${value}"`).join(';')) 
       .join('\n');
@@ -218,10 +214,10 @@ const TableTwo: React.FC = () => {
             </div>
           </div>
 
-          {paginatedData.map(item => (
+          {paginatedData.map((item, index) => (
             <div
               className="grid grid-cols-3 sm:grid-cols-4 border-b border-stroke dark:border-strokedark"
-              key={item.id}
+              key={index}
             >
               <div className="flex items-center gap-3 p-2.5 xl:p-5">
                 <p className="text-black dark:text-white">{item.nodo}</p>
@@ -244,7 +240,6 @@ const TableTwo: React.FC = () => {
           ))}
         </div>
       </div>
-
 
       <div className="flex justify-center mt-4">
         <button
