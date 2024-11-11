@@ -12,7 +12,7 @@ import jwt
 from jwt.exceptions import InvalidTokenError
 from passlib.context import CryptContext
 
-pwd_context = CryptContext(schemes=["bcrypt"], deprecated="auto") #para encriptar pass
+pwd_context = CryptContext(schemes=["bcrypt"]) #, deprecated="auto") #para encriptar pass
 
 
 load_dotenv()#.env
