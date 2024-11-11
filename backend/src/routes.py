@@ -9,7 +9,8 @@ from sqlalchemy.future import select
 from backend.src.models import Medicion, Nodo, Usuario
 from typing import List
 from backend.src.auth import authenticate_user
-from jose import jwt, JWTError
+import jwt
+from jwt.exceptions import InvalidTokenError
 
 router = APIRouter()
 
