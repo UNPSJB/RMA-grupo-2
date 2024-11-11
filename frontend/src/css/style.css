@@ -209,6 +209,38 @@ span.flatpickr-weekday,
 .custom-input-date-2::-webkit-calendar-picker-indicator {
   background-image: url(./images/icon/icon-arrow-down.svg);
 }
+/* Estilos para la impresión */
+@media print {
+  /* Estilo general de la página */
+  body {
+    font-family: Arial, sans-serif;
+    color: black;
+    background-color: white;
+  }
+
+  /* Ocultar elementos que no deben aparecer en la impresión */
+  .no-print {
+    display: none;
+  }
+
+  /* Contenedor que contiene todo el contenido de la impresión */
+  .print-container {
+    width: 100%;
+    padding: 20px;
+    page-break-before: always;
+  }
+
+  /* Para los gráficos y las tablas */
+  #chart-container, #table-container {
+    width: 100%;
+    page-break-before: always;
+  }
+
+  /* Configurar las tarjetas para que se muestren bien */
+  .card-container {
+    margin-bottom: 20px;
+  }
+}
 
 [x-cloak] {
   display: none !important;
