@@ -13,6 +13,7 @@ import PanelNodos from './pages/Admin/PanelNodos';
 import PanelUsuarios from './pages/Admin/PanelUsuarios';
 import AdminMain from './pages/Admin/AdminMain';
 import ProtectedRoute from './ProtectedRoute'; // Importa ProtectedRoute
+import AdminLayout from './layout/AdminLayout';
 
 function App() {
   const [loading, setLoading] = useState<boolean>(true);
@@ -54,6 +55,8 @@ function App() {
         }/>
 
         {/* Ruta protegida para administradores */}
+      </Route>
+      <Route element={<AdminLayout/>}>
         <Route path="/admin/nodos" element={
           <ProtectedRoute requiredRole="admin">
             <PanelNodos />

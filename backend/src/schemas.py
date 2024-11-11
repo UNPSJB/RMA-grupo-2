@@ -28,6 +28,12 @@ class Medicion(MedicionBase):
 class MedicionCreate(MedicionBase):
     pass
 
+class MedicionFiltro(BaseModel):
+    nodo: int
+    tipo: int
+    fechaDesde: datetime.datetime
+    fechaHasta: datetime.datetime
+
 ## ----------------------- USUARIO
 class UsuarioBase(BaseModel):
     nombre: str
@@ -120,3 +126,5 @@ class NodoUpdate(NodoBase):
 class Token(BaseModel):
     access_token: str
     token_type: str
+
+
