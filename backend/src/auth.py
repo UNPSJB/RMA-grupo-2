@@ -8,7 +8,8 @@ from backend.database import get_db
 from datetime import datetime, timedelta
 from fastapi import Depends, FastAPI, HTTPException
 from fastapi.security import OAuth2PasswordBearer, OAuth2PasswordRequestForm
-from jose import JWTError, jwt
+import jwt
+from jwt.exceptions import InvalidTokenError
 from passlib.context import CryptContext
 
 pwd_context = CryptContext(schemes=["bcrypt"]) #, deprecated="auto") #para encriptar pass
@@ -62,7 +63,7 @@ async def get_current_user(token: str, db: AsyncSession = Depends(get_db)):
         if user_id is None or role is None:
             raise credentials_exception
         return {"user_id": user_id, "role": role}
-    except JWTError:
+    except InvalidTokenError:
         raise credentials_exception
 
 def role_required(required_role: str):
