@@ -5,6 +5,7 @@ import LogoDark from '../../images/logo/logo-dark.svg';
 import Logo from '../../images/logo/logo.svg';
 import { useNavigate } from 'react-router-dom';
 import { useAuth } from '../../AuthContext';
+import Alerts from '../../components/alerts'
 import dotenv from 'dotenv';
 
 
@@ -12,11 +13,20 @@ const SignIn: React.FC = () => {
   const navigate = useNavigate();
   const { setToken } = useAuth();
   const [formData, setFormData] = useState({ email: '', contrasena: '' });
+  const [alert, setAlert] = useState({
+    type: '',
+    message: '',
+    description: '',
+  });
   
   async function handleSubmit(event: FormEvent<HTMLFormElement>): Promise<void> {
     event.preventDefault();
     if (!formData.email || !formData.contrasena) {
-      alert("Por favor completa todos los campos.");
+      setAlert({
+        type: 'warning',
+        message: 'Atencion!',
+        description: 'Debe rellenar ambos campos.',
+      });
       return;
     }
 
@@ -33,11 +43,19 @@ const SignIn: React.FC = () => {
         setToken(accessToken);
         navigate('/user/RMA');
       } else {
-        alert("Correo electrónico o contraseña incorrectos.");
+        setAlert({
+          type: 'error',
+          message: 'Credenciales invalidas',
+          description: 'Revise el email o la contraseña.',
+        });
       }
     } catch (error) {
       console.error("Error:", error);
-      alert("Hubo un error al iniciar sesión.");
+      setAlert({
+        type: 'error',
+        message: 'Invalid Credentials',
+        description: 'The username or password you entered is incorrect.',
+      });
     }
   }
 
@@ -239,7 +257,13 @@ const SignIn: React.FC = () => {
                       onChange={(e) => setFormData({ ...formData, contrasena: e.target.value })}
                       value={formData.contrasena}
                     />
-
+                    {alert.message && (
+                      <Alerts
+                        type={alert.type}
+                        message={alert.message}
+                        description={alert.description}
+                      />
+                    )}
                     <span className="absolute right-4 top-4">
                       <svg
                         className="fill-current"
