@@ -2,13 +2,7 @@ from pydantic import BaseModel, EmailStr, field_validator
 #from datetime import datetime
 from typing import Optional
 import datetime
-import enum
-from sqlalchemy import Enum
 
-class RolEnum(enum.Enum):
-    admin = "admin"
-    default = "default"
-    investigador = "investigador"
 
 ## ----------------------- MEDICIONES
 class MedicionBase(BaseModel):
@@ -86,8 +80,7 @@ class UsuarioUpdate(BaseModel):
         return contrasena
     
 class UsuarioUpdateRol(BaseModel):
-    rol: RolEnum
-
+    rol: str
 class UsuarioLogin(BaseModel):
     email: EmailStr
     contrasena: str
@@ -98,15 +91,17 @@ class NodoBase(BaseModel):
     posicionx: float
     posiciony: float
     nombre: str
-    descripcion: str
+    descripcion: Optional[str]
+    bateria: Optional[int]
     
 
 class Nodo(NodoBase):
-    id: Optional[int]
+
+    id: int
+    nombre: str
+    descripcion: Optional[str]
     posicionx: float
     posiciony: float
-    nombre: str
-    descripcion: str
     bateria: Optional[float]
 
     class Config:
@@ -119,4 +114,9 @@ class NodoUpdate(NodoBase):
     posicionx: float
     posiciony: float
     nombre: str
-    descripcion: str    
+    descripcion: Optional[str]    
+
+
+class Token(BaseModel):
+    access_token: str
+    token_type: str

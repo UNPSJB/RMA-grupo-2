@@ -6,7 +6,8 @@ from backend.src import schemas, services
 from sqlalchemy.future import select
 from backend.src.models import Medicion, Nodo, Usuario
 from typing import List
-from backend.src.auth import pwd_context
+from backend.src.auth import authenticate_user
+from jose import jwt, JWTError
 
 router = APIRouter()
 
@@ -29,14 +30,15 @@ async def get_mediciones(db:AsyncSession = Depends(get_db)):
     return await services.leer_mediciones(db)
 ## ----------------------- LOGIN
 
-@router.post("/login", response_model=schemas.Usuario)
+@router.post("/login", response_model=schemas.Token)
 async def login(usuario: schemas.UsuarioLogin, db: AsyncSession = Depends(get_db)):
-    result = await db.execute(select(Usuario).where(Usuario.email == usuario.email))
-    user = result.scalar_one_or_none()   
-    if user is None or not pwd_context.verify(usuario.contrasena, user.contrasena):
-        raise HTTPException(status_code=401, detail="Correo electronico o contraseña incorrectos.")
-    token = jwt.encode(user, getenv("TOKEN_KEY"), algorithm='HS256')
-    return token
+    # Autentica al usuario
+    user = await authenticate_user(db, usuario.email, usuario.contrasena)
+    # Genera el token JWT con el rol incluido en el payload
+    token_data = {"sub": user.email, "id": user.id, "role": user.rol}
+    token = jwt.encode(token_data, getenv("SECRET_KEY"), algorithm='HS256')
+    print(" Y EL TOKEN ES ", token_data)
+    return {"access_token": token, "token_type": "bearer"}
 
 ## ----------------------- USUARIO
 
@@ -91,3 +93,7 @@ async def delete_nodo(nodo_id: int, db: AsyncSession = Depends(get_db)):
 @router.get("/nodos", response_model=List[schemas.Nodo])
 async def get_nodos(db: AsyncSession = Depends(get_db)):
     return await services.leer_todos_los_nodos(db)
+
+@router.get("/mediciones", response_model=List[schemas.Medicion])
+async def get_mediciones(db:AsyncSession = Depends(get_db)):
+    return await services.leer_mediciones(db)

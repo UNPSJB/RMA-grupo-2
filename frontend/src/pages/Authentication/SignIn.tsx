@@ -5,57 +5,38 @@ import LogoDark from '../../images/logo/logo-dark.svg';
 import Logo from '../../images/logo/logo.svg';
 import { useNavigate } from 'react-router-dom';
 import { useAuth } from '../../AuthContext';
-import jwt from 'jsonwebtoken';
 import dotenv from 'dotenv';
 
 
 const SignIn: React.FC = () => {
   const navigate = useNavigate();
-
-  const [formData, setFormData] = useState({
-    email: '',
-    contrasena: '',
-  });
-
+  const { setToken } = useAuth();
+  const [formData, setFormData] = useState({ email: '', contrasena: '' });
+  
   async function handleSubmit(event: FormEvent<HTMLFormElement>): Promise<void> {
     event.preventDefault();
-    const data = {
-      email: formData.email,
-      contrasena: formData.contrasena,
-    };
-    if (formData.email == "" || formData.contrasena == "") {
+    if (!formData.email || !formData.contrasena) {
       alert("Por favor completa todos los campos.");
       return;
     }
 
     try {
-      console.log("Datos enviados:", data);
       const response = await fetch("http://localhost:8000/login", {
-        method: "POST", 
-        headers: {
-          "Content-Type": "application/json", // Indica que envías JSON
-        },
-        body: JSON.stringify(data), // Convierte el objeto a una cadena JSON
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(formData),
       });
 
       if (response.ok) {
-        const token = await response.json(); // Si la respuesta es correcta, obtienes los datos
-        const { setToken } = useAuth();
-        setToken(token);
-        dotenv.config();
-        const TOKEN_KEY: string = process.env.TOKEN_KEY!; // Usar afirmación no nula
-        console.log("Inicio de sesión exitoso:"); // Manejo de la respuesta exitosa
-        const payload = jwt.verify(token, TOKEN_KEY, { algorithms: ['HS256'] })
-        navigate('user/RMA');
-        // Aquí puedes guardar el token o los datos del usuario en el localStorage o en el estado
-        // localStorage.setItem('token', responseData.token); // Ejemplo de guardado de token
+        const data = await response.json();
+        const accessToken = data.access_token;
+        setToken(accessToken);
+        navigate('/user/RMA');
       } else {
-        const errorData = await response.json(); // Si hay un error, obtienes los datos del error
-        console.error("Error del servidor:", errorData); // Manejo del error
         alert("Correo electrónico o contraseña incorrectos.");
       }
     } catch (error) {
-      console.error("Error:", error); // Manejo de errores de red
+      console.error("Error:", error);
       alert("Hubo un error al iniciar sesión.");
     }
   }

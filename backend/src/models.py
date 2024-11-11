@@ -4,18 +4,16 @@ from sqlalchemy.orm import Mapped, mapped_column
 from sqlalchemy.ext.declarative import declarative_base
 from sqlalchemy import func
 from backend.database import Base, engine
-from sqlalchemy import Enum
-import enum
 
-class RolEnum(enum.Enum):
-    admin = "admin"
-    default = "default"
-    investigador = "investigador"
+
+
 
 Base = declarative_base()
 
 class BaseModel(Base):
     __abstract__ = True
+
+
 
 ## ----------------------- MEDICIONES
 class Medicion(Base):
@@ -44,7 +42,7 @@ class Usuario(Base):
         DateTime(timezone=True),
         default=func.now()
     )
-    rol: Mapped[RolEnum] = mapped_column(Enum(RolEnum, name='rol'), index=True, nullable=False)
+    rol: Mapped[str] = mapped_column(String, index=True, nullable=False)
 
 ## ------------------- NODOS
 
@@ -53,7 +51,7 @@ class Nodo(Base):
 
     id: Mapped[int] = mapped_column(Integer, primary_key=True, index=True, autoincrement=True)
     nombre : Mapped[str] = mapped_column(String, index=True, nullable=False)
+    descripcion : Mapped[str] = mapped_column(String, index=True, nullable=True)
     posicionx : Mapped[float] = mapped_column(Float, index=True, nullable=False)
     posiciony : Mapped[float] = mapped_column(Float, index=True, nullable=False)
-    descripcion : Mapped[str] = mapped_column(String, index=True, nullable=True)
     bateria: Mapped[float] = mapped_column(Float, index=True, nullable=True)

@@ -1,24 +1,23 @@
 import { useEffect, useState } from 'react';
 import { Route, Routes, useLocation } from 'react-router-dom';
-//import { AuthProvider } from 'AuthContext';
 import Loader from './common/Loader';
-//import PageTitle from './components/PageTitle';
 import SignIn from './pages/Authentication/SignIn';
+import Unauthorized from './pages/Authentication/Unauthorized';
 import SignUp from './pages/Authentication/SignUp';
 import RMA from './pages/Investigador/RMA';
-//import Perfil from './pages/Perfil';
 import Settings from './pages/Settings';
 import Tablas from './pages/Tablas';
 import DefaultLayout from './layout/DefaultLayout';
 import AuthLayout from './layout/AuthLayout';
-import PanelNodos from './pages/Admin/PanelNodos'
+import PanelNodos from './pages/Admin/PanelNodos';
 import PanelUsuarios from './pages/Admin/PanelUsuarios';
 import AdminMain from './pages/Admin/AdminMain';
+import ProtectedRoute from './ProtectedRoute'; // Importa ProtectedRoute
 
 function App() {
   const [loading, setLoading] = useState<boolean>(true);
   const { pathname } = useLocation();
-
+  
   useEffect(() => {
     window.scrollTo(0, 0);
   }, [pathname]);
@@ -31,20 +30,54 @@ function App() {
     <Loader />
   ) : (
     <Routes>
-      {/* Rutas con AuthLayout para SignIn y SignUp */}
+      {/* Rutas públicas con AuthLayout para SignIn y SignUp */}
       <Route element={<AuthLayout />}>
         <Route path="/" element={<SignIn />} />
         <Route path="/auth/signup" element={<SignUp />} />
+        <Route path="/unauthorized" element={<Unauthorized />} />
       </Route>
 
-      {/* Rutas con DefaultLayout para páginas de usuario */}
+      {/* Rutas protegidas con DefaultLayout */}
       <Route element={<DefaultLayout />}>
-        <Route path="/user/RMA" element={<RMA />} />
-        <Route path="/user/tablas" element={<Tablas />} />
-        <Route path="/settings" element={<Settings />} />
-        <Route path="/admin/nodos" element={<PanelNodos />} />
-        <Route path="/admin/usuarios" element={<PanelUsuarios />} />
-        <Route path="/admin" element={<AdminMain />} />
+        {/* Ruta protegida para usuarios con rol 'user' */}
+        <Route path="/user/RMA" element={
+          <ProtectedRoute requiredRole="investigador">
+            <RMA />
+          </ProtectedRoute>
+        }/>
+        
+        {/* Ruta protegida para usuarios con rol 'user' */}
+        <Route path="/user/tablas" element={
+          <ProtectedRoute requiredRole="investigador">
+            <Tablas />
+          </ProtectedRoute>
+        }/>
+
+        {/* Ruta protegida para administradores */}
+        <Route path="/admin/nodos" element={
+          <ProtectedRoute requiredRole="admin">
+            <PanelNodos />
+          </ProtectedRoute>
+        }/>
+        
+        <Route path="/admin/usuarios" element={
+          <ProtectedRoute requiredRole="admin">
+            <PanelUsuarios />
+          </ProtectedRoute>
+        }/>
+        
+        <Route path="/admin" element={
+          <ProtectedRoute requiredRole="admin">
+            <AdminMain />
+          </ProtectedRoute>
+        }/>
+
+        {/* Ruta accesible para cualquier usuario autenticado */}
+        <Route path="/settings" element={
+          <ProtectedRoute>
+            <Settings />
+          </ProtectedRoute>
+        }/>
       </Route>
     </Routes>
   );

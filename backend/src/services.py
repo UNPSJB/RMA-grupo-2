@@ -38,7 +38,7 @@ async def crear_medicion(db: AsyncSession, medicion: schemas.MedicionCreate) -> 
     return new_medicion
 
 async def leer_medicion(db: AsyncSession, medicion_id: int) -> schemas.Medicion:
-    async with db.begin:
+    async with db.begin():
         result = await db.execute(select(Medicion).filter(Medicion.id == medicion_id))
         db_medicion = result.scalar_one_or_none()
         if db_medicion is None:
@@ -46,7 +46,7 @@ async def leer_medicion(db: AsyncSession, medicion_id: int) -> schemas.Medicion:
         return db_medicion
 
 async def leer_mediciones(db: AsyncSession):
-    result = await db.execute(select(Medicion))  
+    result = await db.execute(select(Medicion)) 
     return result.scalars().all() 
 
 ## ----------------------- USUARIO
@@ -63,7 +63,7 @@ async def crear_usuario(db: AsyncSession, usuario: schemas.UsuarioCreate) -> sch
         fecha_registro=datetime.datetime.now(datetime.timezone.utc),
         rol="default"
     )
-
+    #print("VALORES: ", new_usuario.nombre, " ", new_usuario.email, " ", new_usuario.contrasena, " ", new_usuario.rol)
     try:
         db.add(new_usuario)
         await db.commit()
@@ -75,11 +75,13 @@ async def crear_usuario(db: AsyncSession, usuario: schemas.UsuarioCreate) -> sch
     return new_usuario
 
 async def leer_usuario(db: AsyncSession, usuario_id: int) -> schemas.Usuario:
-    async with db.begin:
+    async with db.begin():
+        print("BUSCA USUARIO", usuario_id)
         result = await db.execute(select(Usuario).filter(Usuario.id == usuario_id))
         db_usuario = result.scalar_one_or_none()
         if db_usuario is None:
             raise HTTPException(status_code=404, detail="Usuario no encontrado")
+        
         return db_usuario
     
 async def modificar_usuario(db: AsyncSession, usuario_id: int, usuario: schemas.UsuarioUpdate) -> schemas.Usuario:
@@ -100,7 +102,7 @@ async def modificar_rol_usuario(db: AsyncSession, usuario_id: int, usuario: sche
     db_usuario = await leer_usuario(db, usuario_id)
     
     if db_usuario:
-        db_usuario.rol = usuario.rol.value
+        db_usuario.rol = usuario.rol
         await db.commit()
         await db.refresh(db_usuario)
         return db_usuario
@@ -133,7 +135,7 @@ async def crear_nodo(db: AsyncSession, nodo: schemas.NodoCreate) -> schemas.Nodo
         posicionx = nodo.posicionx,
         posiciony = nodo.posiciony,
         nombre = nodo.nombre,
-        descripcion = nodo.descripcion,        
+        descripcion = nodo.descripcion,    
     )
     try:
         db.add(new_nodo)
@@ -148,6 +150,7 @@ async def leer_nodo(db: AsyncSession, nodo_id: int) -> schemas.Nodo:
     async with db.begin():
         result = await db.execute(select(Nodo).filter(Nodo.id == nodo_id))
         db_nodo = result.scalar_one_or_none()
+        print("LLEGA AKI CON RESULTADO ", db_nodo)
         if db_nodo is None:
             raise HTTPException(status_code=404, detail="Nodo no encontrado")
         return db_nodo
