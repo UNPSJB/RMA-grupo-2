@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import AlertPopup from '../../components/popUp'; // Asegúrate de que la ruta sea correcta
+import AlertPopup from '../../components/popUp';
 
 interface Nodo {
   id: number;
@@ -17,18 +17,16 @@ interface TableNodosProps {
 
 const TableNodos: React.FC<TableNodosProps> = ({ nodos, setNodos, onEditUptMode }) => {
   const [alert, setPopUp] = useState<{ message: string; description: string } | null>(null);
-  const [selectedNodo, setSelectedNodo] = useState<Nodo | null>(null); // Nodo seleccionado para eliminar
+  const [selectedNodo, setSelectedNodo] = useState<Nodo | null>(null);
 
-  // Mostrar la alerta con la opción de eliminar
   const showAlert = (nodo: Nodo) => {
-    setSelectedNodo(nodo); // Guardamos el nodo seleccionado para eliminar
+    setSelectedNodo(nodo);
     setPopUp({
       message: 'Atención!',
       description: 'La eliminación del nodo es permanente.',
     });
   };
 
-  // Eliminar el nodo
   const deleteNodo = async () => {
     if (!selectedNodo) return;
     try {
@@ -50,8 +48,6 @@ const TableNodos: React.FC<TableNodosProps> = ({ nodos, setNodos, onEditUptMode 
     } catch (error) {
       console.error('Error:', error);
     }
-
-    // Cerrar la alerta después de eliminar
     setPopUp(null);
   };
 
@@ -65,14 +61,14 @@ const TableNodos: React.FC<TableNodosProps> = ({ nodos, setNodos, onEditUptMode 
         Nodos totales
       </h4>
       
-      {/* Mostrar el popup si hay alerta */}
+      {}
       <div className="Alerta mb-4">
         {alert && (
           <AlertPopup
             message={alert.message}
             description={alert.description}
-            onClose={() => setPopUp(null)} // Cerrar la alerta
-            onConfirm={deleteNodo} // Confirmar eliminación
+            onClose={() => setPopUp(null)}
+            onConfirm={deleteNodo}
           />
         )}
       </div>
@@ -116,7 +112,7 @@ const TableNodos: React.FC<TableNodosProps> = ({ nodos, setNodos, onEditUptMode 
               </button>
               <button
                 className="bg-red-500 text-white px-4 py-2 rounded"
-                onClick={() => showAlert(nodo)} // Mostrar alerta para eliminar
+                onClick={() => showAlert(nodo)}
               >
                 Eliminar
               </button>
