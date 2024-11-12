@@ -11,7 +11,6 @@ const ProtectedRoute: React.FC<ProtectedRouteProps> = ({ children, requiredRole 
   const { token, role } = useAuth();
   // Si el usuario no está autenticado, redirige a la página de inicio de sesión
   if (!token) {
-    alert("No se ha podido autenticar el usuario")
     return <Navigate to="/" />;
   }
 

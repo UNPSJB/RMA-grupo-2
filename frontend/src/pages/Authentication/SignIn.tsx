@@ -257,13 +257,6 @@ const SignIn: React.FC = () => {
                       onChange={(e) => setFormData({ ...formData, contrasena: e.target.value })}
                       value={formData.contrasena}
                     />
-                    {alert.message && (
-                      <Alerts
-                        type={alert.type}
-                        message={alert.message}
-                        description={alert.description}
-                      />
-                    )}
                     <span className="absolute right-4 top-4">
                       <svg
                         className="fill-current"
@@ -287,7 +280,15 @@ const SignIn: React.FC = () => {
                     </span>
                   </div>
                 </div>
-
+                <div className="Alerta mb-4">
+                  {alert.message && (
+                    <Alerts
+                      type={alert.type}
+                      message={alert.message}
+                      description={alert.description}
+                    />
+                  )}
+                </div>
                 <div className="mb-5">
                   <input
                     type="submit"

@@ -3,7 +3,6 @@ import DefaultLayout from '../layout/DefaultLayout';
 import Breadcrumb from '../components/Breadcrumbs/Breadcrumb';
 
 const Alerts = ({ type, message, description }) => {
-  // Definir los estilos de las alertas según el tipo
   let alertStyles = '';
   let icon = '';
   let iconBg = '';
@@ -11,7 +10,6 @@ const Alerts = ({ type, message, description }) => {
   let bgColor = '';
   let textColor = '';
 
-  // Personalizamos según el tipo de alerta
   switch (type) {
     case 'warning':
       alertStyles = 'border-warning bg-warning bg-opacity-[15%] dark:bg-[#1B1B24] text-[#9D5425]';
@@ -23,7 +21,7 @@ const Alerts = ({ type, message, description }) => {
           ></path>
         </svg>
       );
-      iconBg = 'bg-warning bg-opacity-30'; // Fondo de color amarillo con opacidad para el icono (warning)
+      iconBg = 'bg-warning bg-opacity-30';
       break;
     case 'success':
       alertStyles = 'border-[#34D399] bg-[#34D399] bg-opacity-[15%] dark:bg-[#1B1B24] text-black';
@@ -36,7 +34,7 @@ const Alerts = ({ type, message, description }) => {
           ></path>
         </svg>
       );
-      iconBg = 'bg-[#34D399]'; // Fondo de color verde para el icono (success)
+      iconBg = 'bg-[#34D399]';
       break;
     case 'error':
       alertStyles = 'border-[#F87171] bg-[#F87171] bg-opacity-[15%] dark:bg-[#1B1B24] text-[#B45454]';
@@ -49,7 +47,7 @@ const Alerts = ({ type, message, description }) => {
           ></path>
         </svg>
       );
-      iconBg = 'bg-[#F87171]'; // Fondo de color rojo para el icono (error)
+      iconBg = 'bg-[#F87171]';
       break;
     default:
       break;
