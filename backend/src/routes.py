@@ -6,7 +6,7 @@ from sqlalchemy.ext.asyncio import AsyncSession
 from backend.database import get_db
 from backend.src import schemas, services
 from sqlalchemy.future import select
-from backend.src.models import Medicion, Nodo, Usuario
+from backend.src.models import Medicion, Nodo, Usuario, Alarma
 from typing import List
 from backend.src.auth import authenticate_user
 import jwt
@@ -120,3 +120,12 @@ async def get_nodos(db: AsyncSession = Depends(get_db)):
 @router.get("/mediciones", response_model=List[schemas.Medicion])
 async def get_mediciones(db:AsyncSession = Depends(get_db)):
     return await services.leer_mediciones(db)
+
+## ---------------------- ALARMA
+@router.post("/alarma", response_model=schemas.NodoCreate)
+async def create_alarma(alarma: schemas.AlarmaCreate, db: AsyncSession = Depends(get_db)):
+    try:
+        alarma = await create_alarma(db, alarma)
+        return alarma
+    except ValueError as e:
+        raise HTTPException(status_code=400, detail=str(e))

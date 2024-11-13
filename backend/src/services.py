@@ -3,10 +3,9 @@ from sqlalchemy import Enum
 from sqlalchemy.future import select
 from sqlalchemy import and_
 from backend.src import schemas, models
-from backend.src.models import Usuario, Nodo, Medicion
+from backend.src.models import Usuario, Nodo, Medicion, Alarma
 from fastapi import HTTPException
 from backend.database import SessionLocal
-from backend.src.datos import datos
 import datetime
 from backend.src.auth import pwd_context
 
@@ -19,8 +18,24 @@ async def get_db():
         
 ## ----------------------- MEDICIONES
 async def crear_medicion(db: AsyncSession, medicion: schemas.MedicionCreate) -> schemas.MedicionCreate:
-    mError = not (datos[medicion.tipo][0] <= medicion.dato <= datos[medicion.tipo][1])
-    new_medicion = models.Medicion(        
+    result = await db.execute(select(models.DatosSensores).filter(models.DatosSensores.type == medicion.tipo))
+    sensor_data = result.scalars().first()
+
+    if not sensor_data:
+        raise ValueError(f"Tipo de dato {medicion.tipo} no encontrado en la base de datos.")
+    
+    result_alarmas = await db.execute(
+        select(models.Alarma).filter(models.Alarma.tipo == medicion.tipo, models.Alarma.nodo == medicion.nodo)
+    )
+    alarmas = result_alarmas.scalars().all()
+    mError = not (sensor_data.min <= medicion.dato <= sensor_data.max)
+
+    for alarma in alarmas:
+        if alarma.valor_min <= medicion.dato <= alarma.valor_max:
+            # me falta poner el bot, aqui enviare el mensaje.
+            break
+
+    new_medicion = models.Medicion(
         nodo=medicion.nodo,
         tipo=medicion.tipo,
         dato=medicion.dato,
@@ -161,7 +176,7 @@ async def crear_nodo(db: AsyncSession, nodo: schemas.NodoCreate) -> schemas.Nodo
         await db.refresh(new_nodo)
     except Exception as e:
         await db.rollback()
-        raise HTTPException(status_code=400, detail="Error al crear nodo") from e
+        raise HTTPException(status_code=400, detail=f"Error al crear nodo: {str(e)}") from e
     return new_nodo
 
 async def leer_nodo(db: AsyncSession, nodo_id: int) -> schemas.Nodo:
@@ -199,3 +214,30 @@ async def eliminar_nodo(db: AsyncSession, nodo_id: int) -> dict:
 async def leer_todos_los_nodos(db: AsyncSession):
     result = await db.execute(select(Nodo))  
     return result.scalars().all() 
+
+## ----------------------- ALARMA
+async def create_alarma(db: AsyncSession, alarma: schemas.AlarmaCreate):
+    query_tipo = select(schemas.DatosSensores).filter(schemas.DatosSensores.tipo == alarma.tipo)
+    result_tipo = await db.execute(query_tipo)
+    tipo = result_tipo.scalars().first()
+    if not tipo:
+        raise ValueError(f"El tipo de dato con ID {alarma.tipo} no existe.")
+    
+    query_nodo = select(schemas.Nodo).filter(schemas.Nodo.id == alarma.nodo)
+    result_nodo = await db.execute(query_nodo)
+    nodo = result_nodo.scalars().first()
+    if not nodo:
+        raise ValueError(f"El nodo con ID {alarma.nodo} no existe.")
+
+    new_alarma = Alarma(
+        nombre=alarma.nombre,
+        descripcion=alarma.descripcion,
+        tipo=alarma.tipo,
+        nodo=alarma.nodo,
+        valor_min=alarma.valor_min,
+        valor_max=alarma.valor_max
+    )
+    db.add(new_alarma)
+    await db.commit()
+    await db.refresh(new_alarma)
+    return new_alarma

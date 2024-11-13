@@ -1,19 +1,14 @@
 import datetime
-from sqlalchemy import Integer, Boolean, String, Float, DateTime
-from sqlalchemy.orm import Mapped, mapped_column
+from sqlalchemy import Integer, Boolean, String, Float, DateTime, ForeignKey
+from sqlalchemy.orm import Mapped, mapped_column, relationship
 from sqlalchemy.ext.declarative import declarative_base
 from sqlalchemy import func
 from backend.database import Base, engine
-
-
-
 
 Base = declarative_base()
 
 class BaseModel(Base):
     __abstract__ = True
-
-
 
 ## ----------------------- MEDICIONES
 class Medicion(Base):
@@ -29,6 +24,32 @@ class Medicion(Base):
     )
     bateria: Mapped[int] = mapped_column(Integer, nullable=True)
     error: Mapped[bool] = mapped_column(Boolean, nullable=False)
+
+## ----------------------- DATOS SENSORES
+class DatosSensores(Base):
+    __tablename__ = 'datos_sensores'
+
+    tipo: Mapped[int] = mapped_column(Integer, primary_key=True, index=True)
+    min: Mapped[float] = mapped_column(Float)
+    max: Mapped[float] = mapped_column(Float)
+    descripcion: Mapped[str] = mapped_column(String)
+
+    alarma: Mapped[list["Alarma"]] = relationship("Alarma", back_populates="tipo_sensor")
+
+## ----------------------- ALARMAS
+class Alarma(Base):
+    __tablename__ = "alarma"
+
+    id: Mapped[int] = mapped_column(Integer, primary_key=True, index=True, autoincrement=True)
+    nombre: Mapped[str] = mapped_column(String, nullable=False)
+    descripcion: Mapped[str] = mapped_column(String, nullable=False)
+    tipo: Mapped[int] = mapped_column(Integer, ForeignKey('datos_sensores.tipo'), nullable=False)  # Clave foránea de datos_sensores
+    nodo: Mapped[int] = mapped_column(Integer, ForeignKey('nodo.id'), nullable=False)  # Clave foránea de nodo
+    valor_min: Mapped[float] = mapped_column(Float, nullable=False)
+    valor_max: Mapped[float] = mapped_column(Float, nullable=False)
+
+    tipo_sensor: Mapped["DatosSensores"] = relationship("DatosSensores", back_populates="alarma")
+    nodo_info: Mapped["Nodo"] = relationship("Nodo", back_populates="alarma")
 
 ## ----------------------- Usuario
 class Usuario(Base):
@@ -55,3 +76,5 @@ class Nodo(Base):
     posicionx : Mapped[float] = mapped_column(Float, index=True, nullable=False)
     posiciony : Mapped[float] = mapped_column(Float, index=True, nullable=False)
     bateria: Mapped[float] = mapped_column(Float, index=True, nullable=True)
+
+    alarma: Mapped[list["Alarma"]] = relationship("Alarma", back_populates="nodo_info")

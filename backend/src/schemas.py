@@ -127,4 +127,18 @@ class Token(BaseModel):
     access_token: str
     token_type: str
 
+## ----------------------- DATOS SENSORES
+class DatosSensores(BaseModel):
+    tipo: int
+    min: int
+    max: int
+    descripcion: str
 
+## ----------------------- ALARMA
+class AlarmaCreate(BaseModel):
+    nombre: str
+    descripcion: str
+    tipo: int
+    nodo: int
+    valor_min: float
+    valor_max: float

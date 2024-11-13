@@ -41,7 +41,7 @@ class Nodo:
 
         while not self.stop_event.is_set():
             if len(message) == 0:
-                message = str(random.uniform(12.0, 30.0))
+                message = str(random.uniform(12.0, 70.0))
             mensaje = self.formatear_mensaje(
                 topic,
                 tipo,
