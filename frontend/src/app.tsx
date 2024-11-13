@@ -6,7 +6,7 @@ import Unauthorized from './pages/Authentication/Unauthorized';
 import SignUp from './pages/Authentication/SignUp';
 import RMA from './pages/Investigador/RMA';
 import Settings from './pages/Settings';
-import Tablas from './pages/Tablas';
+import Tablas from './pages/Investigador/Tablas';
 import DefaultLayout from './layout/DefaultLayout';
 import AuthLayout from './layout/AuthLayout';
 import PanelNodos from './pages/Admin/PanelNodos';

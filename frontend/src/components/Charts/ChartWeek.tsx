@@ -2,7 +2,6 @@ import { ApexOptions } from 'apexcharts';
 import React, { useEffect, useState } from 'react';
 import ReactApexChart from 'react-apexcharts';
 import Select, { MultiValue, ActionMeta, SingleValue } from 'react-select';
-import DatePicker from 'react-datepicker';
 import "react-datepicker/dist/react-datepicker.css";
 import axios from 'axios';
 
@@ -25,7 +24,7 @@ interface Medicion {
 
 
 
-const ChartOne: React.FC = () => {
+const ChartWeek: React.FC = () => {
   const [filteredData, setFilteredData] = useState<Medicion[]>([]);
   const [medicionData, setMedicionData] = useState<Medicion[]>([]);
   const [fechas, setFechas] = useState<Date[]>([]);
@@ -47,47 +46,6 @@ const ChartOne: React.FC = () => {
     dataLabels: { enabled: false },
   };
 
-
-  /*useEffect(() => {
-    const fetchNodo1Data = async () => {
-      try {
-        const response = await axios.get('http://localhost:8000/medicion/filtrar');
-        const data = response.data;
-
-        // Agrupar y calcular el promedio de temperaturas por hora
-        const groupedData: { [key: string]: number[] } = {};
-        data.forEach((item: any) => {
-          const date = new Date(item.tiempo).getHours(); // Obtener solo la hora
-          if (!groupedData[date]) {
-            groupedData[date] = [];
-          }
-          groupedData[date].push(parseFloat(item.dato)); // Convertir a número
-        });
-
-        // Calcular promedios por hora (de 0 a 23)
-        const averageData = Array.from({ length: 24 }, (_, i) => {
-          const values = groupedData[i] || [];
-          return values.length ? values.reduce((sum, val) => sum + val, 0) / values.length : 0; // Promedio o 0 si no hay datos
-        });
-
-        setNodo1Data(averageData); // Actualizamos el estado con los promedios
-      } catch (error) {
-        console.error('Error al obtener datos del Nodo 1:', error);
-      }
-    };
-
-    fetchNodo1Data();
-  }, []);
-
-  // Combinamos los datos del nodo 1 con los datos falsos de otros nodos
-  const series = [
-    { name: 'Nodo 1', data: nodo1Data.length > 0 ? nodo1Data : Array(24).fill(0) }, // Datos promediados del nodo 1
-    { name: 'Nodo 2', data: allProducts[1].data }, // Datos falsos
-    { name: 'Nodo 3', data: allProducts[2].data }, // Datos falsos
-    { name: 'Nodo 4', data: allProducts[3].data }, // Datos falsos
-    { name: 'Nodo 5', data: allProducts[4].data }, // Datos falsos
-  ];*/
-
   const selectNodeOptions = [
     { value: 1, label: "Nodo 1" },
     { value: 2, label: "Nodo 2" },
@@ -100,8 +58,8 @@ const ChartOne: React.FC = () => {
 
   const [selectedNode, setSelectedNode] = useState(selectNodeOptions[0].value);
   const [selectedDataType, setSelectedDataType] = useState(selectDataTypeOptions[0].value);
-  const [startDate, setStartDate] = useState(new Date());
-  const [endDate, setEndDate] = useState(new Date());
+  const hoy = new Date();
+  const haceseisdias = new Date(hoy.getDate() - 7);
 
   const handleNodeSelect = (selectedOption: SingleValue<{ value: number; label: string }>) => {
     if(selectedOption != null){
@@ -131,14 +89,9 @@ const ChartOne: React.FC = () => {
       } else if (selectedDataType === 25) {
         data = data.filter((item: { tipo: number; }) => item.tipo === 25);
       }
-  
-      if (startDate) {
-        data = data.filter((item: { tiempo: string | number | Date; }) => new Date(item.tiempo) >= new Date(startDate));
-      }
-  
-      if (endDate) {
-        data = data.filter((item: { tiempo: string | number | Date; }) => new Date(item.tiempo) <= new Date(endDate));
-      }
+
+    data = data.filter((item: { tiempo: string | number | Date; }) => new Date(item.tiempo) >= new Date(haceseisdias));
+    data = data.filter((item: { tiempo: string | number | Date; }) => new Date(item.tiempo) <= new Date(hoy));
       setFilteredData(data);
       setFechas(filteredData.map((d: Medicion) => d.tiempo));
       setValores(filteredData.map((d: Medicion) => d.dato));
@@ -172,25 +125,6 @@ const ChartOne: React.FC = () => {
 
         {/* Selector de Rango de Fechas */}
         <div className="flex space-x-2">
-          <DatePicker
-            selected={startDate}
-            onChange={(date) => setStartDate(date)}
-            selectsStart
-            startDate={startDate}
-            endDate={endDate}
-            placeholderText="Fecha Desde"
-            className="w-full max-w-xs"
-          />
-          <DatePicker
-            selected={endDate}
-            onChange={(date) => setEndDate(date)}
-            selectsEnd
-            startDate={startDate}
-            endDate={endDate}
-            minDate={startDate}
-            placeholderText="Fecha Hasta"
-            className="w-full max-w-xs"
-          />
           <button
           onClick={handleSearch}
           className="bg-blue-500 text-white px-4 py-2 rounded-md hover:bg-blue-600"
@@ -218,4 +152,4 @@ const ChartOne: React.FC = () => {
 };
 
 
-export default ChartOne;
+export default ChartWeek;
