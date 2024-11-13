@@ -7,13 +7,15 @@ import SignUp from './pages/Authentication/SignUp';
 import RMA from './pages/Investigador/RMA';
 import Settings from './pages/Settings';
 import Tablas from './pages/Investigador/Tablas';
-import DefaultLayout from './layout/DefaultLayout';
+import InvestigadorLayout from './layout/InvestigadorLayout';
 import AuthLayout from './layout/AuthLayout';
 import PanelNodos from './pages/Admin/PanelNodos';
 import PanelUsuarios from './pages/Admin/PanelUsuarios';
 import AdminMain from './pages/Admin/AdminMain';
 import ProtectedRoute from './ProtectedRoute'; // Importa ProtectedRoute
 import AdminLayout from './layout/AdminLayout';
+import DefaultLayout from './layout/DefaultLayout';
+import PaginaDefault from './pages/DefaultView/PaginaDefault';
 
 function App() {
   const [loading, setLoading] = useState<boolean>(true);
@@ -38,8 +40,8 @@ function App() {
         <Route path="/unauthorized" element={<Unauthorized />} />
       </Route>
 
-      {/* Rutas protegidas con DefaultLayout */}
-      <Route element={<DefaultLayout />}>
+      {/* Rutas protegidas con InvestigadorLayout */}
+      <Route element={<InvestigadorLayout />}>
         {/* Ruta protegida para usuarios con rol 'user' */}
         <Route path="/user/RMA" element={
           <ProtectedRoute requiredRole="investigador">
@@ -79,6 +81,11 @@ function App() {
         <Route path="/settings" element={
           <ProtectedRoute>
             <Settings />
+          </ProtectedRoute>
+        }/>
+        <Route path="/RMAinvitado" element={
+          <ProtectedRoute>
+            <PaginaDefault />
           </ProtectedRoute>
         }/>
       </Route>

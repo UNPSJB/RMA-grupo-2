@@ -45,6 +45,10 @@ const ChartOne: React.FC = () => {
     },
     markers: { size: 5, colors: ['#3C50E0'] },
     dataLabels: { enabled: false },
+    stroke: {
+      curve: 'smooth', // Define la suavidad de la línea
+      width: 2, // Ajusta el grosor de la línea
+    },
   };
 
 
@@ -139,6 +143,7 @@ const ChartOne: React.FC = () => {
       if (endDate) {
         data = data.filter((item: { tiempo: string | number | Date; }) => new Date(item.tiempo) <= new Date(endDate));
       }
+      //data.sort(function(a: Medicion, b:Medicion){ return( (a.tiempo).getTime() - (b.tiempo).getTime())});
       setFilteredData(data);
       setFechas(filteredData.map((d: Medicion) => d.tiempo));
       setValores(filteredData.map((d: Medicion) => d.dato));
