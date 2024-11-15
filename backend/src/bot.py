@@ -1,7 +1,7 @@
 from aiogram import Bot, Dispatcher
 import logging
 
-API_TOKEN = '7609847784:AAFmy1uIAsqlUovuGaThPD8oiZPk528srSI'
+API_TOKEN = 'token'
 CHANNEL_ID = '@RMAgrupo2'
 
 bot = Bot(token=API_TOKEN)
