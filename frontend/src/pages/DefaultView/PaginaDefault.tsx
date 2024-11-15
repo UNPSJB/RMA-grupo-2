@@ -38,7 +38,7 @@ enum TipoMensaje {
   WATER_HEIGHT = 25,
 }
 
-const RMA: React.FC = () => {
+const PaginaDefault: React.FC = () => {
   const [lastMeasurement, setLastMeasurement] = useState<{ temperature: { value: number | null; nodo: number | null }; height: { value: number | null; nodo: number | null } }>({
     temperature: { value: null, nodo: null },
     height: { value: null, nodo: null },
@@ -170,4 +170,4 @@ const RMA: React.FC = () => {
   );
 };
 
-export default RMA;
+export default PaginaDefault;
