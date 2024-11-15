@@ -41,7 +41,13 @@ const SignIn: React.FC = () => {
         const data = await response.json();
         const accessToken = data.access_token;
         setToken(accessToken);
-        navigate('/user/RMA');
+        const role = localStorage.getItem('role');
+        if(role == 'admin')
+          navigate('/admin/RMA');
+        if(role == 'investigador')
+          navigate('/user/RMA');
+        if(role == 'default')
+          navigate('/unauthorized');
       } else {
         setAlert({
           type: 'error',

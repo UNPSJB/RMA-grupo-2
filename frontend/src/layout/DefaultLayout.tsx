@@ -1,9 +1,9 @@
 import React, { useState, ReactNode } from 'react';
 import Header from '../components/Header/index';
-import Sidebar from '../components/Sidebar/index';
+import Sidebar from '../components/DefaultSidebar/index';
 import { useOutlet } from "react-router-dom"; // Importar useOutlet
 
-const InvestigadorLayout: React.FC = () => {
+const DefaultLayout: React.FC = () => {
   const [sidebarOpen, setSidebarOpen] = useState(false);
   const outlet = useOutlet();
   return (
@@ -35,4 +35,4 @@ const InvestigadorLayout: React.FC = () => {
   );
 };
 
-export default InvestigadorLayout;
+export default DefaultLayout;

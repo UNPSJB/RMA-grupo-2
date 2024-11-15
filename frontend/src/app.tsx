@@ -60,6 +60,11 @@ function App() {
         {/* Ruta protegida para administradores */}
       </Route>
       <Route element={<AdminLayout/>}>
+        <Route path="/admin/RMA" element={
+          <ProtectedRoute requiredRole="admin">
+            <RMA />
+          </ProtectedRoute>
+        }/>
         <Route path="/admin/nodos" element={
           <ProtectedRoute requiredRole="admin">
             <PanelNodos />
