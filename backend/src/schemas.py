@@ -135,10 +135,33 @@ class DatosSensores(BaseModel):
     descripcion: str
 
 ## ----------------------- ALARMA
-class AlarmaCreate(BaseModel):
+class AlarmaBase(BaseModel):
     nombre: str
     descripcion: str
     tipo: int
     nodo: int
     valor_min: float
     valor_max: float
+    
+
+class Alarma(AlarmaBase):
+    nombre: str
+    descripcion: str
+    tipo: int
+    nodo: int
+    valor_min: float
+    valor_max: float
+
+    class Config:
+        orm_mode = True
+
+class AlarmaCreate(AlarmaBase):
+    pass
+
+class AlarmaUpdate(AlarmaBase):
+    nombre: str
+    descripcion: str
+    tipo: int
+    nodo: int
+    valor_min: float
+    valor_max: float  

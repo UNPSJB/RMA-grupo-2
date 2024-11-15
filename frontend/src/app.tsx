@@ -14,6 +14,7 @@ import PanelUsuarios from './pages/Admin/PanelUsuarios';
 import AdminMain from './pages/Admin/AdminMain';
 import ProtectedRoute from './ProtectedRoute'; // Importa ProtectedRoute
 import AdminLayout from './layout/AdminLayout';
+import PanelAlarmas from './pages/Admin/PanelAlarmas';
 import DefaultLayout from './layout/DefaultLayout';
 import PaginaDefault from './pages/DefaultView/PaginaDefault';
 
@@ -68,6 +69,12 @@ function App() {
         <Route path="/admin/usuarios" element={
           <ProtectedRoute requiredRole="admin">
             <PanelUsuarios />
+          </ProtectedRoute>
+        }/>
+
+        <Route path="/admin/alarmas" element={
+          <ProtectedRoute requiredRole="admin">
+            <PanelAlarmas />
           </ProtectedRoute>
         }/>
         

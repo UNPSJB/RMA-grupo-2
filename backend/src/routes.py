@@ -122,10 +122,31 @@ async def get_mediciones(db:AsyncSession = Depends(get_db)):
     return await services.leer_mediciones(db)
 
 ## ---------------------- ALARMA
-@router.post("/alarma", response_model=schemas.NodoCreate)
-async def create_alarma(alarma: schemas.AlarmaCreate, db: AsyncSession = Depends(get_db)):
+@router.post("/alarma", response_model=schemas.AlarmaCreate)
+async def crear_alarma(alarma: schemas.AlarmaCreate, db: AsyncSession = Depends(get_db)):
     try:
-        alarma = await create_alarma(db, alarma)
+        alarma = await services.crear_alarma(db, alarma)
         return alarma
     except ValueError as e:
         raise HTTPException(status_code=400, detail=str(e))
+    
+@router.get("/alarma/{alarma_id}", response_model=schemas.Alarma)
+async def get_alarma(alarma_id: int, db: AsyncSession = Depends(get_db)):
+    return await services.leer_alarma(db, alarma_id)
+
+
+@router.put("/alarma/{alarma_id}", response_model=schemas.Alarma)
+async def update_alarma(
+    alarma_id: int, alarma: schemas.AlarmaUpdate, db: AsyncSession = Depends(get_db)
+):
+    return await services.modificar_alarma(db, alarma_id, alarma)
+
+
+@router.delete("/alarma/{alarma_id}")
+async def delete_alarma(alarma_id: int, db: AsyncSession = Depends(get_db)):
+    return await services.eliminar_alarma(db, alarma_id)
+
+
+@router.get("/alarmas", response_model=List[schemas.Alarma])
+async def get_alarmas(db: AsyncSession = Depends(get_db)):
+    return await services.leer_todas_las_alarmas(db)

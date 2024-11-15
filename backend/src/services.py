@@ -3,7 +3,7 @@ from sqlalchemy import Enum
 from sqlalchemy.future import select
 from sqlalchemy import and_
 from backend.src import schemas, models
-from backend.src.models import Usuario, Nodo, Medicion, Alarma
+from backend.src.models import Usuario, Nodo, Medicion, Alarma, DatosSensores
 from fastapi import HTTPException
 from backend.database import SessionLocal
 import datetime
@@ -220,13 +220,13 @@ async def leer_todos_los_nodos(db: AsyncSession):
 
 ## ----------------------- ALARMA
 async def crear_alarma(db: AsyncSession, alarma: schemas.AlarmaCreate):
-    query_tipo = select(schemas.DatosSensores).filter(schemas.DatosSensores.tipo == alarma.tipo)
+    query_tipo = select(DatosSensores).filter(DatosSensores.tipo == alarma.tipo)
     result_tipo = await db.execute(query_tipo)
     tipo = result_tipo.scalars().first()
     if not tipo:
         raise ValueError(f"El tipo de dato con ID {alarma.tipo} no existe.")
     
-    query_nodo = select(schemas.Nodo).filter(schemas.Nodo.id == alarma.nodo)
+    query_nodo = select(Nodo).filter(Nodo.id == alarma.nodo)
     result_nodo = await db.execute(query_nodo)
     nodo = result_nodo.scalars().first()
     if not nodo:
@@ -244,3 +244,40 @@ async def crear_alarma(db: AsyncSession, alarma: schemas.AlarmaCreate):
     await db.commit()
     await db.refresh(new_alarma)
     return new_alarma
+
+async def leer_alarma(db: AsyncSession, alarma_id: int) -> schemas.Alarma:
+    async with db.begin():
+        result = await db.execute(select(Alarma).filter(Alarma.id == alarma_id))
+        db_alarma = result.scalar_one_or_none()
+        if db_alarma is None:
+            raise HTTPException(status_code=404, detail="Alarma no encontrada")
+        return db_alarma
+    
+async def modificar_alarma(db: AsyncSession, alarma_id: int, alarma: schemas.AlarmaUpdate) -> schemas.Alarma:
+    db_alarma = await leer_alarma(db, alarma_id)
+    
+    if db_alarma:
+        db_alarma.nombre = alarma.nombre
+        db_alarma.descripcion = alarma.descripcion
+        db_alarma.tipo = alarma.tipo
+        db_alarma.nodo = alarma.nodo
+        db_alarma.valor_min = alarma.valor_min
+        db_alarma.valor_max = alarma.valor_max
+        await db.commit()
+        await db.refresh(db_alarma)
+        return db_alarma
+    else:
+        raise HTTPException(status_code=404, detail="alarma no encontrada")
+    
+async def eliminar_alarma(db: AsyncSession, alarma_id: int) -> dict:
+    db_alarma = await leer_alarma(db, alarma_id)
+    if db_alarma:
+        await db.delete(db_alarma)
+        await db.commit()
+        return {"detail": "Alarma eliminada"}
+    else:
+        raise HTTPException(status_code=404, detail="Alarma no encontrada")
+    
+async def leer_todas_las_alarmas(db: AsyncSession):
+    result = await db.execute(select(Alarma))  
+    return result.scalars().all() 
