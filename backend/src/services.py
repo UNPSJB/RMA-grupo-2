@@ -8,6 +8,7 @@ from fastapi import HTTPException
 from backend.database import SessionLocal
 import datetime
 from backend.src.auth import pwd_context
+from backend.src.bot import send_alarm_to_channel
 
 async def get_db():
     db = SessionLocal()
@@ -18,7 +19,7 @@ async def get_db():
         
 ## ----------------------- MEDICIONES
 async def crear_medicion(db: AsyncSession, medicion: schemas.MedicionCreate) -> schemas.MedicionCreate:
-    result = await db.execute(select(models.DatosSensores).filter(models.DatosSensores.type == medicion.tipo))
+    result = await db.execute(select(models.DatosSensores).filter(models.DatosSensores.tipo == medicion.tipo))
     sensor_data = result.scalars().first()
 
     if not sensor_data:
@@ -31,8 +32,10 @@ async def crear_medicion(db: AsyncSession, medicion: schemas.MedicionCreate) -> 
     mError = not (sensor_data.min <= medicion.dato <= sensor_data.max)
 
     for alarma in alarmas:
-        if alarma.valor_min <= medicion.dato <= alarma.valor_max:
-            # me falta poner el bot, aqui enviare el mensaje.
+        if medicion.dato < alarma.valor_min or medicion.dato > alarma.valor_max:
+            alarma_message = f"🚨¡ALERTA! Se ha disparado una alarma para el nodo {medicion.nodo} " \
+                             f"con el valor {medicion.dato} para el tipo de dato {sensor_data.descripcion}. "
+            await send_alarm_to_channel(alarma_message)
             break
 
     new_medicion = models.Medicion(
@@ -216,7 +219,7 @@ async def leer_todos_los_nodos(db: AsyncSession):
     return result.scalars().all() 
 
 ## ----------------------- ALARMA
-async def create_alarma(db: AsyncSession, alarma: schemas.AlarmaCreate):
+async def crear_alarma(db: AsyncSession, alarma: schemas.AlarmaCreate):
     query_tipo = select(schemas.DatosSensores).filter(schemas.DatosSensores.tipo == alarma.tipo)
     result_tipo = await db.execute(query_tipo)
     tipo = result_tipo.scalars().first()

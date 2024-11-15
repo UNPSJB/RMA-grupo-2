@@ -1,13 +1,13 @@
-import os, asyncio, sys, subprocess
+import os, asyncio, sys
 sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), '../'))) #Ejecutar desde RMA-grupo-2
 from dotenv import load_dotenv
 from fastapi import FastAPI
 from fastapi.staticfiles import StaticFiles
 from backend.database import engine, Base
-#from src.models import Producto
 from backend.src.routes import router as routers
 from sqlalchemy.future import select
 from fastapi.middleware.cors import CORSMiddleware
+from backend.src.bot import start_bot
 
 load_dotenv()#.env
 DATABASE_URL = os.getenv("DB_URL")
@@ -43,6 +43,8 @@ app.add_middleware(
 
 async def main():
     await init_db()
+    bot_task = asyncio.create_task(start_bot())
+    await asyncio.Event().wait()
 
 if __name__ == "__main__":
     asyncio.run(main())
