@@ -93,6 +93,10 @@ class UsuarioLogin(BaseModel):
 
 ##--------NODO
 
+class NodoList(BaseModel):
+    value: int
+    label: str
+
 class NodoBase(BaseModel):
     posicionx: float
     posiciony: float

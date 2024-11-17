@@ -117,6 +117,10 @@ async def delete_nodo(nodo_id: int, db: AsyncSession = Depends(get_db)):
 async def get_nodos(db: AsyncSession = Depends(get_db)):
     return await services.leer_todos_los_nodos(db)
 
+@router.get("/lista_nodos", response_model=List[schemas.NodoList])
+async def get_lista_nodos(db: AsyncSession = Depends(get_db)):
+    return await services.listar_nodos(db)
+
 @router.get("/mediciones", response_model=List[schemas.Medicion])
 async def get_mediciones(db:AsyncSession = Depends(get_db)):
     return await services.leer_mediciones(db)

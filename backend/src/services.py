@@ -218,6 +218,9 @@ async def leer_todos_los_nodos(db: AsyncSession):
     result = await db.execute(select(Nodo))  
     return result.scalars().all() 
 
+async def listar_nodos(db: AsyncSession):
+    result = await db.execute(select(Nodo))
+    return [{"value": nodo.id, "label": nodo.nombre} for nodo in result.scalars().all()]
 ## ----------------------- ALARMA
 async def crear_alarma(db: AsyncSession, alarma: schemas.AlarmaCreate):
     query_tipo = select(DatosSensores).filter(DatosSensores.tipo == alarma.tipo)
