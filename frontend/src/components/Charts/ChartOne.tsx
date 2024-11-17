@@ -263,6 +263,9 @@ const ChartOne: React.FC = () => {
   const [selectNodeOptions, setSelectNodeOptions] = useState<
     { value: number; label: string }[]
   >([]);
+  const [selectDataTypeOptions, setSelectDataTypeOptions] = useState<
+    { value: number; label: string }[]
+  >([]);
 
   const [selectedNode, setSelectedNode] = useState<number>(1);
   const [selectedDataType, setSelectedDataType] = useState<number>(1);
@@ -284,7 +287,6 @@ const ChartOne: React.FC = () => {
     stroke: { curve: 'smooth', width: 2 },
   };
 
-
   const fetchNodos = async () => {
     try {
       const response = await axios.get("http://localhost:8000/lista_nodos/");
@@ -294,12 +296,14 @@ const ChartOne: React.FC = () => {
     }
   };
 
-
-
-  const selectDataTypeOptions = [
-    { value: 1, label: "Temperatura" },
-    { value: 25, label: "Altura" },
-  ];
+  const fetchDataType = async () => {
+    try {
+      const response = await axios.get("http://localhost:8000/lista_tipo_medicion/");
+      setSelectDataTypeOptions(response.data); // Establecer el listado dinámicamente
+    } catch (error) {
+      console.error("Error al obtener los tipo de medicion:", error);
+    }
+  };
 
   const handleSearch = async () => {
     try {
@@ -336,6 +340,7 @@ const ChartOne: React.FC = () => {
 
   useEffect(() => {
     fetchNodos();
+    fetchDataType();
   }, []);
 
   return (
@@ -344,14 +349,14 @@ const ChartOne: React.FC = () => {
         <Select
           options={selectNodeOptions}
           onChange={(option) => option && setSelectedNode(option.value)}
-          defaultValue={selectNodeOptions[0]}
+          defaultValue={""}
           className="w-full max-w-xs"
         />
 
         <Select
           options={selectDataTypeOptions}
           onChange={(option) => option && setSelectedDataType(option.value)}
-          defaultValue={selectDataTypeOptions[0]}
+          defaultValue={""}
           className="w-full max-w-xs"
         />
 

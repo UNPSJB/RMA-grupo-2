@@ -93,7 +93,7 @@ class UsuarioLogin(BaseModel):
 
 ##--------NODO
 
-class NodoList(BaseModel):
+class Detalle(BaseModel):
     value: int
     label: str
 

@@ -84,6 +84,11 @@ async def leer_mediciones_filtro(db: AsyncSession, filtros: schemas.MedicionFilt
     }
     return datos
 
+async def listar_tipos_medicion(db: AsyncSession):
+    result = await db.execute(select(Medicion.tipo, DatosSensores.descripcion)
+                              .join(DatosSensores, Medicion.tipo == DatosSensores.tipo)
+                              .group_by(Medicion.tipo, DatosSensores.descripcion))
+    return [{"value": data.tipo, "label": data.descripcion} for data in result.all()]
 
 ## ----------------------- USUARIO
 async def crear_usuario(db: AsyncSession, usuario: schemas.UsuarioCreate) -> schemas.UsuarioCreate:
