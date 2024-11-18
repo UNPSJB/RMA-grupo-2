@@ -1,7 +1,7 @@
 import { ApexOptions } from 'apexcharts';
 import React, { useState, useEffect } from 'react';
 import ReactApexChart from 'react-apexcharts';
-
+import selectStyles from 'styles'
 const options: ApexOptions = {
   legend: {
     show: false,

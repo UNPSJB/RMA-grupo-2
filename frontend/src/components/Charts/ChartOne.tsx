@@ -5,6 +5,7 @@ import Select, { SingleValue } from 'react-select';
 import DatePicker from 'react-datepicker';
 import "react-datepicker/dist/react-datepicker.css";
 import axios from 'axios';
+//import selectStyles from './styles';
 
 interface Medicion {
   id: number;
@@ -16,7 +17,6 @@ interface Medicion {
 }
 
 const ChartOne: React.FC = () => {
-  const [medicionData, setMedicionData] = useState<Medicion[]>([]);
   const [filteredData, setFilteredData] = useState<Medicion[]>([]);
   const [startDate, setStartDate] = useState(new Date());
   const [endDate, setEndDate] = useState(new Date());
@@ -29,22 +29,37 @@ const ChartOne: React.FC = () => {
 
   const [selectedNode, setSelectedNode] = useState<number>(1);
   const [selectedDataType, setSelectedDataType] = useState<number>(1);
-
-  const options: ApexOptions = {
+  const [options, setChartOptions] = useState<ApexOptions>({
     legend: { show: true },
-    chart: { type: 'area', height: 350 },
+    chart: { type: "area", height: 350 },
     xaxis: {
-      type: 'datetime',
+      type: "datetime",
       labels: { show: true },
-      title: { text: 'Hora' },
+      title: { text: "Hora" },
     },
     yaxis: {
       labels: { formatter: (val) => Math.round(val).toString() },
-      title: { text: 'Temperatura (ºC)' },
+      title: { text: ""},
     },
-    markers: { size: 5, colors: ['#3C50E0'] },
+    markers: { size: 0, colors: ["#3C50E0"] },
     dataLabels: { enabled: false },
-    stroke: { curve: 'smooth', width: 2 },
+    stroke: { curve: "smooth", width: 2 },
+    grid: {
+      borderColor: '#333', // Línea de la cuadrícula en modo oscuro
+    },
+    fill: {
+      opacity: 1,
+      colors: ["#3C50E0"], // Color de fondo del gráfico en modo oscuro
+    },
+    tooltip: {
+      theme: 'dark', // Activar el tema oscuro en los tooltips
+    },
+  });
+
+  const yAxisSettings: Record<number, { min: number; max: number; title: string }> = {
+    1: { min: -20, max: 60, title: "Temperatura (ºC)" },
+    16: { min: 0, max: 100, title: "Voltaje(V)" },
+    25: { min: 0, max: 200, title: "Altura del suelo (mm)" },
   };
 
   const fetchNodos = async () => {
@@ -74,10 +89,8 @@ const ChartOne: React.FC = () => {
         data = data.filter((item) => item.nodo === selectedNode);
       }
 
-      if (selectedDataType === 1) {
-        data = data.filter((item) => item.tipo === 1 || item.tipo === 2);
-      } else if (selectedDataType === 25) {
-        data = data.filter((item) => item.tipo === 25);
+      if (selectedDataType) {
+        data = data.filter((item) => item.tipo === selectedDataType);
       }
 
       if (startDate) {
@@ -87,8 +100,18 @@ const ChartOne: React.FC = () => {
       if (endDate) {
         data = data.filter((item) => new Date(item.tiempo) <= endDate);
       }
-
+      
       setFilteredData(data);
+      const range = yAxisSettings[selectedDataType];
+      setChartOptions((prevOptions) => ({
+        ...prevOptions,
+        yaxis: {
+          ...prevOptions.yaxis,
+          min: range.min,
+          max: range.max,
+          title: { text: range.title },
+        },
+      }));
     } catch (error) {
       console.error('Error al obtener las mediciones:', error);
     }
@@ -97,14 +120,14 @@ const ChartOne: React.FC = () => {
   // Extraer fechas y valores para el gráfico
   const fechas = filteredData.map((d) => d.tiempo);
   const valores = filteredData.map((d) => d.dato);
-
+  
   useEffect(() => {
     fetchNodos();
     fetchDataType();
   }, []);
 
   return (
-    <div className="col-span-12 rounded-sm border border-stroke bg-white px-5 pt-7.5 pb-5 shadow-default">
+    <div className="col-span-12 rounded-sm border border-stroke bg-white dark:bg-boxdark px-5 pt-7.5 pb-5 shadow-default dark:border-strokedark">
       <div className="flex justify-between items-center mb-5">
         <Select
           options={selectNodeOptions}
@@ -127,7 +150,7 @@ const ChartOne: React.FC = () => {
             selectsStart
             startDate={startDate}
             endDate={endDate}
-            className="w-full max-w-xs"
+            className="w-full max-w-xs dark:text-white dark:bg-meta-4"
           />
           <DatePicker
             selected={endDate}
@@ -136,11 +159,11 @@ const ChartOne: React.FC = () => {
             startDate={startDate}
             endDate={endDate}
             minDate={startDate}
-            className="w-full max-w-xs"
+            className="w-full max-w-xs dark:text-white dark:bg-meta-4"
           />
           <button
             onClick={handleSearch}
-            className="bg-blue-500 text-white px-4 py-2 rounded-md hover:bg-blue-600"
+            className="bg-blue-500 text-white px-4 py-2 rounded-md hover:bg-blue-600 dark:bg-blue-800 dark:hover:bg-blue-700"
           >
             Buscar
           </button>
