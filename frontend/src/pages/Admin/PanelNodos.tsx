@@ -324,7 +324,6 @@ const PanelNodos = () => {
               </button>
             )}
           </div>
-          
         </form>
       </div>
     </>

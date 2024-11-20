@@ -3,7 +3,7 @@ name = "poetry-pedido-ahora"
 version = "0.1.0"
 description = "Proyecto para la materia desarrollo de software"
 authors = ["Federico Cabaña <federicogabriel12@hotmail.com>"]
-readme = "README.md"   
+readme = "README.md"
 
 [tool.poetry.dependencies]
 python = "^3.10"
@@ -16,7 +16,11 @@ email-validator = "^2.2.0"
 passlib = {extras = ["bcrypt"], version = "^1.7.4"}
 bcrypt = "^4.2.0"
 pyjwt = "^2.9.0"
+<<<<<<< Updated upstream
 aiogram = "^3.14.0"
+=======
+paho-mqtt = "^2.1.0"
+>>>>>>> Stashed changes
 
 [build-system]
 requires = ["poetry-core"]
