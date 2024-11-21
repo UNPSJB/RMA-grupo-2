@@ -2,6 +2,7 @@ import Breadcrumb from '../../components/Breadcrumbs/Breadcrumb';
 import TableOne from '../../components/Tables/TableOne';
 import TableThree from '../../components/Tables/TableThree';
 import TableTwo from '../../components/Tables/TableTwo';
+import TableError from '../../components/Tables/TableError';
 
 const Tablas = () => {
   return (
@@ -12,6 +13,7 @@ const Tablas = () => {
         <TableOne />
         <TableTwo />
         <TableThree />
+        <TableError />
       </div>
     </>
   );
