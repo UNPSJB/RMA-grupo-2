@@ -5,9 +5,7 @@ import ChartOne from '../../components/Charts/ChartOne';
 import ChartTwo from '../../components/Charts/ChartTwo';
 import TableOne from '../../components/Tables/TableOne';
 import ChartLineaTemp from '../../components/Charts/ChartLineaTemp';
-import ChubutMap from '../../components/Maps/ChubutMap';
 import axios from 'axios';
-import Buttons from '../UiElements/Buttons';
 
 
 enum TipoMensaje {

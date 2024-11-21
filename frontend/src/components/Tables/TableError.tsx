@@ -9,7 +9,7 @@ interface Medicion {
   error: boolean;
 }
 
-const TableTwo: React.FC = () => {
+const TableError: React.FC = () => {
   const [medicionData, setMedicionData] = useState<Medicion[]>([]);
   const [filteredData, setFilteredData] = useState<Medicion[]>([]);
   const [error, setError] = useState<string | null>(null);
@@ -32,11 +32,12 @@ const TableTwo: React.FC = () => {
     const obtenerMediciones = async () => {
       try {
         const response = await axios.get('http://localhost:8000/medicion/');
-        setMedicionData(response.data);
-        setFilteredData(response.data);
+        const dataWithError = response.data.filter((item: Medicion) => item.error === true);
+        setMedicionData(dataWithError);
+        setFilteredData(dataWithError);
 
         // Extraer nodos únicos para el desplegable
-        const nodosUnicos = Array.from(new Set(response.data.map((item: Medicion) => item.nodo))).sort((a, b) => a - b);
+        const nodosUnicos = Array.from(new Set(dataWithError.map((item: Medicion) => item.nodo))).sort((a, b) => a - b);
         setUniqueNodos(nodosUnicos);
       } catch (error) {
         console.error('Error al obtener las mediciones:', error);
@@ -58,6 +59,8 @@ const TableTwo: React.FC = () => {
       data = data.filter(item => item.tipo === 1 || item.tipo === 2);
     } else if (tipoFilter === 'Altura') {
       data = data.filter(item => item.tipo === 25);
+    } else if (tipoFilter === 'Otro') {
+      data = data.filter(item => item.tipo !== 1 && item.tipo !== 2 && item.tipo !== 25);
     }
 
     if (fechaInicio) {
@@ -103,7 +106,6 @@ const TableTwo: React.FC = () => {
 
     const rows = filteredData.map(item => [
       item.nodo,
-      item.error === false,
       item.tipo === 1 || item.tipo === 2 ? 'Temperatura' : item.tipo === 25 ? 'Altura' : 'Otro',
       `${Math.round(item.dato * 100) / 100}${item.tipo === 1 || item.tipo === 2 ? ' °C' : item.tipo === 25 ? ' m' : ''}`,
       new Date(item.tiempo).toLocaleString('es-ES', {
@@ -123,7 +125,7 @@ const TableTwo: React.FC = () => {
     const url = URL.createObjectURL(blob);
     const link = document.createElement('a');
     link.href = url;
-    link.setAttribute('download', 'mediciones.csv');
+    link.setAttribute('download', 'errores.csv');
     document.body.appendChild(link);
     link.click();
     document.body.removeChild(link);
@@ -140,7 +142,7 @@ const TableTwo: React.FC = () => {
   return (
     <div className="rounded-sm border border-stroke bg-white px-5 pt-6 pb-2.5 shadow-default dark:border-strokedark dark:bg-boxdark sm:px-7.5 xl:pb-1">
       <h4 className="mb-6 text-xl font-semibold text-black dark:text-white">
-        Historial de Mediciones
+        Historial de Mediciones con Error
       </h4>
 
       {/* Filtros */}
@@ -297,4 +299,4 @@ const TableTwo: React.FC = () => {
   );
 };
 
-export default TableTwo;
+export default TableError;

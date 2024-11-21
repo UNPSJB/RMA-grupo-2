@@ -1,7 +1,7 @@
 import React, { useEffect, useRef, useState } from 'react';
 import { NavLink, useLocation } from 'react-router-dom';
 import SidebarLinkGroup from './SidebarLinkGroup';
-import Chubut from '../../images/logo/chubut.svg';
+import rmalogo from '../../images/logo/rmalogo.svg';
 
 interface SidebarProps {
   sidebarOpen: boolean;
@@ -66,7 +66,7 @@ const Sidebar = ({ sidebarOpen, setSidebarOpen }: SidebarProps) => {
       <div className="flex items-center justify-between gap-2 px-6 py-5.5 lg:py-6.5">
         <NavLink to="/">
           <div className='flex items-center'>
-            <img src={Chubut} alt="Chubut" className="w-20 h-20"/>
+            <img src={rmalogo} alt="Chubut" className="w-20 h-20"/>
             Red de Monitoreo
           </div>
         </NavLink>
