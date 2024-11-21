@@ -47,7 +47,7 @@ const RMA: React.FC = () => {
   const { toPDF, targetRef } = usePDF({filename: 'rma-dashboard-reporte.pdf'});
  
  
-  const getLastMeasurement = async (type: int) => {
+  const getLastMeasurement = async (type: number) => {
     try {
       const response = await axios.get(`http://localhost:8000/mediciones/${type}`);
       const lastData = response.data;
@@ -69,15 +69,18 @@ const RMA: React.FC = () => {
       ]);
 
       setLastMeasurement((prev) => {
-        const isTemperatureChanged = prev.temperature.value !== lastTemp?.value;
-        const isHeightChanged = prev.height.value !== lastHeight?.value;
-  
-        if (isTemperatureChanged || isHeightChanged) {
-          return { temperature: lastTemp, height: lastHeight };
-        }
-  
-        return prev; // No actualiza si no hay cambios
-      });
+  const isTemperatureChanged = prev.temperature.value !== lastTemp?.value;
+  const isHeightChanged = prev.height.value !== lastHeight?.value;
+
+  if (isTemperatureChanged || isHeightChanged) {
+    return {
+      temperature: lastTemp ?? { value: null, nodo: null },
+      height: lastHeight ?? { value: null, nodo: null },
+    };
+  }
+
+  return prev; // No actualiza si no hay cambios
+});
       
   } catch (error) {
     console.error('Error en al obtener las ultimas temperaturas:', error);

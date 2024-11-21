@@ -100,7 +100,13 @@ const ChartOne: React.FC = () => {
       if (endDate) {
         data = data.filter((item) => new Date(item.tiempo) <= endDate);
       }
+      data.sort((a, b) => {
+        const dateA = new Date(a.tiempo).getTime();  // Convertir la fecha a timestamp
+        const dateB = new Date(b.tiempo).getTime();  // Convertir la fecha a timestamp
       
+        return dateA - dateB;  // Si dateA es menor, va primero (ascendente)
+      });
+      setFilteredData(data);
       setFilteredData(data);
       const range = yAxisSettings[selectedDataType];
       setChartOptions((prevOptions) => ({
