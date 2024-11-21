@@ -39,59 +39,61 @@ enum TipoMensaje {
 }
 
 const RMA: React.FC = () => {
-  const [lastMeasurement, setLastMeasurement] = useState<{ temperature: { value: number | null; nodo: number | null }; height: { value: number | null; nodo: number | null } }>({
+//  const [isLoading, setIsLoading] = useState(true);
+  const [lastMeasurement, setLastMeasurement] = useState<
+  { temperature: { value: number | null; nodo: number | null }; height: { value: number | null; nodo: number | null } }>({
     temperature: { value: null, nodo: null },
     height: { value: null, nodo: null },
   });
   const [error, setError] = useState<string | null>(null);
   const { toPDF, targetRef } = usePDF({filename: 'rma-dashboard-reporte.pdf'});
-
-  const getLastMeasurement = async (type: TipoMensaje) => {
+ 
+ 
+  const getLastMeasurement = async (type: int) => {
     try {
-      const response = await axios.get('http://localhost:8000/medicion/');
-      const data = response.data;
-
-      if (!Array.isArray(data) || data.length === 0) return null;
-
-      let lastData;
-
-      if (type === TipoMensaje.TEMP_T) {
-        const dataTemp = data.filter(dato => dato.tipo === TipoMensaje.TEMP_T);
-        if (dataTemp.length === 0) return null;
-
-        lastData = dataTemp.reduce((prev, current) => new Date(prev.tiempo) > new Date(current.tiempo) ? prev : current);
-        return { value: Math.round(lastData.dato * 100) / 100, nodo: lastData.nodo };
-      }
-
-      if (type === TipoMensaje.WATER_HEIGHT) {
-        const dataHeight = data.filter(dato => dato.tipo === TipoMensaje.WATER_HEIGHT);
-        if (dataHeight.length === 0) return null;
-
-        lastData = dataHeight.reduce((prev, current) => new Date(prev.tiempo) > new Date(current.tiempo) ? prev : current);
-        return { value: Math.round(lastData.dato * 100) / 100, nodo: lastData.nodo };
-      }
-      
+      const response = await axios.get(`http://localhost:8000/mediciones/${type}`);
+      const lastData = response.data;
+      if (!lastData) return null;
+      return {value: Math.round(lastData.dato * 100) / 100, nodo: lastData.nodo };
+            
     } catch (error) {
       console.error('Error al obtener la última medición:', error);
       setError('Error al cargar la última medición.');
       return null;
     }
-    return null;
+  };
+  const fetchLastMeasurement = async () => {
+    //setIsLoading(true);
+    try {
+      const [lastTemp, lastHeight] = await Promise.all([
+        getLastMeasurement(TipoMensaje.TEMP_T),
+        getLastMeasurement(TipoMensaje.VOLTAGE_T),
+      ]);
+
+      setLastMeasurement((prev) => {
+        const isTemperatureChanged = prev.temperature.value !== lastTemp?.value;
+        const isHeightChanged = prev.height.value !== lastHeight?.value;
+  
+        if (isTemperatureChanged || isHeightChanged) {
+          return { temperature: lastTemp, height: lastHeight };
+        }
+  
+        return prev; // No actualiza si no hay cambios
+      });
+      
+  } catch (error) {
+    console.error('Error en al obtener las ultimas temperaturas:', error);
+    setError('Error al cargar los datos.');
+  } //finally {
+  //   setIsLoading(false);
+  // }
   };
 
   useEffect(() => {
-    const fetchLastMeasurement = async () => {
-      const lastTemp = await getLastMeasurement(TipoMensaje.TEMP_T);
-      const lastHeight = await getLastMeasurement(TipoMensaje.WATER_HEIGHT);
-
-      setLastMeasurement({ 
-        temperature: lastTemp !== null ? lastTemp : { value: null, nodo: null }, 
-        height: lastHeight !== null ? lastHeight : { value: null, nodo: null },
-      });
-    };
-
+    
     fetchLastMeasurement();
-    const intervalId = setInterval(fetchLastMeasurement, 60000);
+    const intervalId = setInterval(fetchLastMeasurement, 60000  
+    );
 
     return () => clearInterval(intervalId);
   }, []);
@@ -134,7 +136,7 @@ const RMA: React.FC = () => {
     
           <CardDataStats
             title={`Última altura registrada (Nodo ${lastMeasurement.height.nodo || 'N/A'})`} 
-            total={lastMeasurement.height.value !== null ? `${lastMeasurement.height.value} m` : 'Cargando...'} 
+            total={lastMeasurement.height.value !== null ? `${lastMeasurement.height.value} mm` : 'Cargando...'} 
             rate="" 
           >
             <svg

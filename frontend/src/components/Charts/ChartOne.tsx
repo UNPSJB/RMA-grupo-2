@@ -64,7 +64,7 @@ const ChartOne: React.FC = () => {
 
   const fetchNodos = async () => {
     try {
-      const response = await axios.get("http://localhost:8000/lista_nodos/");
+      const response = await axios.get("http://localhost:8000/lista_nodos");
       setSelectNodeOptions(response.data); // Establecer el listado dinámicamente
     } catch (error) {
       console.error("Error al obtener los nodos:", error);
@@ -73,7 +73,7 @@ const ChartOne: React.FC = () => {
 
   const fetchDataType = async () => {
     try {
-      const response = await axios.get("http://localhost:8000/lista_tipo_medicion/");
+      const response = await axios.get("http://localhost:8000/lista_tipo_medicion");
       setSelectDataTypeOptions(response.data); // Establecer el listado dinámicamente
     } catch (error) {
       console.error("Error al obtener los tipo de medicion:", error);

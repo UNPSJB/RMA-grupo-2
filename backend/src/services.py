@@ -1,7 +1,7 @@
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy import Enum
 from sqlalchemy.future import select
-from sqlalchemy import and_
+from sqlalchemy import and_, desc
 from backend.src import schemas, models
 from backend.src.models import Usuario, Nodo, Medicion, Alarma, DatosSensores
 from fastapi import HTTPException
@@ -67,6 +67,10 @@ async def leer_medicion(db: AsyncSession, medicion_id: int) -> schemas.Medicion:
 async def leer_mediciones(db: AsyncSession):
     result = await db.execute(select(Medicion)) 
     return result.scalars().all() 
+
+async def leer_ultima_medicion(db: AsyncSession, type_id: int) -> schemas.Medicion:
+    result = await db.execute(select(Medicion).filter(Medicion.tipo == type_id).order_by(desc(Medicion.tiempo)).limit(1)) 
+    return result.scalars().first()
 
 async def leer_mediciones_filtro(db: AsyncSession, filtros: schemas.MedicionFiltro):
     query = select(Medicion).where(

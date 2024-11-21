@@ -125,6 +125,9 @@ async def get_lista_nodos(db: AsyncSession = Depends(get_db)):
 async def get_mediciones(db:AsyncSession = Depends(get_db)):
     return await services.leer_mediciones(db)
 
+@router.get("/mediciones/{type_id}", response_model=schemas.Medicion)
+async def get_ultima_medicion(type_id: int, db:AsyncSession = Depends(get_db)):
+    return await services.leer_ultima_medicion(db, type_id)
 
 @router.get("/lista_tipo_medicion", response_model=List[schemas.Detalle])
 async def get_lista_tipo_medicion(db: AsyncSession = Depends(get_db)):
