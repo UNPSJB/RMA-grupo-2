@@ -88,9 +88,9 @@ const RMA: React.FC = () => {
   } //finally {
   //   setIsLoading(false);
   // }
-  };
+  };*/
 
-  useEffect(() => {
+  /*useEffect(() => {
     
     fetchLastMeasurement();
     const intervalId = setInterval(fetchLastMeasurement, 60000  
