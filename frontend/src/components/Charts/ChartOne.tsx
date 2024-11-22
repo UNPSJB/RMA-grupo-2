@@ -98,7 +98,6 @@ const ChartOne: React.FC = () => {
   
       // Procesar los datos devueltos por el backend
       const data = response.data as Medicion[];
-      data.sort((a, b) => new Date(a.tiempo).getTime() - new Date(b.tiempo).getTime()); // Orden ascendente
       setFilteredData(data);
       const range = yAxisSettings[selectedDataType];
       setChartOptions((prevOptions) => ({
