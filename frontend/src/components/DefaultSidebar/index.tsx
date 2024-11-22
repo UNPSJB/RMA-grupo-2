@@ -1,7 +1,7 @@
 import React, { useEffect, useRef, useState } from 'react';
 import { NavLink, useLocation } from 'react-router-dom';
 import SidebarLinkGroup from './SidebarLinkGroup';
-import rmalogo from '../../images/logo/rmalogo.svg';
+import rmalogo from '../../images/logo/rmalogo-svg.svg';
 
 interface SidebarProps {
   sidebarOpen: boolean;

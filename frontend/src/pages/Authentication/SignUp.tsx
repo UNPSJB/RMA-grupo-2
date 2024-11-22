@@ -1,7 +1,7 @@
 import React, { useState }  from 'react';
 import { Link } from 'react-router-dom';
 import Breadcrumb from '../../components/Breadcrumbs/Breadcrumb';
-import rmalogo from '../../images/logo/rmalogo.svg';
+import rmalogo from '../../images/logo/rmalogo-svg.svg';
 import Alerts from '../../components/alerts'
 const SignUp: React.FC = () => {
     

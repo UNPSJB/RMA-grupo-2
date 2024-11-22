@@ -4,7 +4,7 @@ import Breadcrumb from '../../components/Breadcrumbs/Breadcrumb';
 import { useNavigate } from 'react-router-dom';
 import { useAuth } from '../../AuthContext';
 import Alerts from '../../components/alerts'
-import rmalogo from '../../images/logo/rmalogo.svg';
+import rmalogo from '../../images/logo/rmalogo-svg.svg';
 import dotenv from 'dotenv';
 
 
