@@ -82,31 +82,23 @@ const ChartOne: React.FC = () => {
 
   const handleSearch = async () => {
     try {
-      const response = await axios.get('http://localhost:8000/medicion/');
-      let data = response.data as Medicion[];
-
-      if (selectedNode) {
-        data = data.filter((item) => item.nodo === selectedNode);
-      }
-
-      if (selectedDataType) {
-        data = data.filter((item) => item.tipo === selectedDataType);
-      }
-
-      if (startDate) {
-        data = data.filter((item) => new Date(item.tiempo) >= startDate);
-      }
-
-      if (endDate) {
-        data = data.filter((item) => new Date(item.tiempo) <= endDate);
-      }
-      data.sort((a, b) => {
-        const dateA = new Date(a.tiempo).getTime();  // Convertir la fecha a timestamp
-        const dateB = new Date(b.tiempo).getTime();  // Convertir la fecha a timestamp
-      
-        return dateA - dateB;  // Si dateA es menor, va primero (ascendente)
-      });
-      setFilteredData(data);
+      // Crear el cuerpo del filtro
+      const filtros = {
+        nodo: selectedNode,
+        tipo: selectedDataType,
+        fechaDesde: startDate.toISOString(), // Convertir las fechas a formato ISO
+        fechaHasta: endDate.toISOString(),
+      };
+  
+      // Realizar la solicitud POST
+      const response = await axios.post(
+        "http://localhost:8000/medicion/filtrar", // Cambia el endpoint según corresponda
+        filtros
+      );
+  
+      // Procesar los datos devueltos por el backend
+      const data = response.data as Medicion[];
+      data.sort((a, b) => new Date(a.tiempo).getTime() - new Date(b.tiempo).getTime()); // Orden ascendente
       setFilteredData(data);
       const range = yAxisSettings[selectedDataType];
       setChartOptions((prevOptions) => ({

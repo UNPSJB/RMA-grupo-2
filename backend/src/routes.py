@@ -28,15 +28,10 @@ async def create_medicion(
         raise HTTPException(status_code=400, detail=str(e))
 
 
-@router.get("/medicion/", response_model=List[schemas.MedicionCreate])
-async def read_mdiciones(db: AsyncSession = Depends(get_db)):
-    async with db.begin():
-        result = await db.execute(select(Medicion))
-        medicion = result.scalars().all()
-    return medicion
-
-@router.get("/medicion/filtrar", response_model=dict[str, list])
-async def leer_mediciones_filtro(filtros: schemas.MedicionFiltro, db: AsyncSession = Depends(get_db)):
+@router.post("/medicion/filtrar", response_model=List[schemas.MedicionFiltrada])
+async def leer_mediciones_filtro(
+    filtros: schemas.MedicionFiltro, db: AsyncSession = Depends(get_db)
+):
     try:
         return await services.leer_mediciones_filtro(db, filtros)
     except HTTPException as e:

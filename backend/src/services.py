@@ -1,7 +1,7 @@
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy import Enum
 from sqlalchemy.future import select
-from sqlalchemy import and_, desc
+from sqlalchemy import and_, desc, asc
 from backend.src import schemas, models
 from backend.src.models import Usuario, Nodo, Medicion, Alarma, DatosSensores
 from fastapi import HTTPException
@@ -73,21 +73,18 @@ async def leer_ultima_medicion(db: AsyncSession, type_id: int) -> schemas.Medici
     return result.scalars().first()
 
 async def leer_mediciones_filtro(db: AsyncSession, filtros: schemas.MedicionFiltro):
-    query = select(Medicion).where(
-        and_(
-            Medicion.tipo == filtros.tipo,
-            Medicion.nodo == filtros.nodo,
-            Medicion.fecha >= filtros.fechaDesde,
-            Medicion.fecha <= filtros.fechaHasta
+    result = await db.execute(select(Medicion.dato, Medicion.tiempo)
+                              .filter(Medicion.tipo == filtros.tipo,
+                                      Medicion.nodo == filtros.nodo,
+                                      Medicion.tiempo >= filtros.fechaDesde,
+                                      Medicion.tiempo <= filtros.fechaHasta)
+                                      .order_by(asc(Medicion.tiempo)))
+    datos_procesados = []
+    for dato in result.fetchall():  # `.fetchall()` obtiene todas las filas como tuplas.
+        datos_procesados.append(
+            schemas.MedicionFiltrada(dato=dato[0], tiempo=dato[1])  # Crea un objeto con el esquema correcto.
         )
-    )
-    result = await db.execute(select(query))
-    datos = {
-        "valores": [medicion.valor for medicion in result],
-        "fechas": [medicion.fecha for medicion in result]
-    }
-    return datos
-
+    return datos_procesados
 async def listar_tipos_medicion(db: AsyncSession):
     result = await db.execute(select(Medicion.tipo, DatosSensores.descripcion)
                               .join(DatosSensores, Medicion.tipo == DatosSensores.tipo)

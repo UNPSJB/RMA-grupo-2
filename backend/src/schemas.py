@@ -34,6 +34,10 @@ class MedicionFiltro(BaseModel):
     fechaDesde: datetime.datetime
     fechaHasta: datetime.datetime
 
+class MedicionFiltrada(BaseModel):
+    dato: float
+    tiempo: datetime.datetime
+
 ## ----------------------- USUARIO
 class UsuarioBase(BaseModel):
     nombre: str
