@@ -65,6 +65,11 @@ function App() {
             <RMA />
           </ProtectedRoute>
         }/>
+        <Route path="/admin/tablas" element={
+          <ProtectedRoute requiredRole="admin">
+            <Tablas />
+          </ProtectedRoute>
+        }/>
         <Route path="/admin/nodos" element={
           <ProtectedRoute requiredRole="admin">
             <PanelNodos />
@@ -95,7 +100,7 @@ function App() {
             <Settings />
           </ProtectedRoute>
         }/>
-        <Route path="/RMAinvitado" element={
+        <Route path="/invitado/RMA" element={
           <ProtectedRoute>
             <PaginaDefault />
           </ProtectedRoute>

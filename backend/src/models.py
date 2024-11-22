@@ -75,6 +75,6 @@ class Nodo(Base):
     descripcion : Mapped[str] = mapped_column(String, index=True, nullable=True)
     posicionx : Mapped[float] = mapped_column(Float, index=True, nullable=False)
     posiciony : Mapped[float] = mapped_column(Float, index=True, nullable=False)
-    bateria: Mapped[float] = mapped_column(Float, index=True, nullable=True)
+    #bateria: Mapped[float] = mapped_column(Float, index=True, nullable=True)
 
     alarma: Mapped[list["Alarma"]] = relationship("Alarma", back_populates="nodo_info", cascade="all, delete-orphan")

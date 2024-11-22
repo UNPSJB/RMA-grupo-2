@@ -15,7 +15,7 @@ const TableThree: React.FC = () => {
     // Función para obtener los nodos desde el backend
     const fetchNodos = async () => {
       try {
-        const response = await fetch('http://localhost:8000/nodos/');
+        const response = await fetch('http://localhost:8000/nodos');
         if (!response.ok) {
           throw new Error('Error al obtener los nodos');
         }
