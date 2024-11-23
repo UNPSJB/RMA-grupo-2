@@ -4,6 +4,7 @@ from typing import Optional
 import datetime
 
 
+
 ## ----------------------- MEDICIONES
 class MedicionBase(BaseModel):
     nodo:int
@@ -135,13 +136,6 @@ class Token(BaseModel):
     access_token: str
     token_type: str
 
-## ----------------------- DATOS SENSORES
-class DatosSensores(BaseModel):
-    tipo: int
-    min: int
-    max: int
-    descripcion: str
-
 ## ----------------------- ALARMA
 class AlarmaBase(BaseModel):
     nombre: str
@@ -173,3 +167,24 @@ class AlarmaUpdate(AlarmaBase):
     nodo: int
     valor_min: float
     valor_max: float  
+
+
+##------------DATOS SENSORES ---------##
+
+class DatosSensoresBase(BaseModel):
+    tipo: int
+    min: float
+    max: float
+    descripcion: str
+    
+    class Config:
+        orm_mode = True
+
+class DatosSensoresCreate(DatosSensoresBase):
+    pass
+
+class DatosSensoresUpdate(DatosSensoresBase):
+    pass
+
+class DatosSensoresResponse(DatosSensoresBase):
+    pass
