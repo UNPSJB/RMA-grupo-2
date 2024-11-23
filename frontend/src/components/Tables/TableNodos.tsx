@@ -1,8 +1,10 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import AlertPopup from '../AlertPopup';
 import '../../css/AlertPopup.css' 
-import AdminMaps from '../../pages/Admin/AdminMaps';
+import AdminMaps from '../../pages/Admin/AdminMaps' 
 import {useNavigate} from 'react-router-dom'
+import axios from 'axios';
+
 interface Nodo {
   id: number;
   nombre: string;
@@ -17,7 +19,7 @@ interface TableNodosProps {
   onEditUptMode: (nodo: Nodo) => void;
 }
 //, onEditUptMode
-const TableNodos: React.FC<TableNodosProps> = ({ nodos, setNodos }) => {
+const TableNodos: React.FC<TableNodosProps> = ({ nodos, setNodos, onEditUptMode }) => {
   const navigate = useNavigate();
   const [alert, setPopUp] = useState<{ message: string; description: string } | null>(null);
   const [selectedNodo, setSelectedNodo] = useState<Nodo | null>(null);
@@ -49,16 +51,19 @@ const TableNodos: React.FC<TableNodosProps> = ({ nodos, setNodos }) => {
       setLng(lng);
     };
 
-    const handleUpdate = async (nodoActualizado: Nodo) => {
+    const handleUpdate = async (nodoUpd: Nodo) => {
+     debugger;
       try {
-        const response = await fetch(`http://localhost:8000/nodo/${nodoActualizado.id}`, {
+        const response = await fetch(`http://localhost:8000/nodo/${nodoUpd.id}`, {
           method: 'PUT',
           headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify(nodoActualizado),
+          body: JSON.stringify(nodoUpd),
         });
       if (response.ok) {
-        setIsEdit(false); // Oculta el panel
-        setSelectedNodoUpt(null); // Limpia el nodo seleccionado
+        obtenerNodos();
+        setNodos(nodos.filter((n) => n.id !== nodoUpd.id));
+        setSelectedNodoUpt(nodos.filter((nodoUpd) => nodoUpd.id !== nodoUpd.id));
+        //setSelectedNodoUpt(null); // Limpia el nodo seleccionado
         //showAlert('success', isEdit ? 'Nodo modificado correctamente' : 'Nodo creado correctamente', 'El nodo se ha guardado con éxito.');
         {/**
           setTimeout(() => {
@@ -102,6 +107,29 @@ const TableNodos: React.FC<TableNodosProps> = ({ nodos, setNodos }) => {
     }
     setPopUp(null);
   };
+{/**
+ */}
+  const obtenerNodos = async () => {
+    try {
+        const response = await axios.get('http://localhost:8000/nodos/');
+        const nodos = response.data;
+        setNodos(nodos);
+    } catch (error) {
+        console.error('Error al obtener los nodos:', error);
+        
+        setPopUp({
+            type: 'error',
+            message: 'Error',
+            description: 'No se pudieron obtener los nodos, contacte con un administrador.',
+        });
+        
+    }
+  };
+
+  useEffect(() => {
+    
+    //obtenerNodos();
+  }, []);
 
   if (nodos.length === 0) {
     return <div>Cargando...</div>;
@@ -125,9 +153,21 @@ const TableNodos: React.FC<TableNodosProps> = ({ nodos, setNodos }) => {
           }}/>
         )}
         </div>
-        <div>
-          <AdminMaps onLocationChange={handleLocationChange} nodos={nodos} />
-        </div>
+
+        <AdminMaps onLocationChange={handleLocationChange} nodos={nodos} />
+      
+      
+      {/* BOTON MOSTRAR lISTA 
+      <div className="md:w-1/2">
+        <button
+          onClick={toggleIsEdit}
+          className="bg-primary text-white px-4 py-2 rounded-lg focus:outline-none hover:bg-primary-dark transition"
+        >
+          {isEdit ? 'Ocultar Lista de Nodos' : 'Mostrar Lista de Nodos'}
+        </button>
+      </div>
+      */}
+     
 
         <h4 className="mb-6 text-xl font-semibold text-black dark:text-white">Lista de nodos</h4>
         <div className="flex flex-col" style={{ maxHeight: '400px', overflowY: 'scroll' }}>
@@ -178,7 +218,7 @@ const TableNodos: React.FC<TableNodosProps> = ({ nodos, setNodos }) => {
                 <button
                   className="bg-red-500 text-white px-4 py-2 rounded"
                   onClick={() => {
-                    setSelectedNodo(nodo);
+                    setSelectedNodo(nodo); // Configura el nodo seleccionado
                     setPopUp({
                       message: 'Atención!',
                       description: '¿Estás seguro de que deseas eliminar este nodo?',
@@ -197,8 +237,8 @@ const TableNodos: React.FC<TableNodosProps> = ({ nodos, setNodos }) => {
             <div className="flex flex-col gap-10">   
              <form onSubmit={(e) => {
                 e.preventDefault();
-                handleUpdate(formData); 
-                setIsEdit(false);       
+                handleUpdate(formData); // Usa los datos actuales del formulario
+                setIsEdit(false);       // Oculta el panel después de guardar
              }}>
                <div className="mb-4">
                  <div className="relative">
@@ -338,8 +378,8 @@ const TableNodos: React.FC<TableNodosProps> = ({ nodos, setNodos }) => {
                </div>
                <button
                    onClick={() => {
-                     handleUpdate(nodo)
-                     setSelectedNodoUpt(nodo);
+                     onEditUptMode(nodo)
+                     setSelectedNodoUpt(nodo); // Configura el nodo seleccionado
                      setPopUp({
                        message: 'Atención!',
                        description: '¿Estás seguro de que deseas Editar este nodo?',

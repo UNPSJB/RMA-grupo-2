@@ -24,9 +24,8 @@ const PanelNodos = () => {
   const [lng, setLng] = useState<number | null>(null);
   const [ isViewCreateNodo, setViewCreateNodo ] = useState(false);
   const toggleDropdown = () => { setViewCreateNodo((prev) => !prev) }; 
-  const [alert, setPopUp] = useState<{type:''; message: string; description: string; onConfirm: () => void;
+  const [alert, setPopUp] = useState<{message: string; description: string; onConfirm: () => void;
   } | null>(null);
-
 
   const [formData, setFormData] = useState({
     id: '',
@@ -58,19 +57,33 @@ const PanelNodos = () => {
     });
   };
 
-  const handleLocationChange = (lat: number, lng: number) => {
-    setLat(lat);
-    setLng(lng);
-  };
-
   const handleCreateNodo = () =>{
-    navigate('/admin/create-nodo');
+    navigate('/admin/crear-nodo');
   }
   
-  const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
-    e.preventDefault();
-
-    const data = {
+  const obtenerNodos = async () => {
+    try {
+      const response = await axios.get('http://localhost:8000/nodos/');
+      const nodos = response.data;
+      setNodos(nodos);
+    } catch (error) {
+      console.error('Error al obtener los nodos:', error);      
+      {/**
+        setPopUp({
+          type: 'error',
+          message: 'Error',
+          description: 'No se pudieron obtener los nodos, contacte con un administrador.',
+        });
+      */}
+      
+    }
+  };
+  {/**
+  
+    const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
+      e.preventDefault();
+      
+      const data = {
       id: formData.id,
       nombre: formData.nombre,
       posicionx: formData.posicionx,
@@ -80,22 +93,22 @@ const PanelNodos = () => {
     };
     debugger;
   
-      try {
-        {/**
-          const url = isEdit
-          ? `http://localhost:8000/nodo/${data.id}`
-          : 'http://localhost:8000/nodo';
-          const method = isEdit ? 'PUT' : 'POST';
-          
-          const response = await fetch(url, {
-            method,
-            headers: {
-              'Content-Type': 'application/json',
-            },
-            body: JSON.stringify(data),
-          });
-        */}
 
+      try {
+        const url = isEdit
+        ? `http://localhost:8000/nodo/${data.id}`
+        : 'http://localhost:8000/nodo';
+        const method = isEdit ? 'PUT' : 'POST';
+        
+        const response = await fetch(url, {
+          method,
+          headers: {
+            'Content-Type': 'application/json',
+          },
+          body: JSON.stringify(data),
+        });
+        
+      try{
         const response = await fetch(`http://localhost:8000/nodo/${data.id}`, {
           method: 'PUT',
           headers: {
@@ -104,48 +117,30 @@ const PanelNodos = () => {
           body: JSON.stringify({ id: data.id }),
         });
         if (response.ok) {
-          //const newNode = await response.json();
-          obtenerNodos();
-          //setNodos((prevNodos) => [...prevNodos, newNode]); // Añade el nodo nuevo a nodos
+          const newNode = await response.json();
+          //obtenerNodos();
+          setNodos((prevNodos) => [...prevNodos, newNode]); // Añade el nodo nuevo a nodos
           toggleEditMode();
           
-                {/*
+               
             setTimeout(() => {
               setPopUp({ type: '', message: '', description: '' });
             }, 3000); // 3 segundos
-          */}
-          //showAlert('success', isEdit ? 'Nodo modificado correctamente' : 'Nodo creado correctamente', 'El nodo se ha guardado con éxito.');
+            //showAlert('success', isEdit ? 'Nodo modificado correctamente' : 'Nodo creado correctamente', 'El nodo se ha guardado con éxito.');
             
-        } else {
+          } else {
             const errorData = await response.json();
             console.error('Error del servidor:', errorData);
-           
-        }
-     } catch (error) {
+            
+          }
+        } catch (error) {
       console.error('Error:', error);
     }
-   setIsEdit(false);
-
+    setIsEdit(false);
+    
   };
-
-  const obtenerNodos = async () => {
-    try {
-      const response = await axios.get('http://localhost:8000/nodos/');
-      const nodos = response.data;
-      setNodos(nodos);
-    } catch (error) {
-      console.error('Error al obtener los nodos:', error);
-      
-      setPopUp({
-        type: 'error',
-        message: 'Error',
-        description: 'No se pudieron obtener los nodos, contacte con un administrador.',
-      });
-      
-    }
-  };
-  console.log(lat, lng)
-
+*/}
+  
   useEffect(() => {
     if (lat !== null && lng !== null) {
       setFormData((prevFormData) => ({
@@ -162,7 +157,7 @@ const PanelNodos = () => {
     <>
       <Breadcrumb pageName="Nodos" />
     
-      {/* ALERTA */}
+     {/* ALERTA */}
       <div className="Alerta mb-4">
         {alert?.message && (
           <AlertPopup
