@@ -1,10 +1,12 @@
+import React, { useEffect, useState } from 'react';
 import Breadcrumb from '../../components/Breadcrumbs/Breadcrumb';
 import TableNodos from '../../components/Tables/TableNodos';
-import AdminMaps from '../Admin/AdminMaps'
-import AlerPanelNodos from '../../components/Alerts/AlertPanelNodos'
-import React, { useEffect, useState } from 'react';
-
+import AdminMaps from '../Admin/AdminMaps';
+import '../../css/AlertPopup.css';
+import AlertPopup from '../../components/AlertPopup'
+import AlertMensaje from '../../components/Alerts/'
 import axios from 'axios';
+import {useNavigate} from 'react-router-dom'
 
 interface Nodo {
   id: number;
@@ -15,17 +17,15 @@ interface Nodo {
 }
 
 const PanelNodos = () => {
+  const navigate = useNavigate();
   const [isEdit, setIsEdit] = useState(false);
   const [nodos, setNodos] = useState<Nodo[]>([]);
   const [lat, setLat] = useState<number | null>(null);
   const [lng, setLng] = useState<number | null>(null);
   const [ isViewCreateNodo, setViewCreateNodo ] = useState(false);
   const toggleDropdown = () => { setViewCreateNodo((prev) => !prev) }; 
-  const [alertMsg, setAlert] = useState({
-    type: '' as 'success' | 'error' | 'info' | 'warning' | '',
-    message: '',
-    description: '',
-  });
+  const [alert, setPopUp] = useState<{message: string; description: string; onConfirm: () => void;
+  } | null>(null);
 
   const [formData, setFormData] = useState({
     id: '',
@@ -57,15 +57,33 @@ const PanelNodos = () => {
     });
   };
 
-  const handleLocationChange = (lat: number, lng: number) => {
-    setLat(lat);
-    setLng(lng);
+  const handleCreateNodo = () =>{
+    navigate('/admin/crear-nodo');
+  }
+  
+  const obtenerNodos = async () => {
+    try {
+      const response = await axios.get('http://localhost:8000/nodos/');
+      const nodos = response.data;
+      setNodos(nodos);
+    } catch (error) {
+      console.error('Error al obtener los nodos:', error);      
+      {/**
+        setPopUp({
+          type: 'error',
+          message: 'Error',
+          description: 'No se pudieron obtener los nodos, contacte con un administrador.',
+        });
+      */}
+      
+    }
   };
-
-  const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
-    e.preventDefault();
-
-    const data = {
+  {/**
+  
+    const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
+      e.preventDefault();
+      
+      const data = {
       id: formData.id,
       nombre: formData.nombre,
       posicionx: formData.posicionx,
@@ -73,76 +91,56 @@ const PanelNodos = () => {
       descripcion: formData.descripcion,  
       bateria: null    
     };
+    debugger;
+  
 
-    if (!formData.posicionx || !formData.posiciony || !formData.nombre) {
-      setAlert({
-        type: 'warning',
-        message: 'Atencion!',
-        description: 'Debe rellenar todos los campos.',
-      });
-      return;
-    }
-    if (isEdit) {
-      showAlert('success', 'Nodo modificado correctamente', 'Los cambios se guardaron con éxito.');
-    } else {
-      showAlert('success', 'Nodo creado correctamente', 'El nodo ha sido creado con éxito.');
-    }
-    try {
-      const url = isEdit
+      try {
+        const url = isEdit
         ? `http://localhost:8000/nodo/${data.id}`
         : 'http://localhost:8000/nodo';
-      const method = isEdit ? 'PUT' : 'POST';
-
-      const response = await fetch(url, {
-        method,
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify(data),
-      });
-      if (response.ok) {
-        const newNode = await response.json();
-        setFormData({
-          id: '',
-          nombre: '',
-          posicionx: '',
-          posiciony: '',
-          descripcion: '',          
+        const method = isEdit ? 'PUT' : 'POST';
+        
+        const response = await fetch(url, {
+          method,
+          headers: {
+            'Content-Type': 'application/json',
+          },
+          body: JSON.stringify(data),
         });
-        setIsEdit(false);
-        obtenerNodos();
-        setNodos((prevNodos) => [...prevNodos, newNode]); // Añade el nodo nuevo a nodos
-        toggleEditMode();
-        setAlert({
-          type: 'success',
-          message: isEdit ? 'Nodo Actualizado' : 'Nodo creado',
-          description: 'Tarea lograda con exito.',
+        
+      try{
+        const response = await fetch(`http://localhost:8000/nodo/${data.id}`, {
+          method: 'PUT',
+          headers: {
+            'Content-Type': 'application/json',
+          },
+          body: JSON.stringify({ id: data.id }),
         });
-      } else {
-        const errorData = await response.json();
-        console.error('Error del servidor:', errorData);
-      }
-    } catch (error) {
+        if (response.ok) {
+          const newNode = await response.json();
+          //obtenerNodos();
+          setNodos((prevNodos) => [...prevNodos, newNode]); // Añade el nodo nuevo a nodos
+          toggleEditMode();
+          
+               
+            setTimeout(() => {
+              setPopUp({ type: '', message: '', description: '' });
+            }, 3000); // 3 segundos
+            //showAlert('success', isEdit ? 'Nodo modificado correctamente' : 'Nodo creado correctamente', 'El nodo se ha guardado con éxito.');
+            
+          } else {
+            const errorData = await response.json();
+            console.error('Error del servidor:', errorData);
+            
+          }
+        } catch (error) {
       console.error('Error:', error);
     }
+    setIsEdit(false);
+    
   };
-
-  const obtenerNodos = async () => {
-    try {
-      const response = await axios.get('http://localhost:8000/nodos/');
-      const nodos = response.data;
-      setNodos(nodos);
-    } catch (error) {
-      console.error('Error al obtener los nodos:', error);
-      setAlert({
-        type: 'error',
-        message: 'Error',
-        description: 'No se pudieron obtener los nodos, contacte con un administrador.',
-      });
-    }
-  };
-  console.log(lat, lng)
-
+*/}
+  
   useEffect(() => {
     if (lat !== null && lng !== null) {
       setFormData((prevFormData) => ({
@@ -153,40 +151,28 @@ const PanelNodos = () => {
     }
     obtenerNodos();
   }, [lat, lng]);
-
-  const showAlert = (type: 'success' | 'error' | 'info' | 'warning', message: string, description = '') => {
-    setAlert({ type, message, description });
-
-    setTimeout(() => {
-      setAlert({ type: '', message: '', description: '' });
-    }, 3000); // 3 segundos
-  };
-
+  
+  
   return (
     <>
       <Breadcrumb pageName="Nodos" />
-      
-      {/* ALERTA*/}
-      {/* Mostrar alerta si hay un mensaje */}
-      {alertMsg.message && (
-      <AlertPanelNodos
-        type={alertMsg.type}
-        message={alertMsg.message}
-        description={alertMsg.description}
-        onClose={() => setAlertMsg({ type: '', message: '', description: '' })}
-      />
-      )}
-      
-        <div className="mb-4">     
-          {/* BOTON CREAR NODO */}    
-          <div  className="md:w-1/2">
-            <button
-              onClick={toggleDropdown}
-              className="bg-primary text-white px-4 py-2 rounded-lg focus:outline-none hover:bg-primary-dark transition"
-              >
-              {isViewCreateNodo ? 'Ocultar panel' : 'Crear nodo'}  
-            </button>
-          </div>
+    
+     {/* ALERTA */}
+      <div className="Alerta mb-4">
+        {alert?.message && (
+          <AlertPopup
+          type={alert.type}
+          message={alert.message}
+            description={alert.description}
+            onClose={() => {}}
+            onConfirm={() => {
+              //setConfirmAction(true)
+            }}
+          />
+        )}
+      </div>
+       
+
 
           {/* TableNodos.tsx */}
           <TableNodos
@@ -195,176 +181,16 @@ const PanelNodos = () => {
             onEditUptMode={onEditUptMode}
           />
           
-          {/* VISTA CREACION  NODO */}
-          {isViewCreateNodo && (
-          <>
-            <div className="flex flex-col gap-10">   
-              <form onSubmit={handleSubmit}>
-                <div className="mb-4">
-                  <div className="relative">
-                    <span className="absolute right-4 top-4">
-                      <svg
-                        className="fill-current"
-                        width="22"
-                        height="22"
-                        viewBox="0 0 22 22"
-                        fill="none"
-                        xmlns="http://www.w3.org/2000/svg"
-                      >
-                      </svg>
-                    </span>
-                  </div>
-                </div>
-                <div className="mb-4">
-                  <label className="mb-2.5 block font-medium text-black dark:text-white">
-                    Nombre
-                  </label>
-                  <div className="relative">
-                    <input
-                      type="text"
-                      id="nombre"
-                      name="nombre"
-                      placeholder="Ingrese el nombre del nodo"
-                      onChange={(e) =>
-                        setFormData({ ...formData, nombre: e.target.value })
-                      }
-                      value={formData.nombre}
-                      className="w-full rounded-lg border border-stroke bg-transparent py-4 pl-6 pr-10 text-black outline-none focus:border-primary focus-visible:shadow-none dark:border-form-strokedark dark:bg-form-input dark:text-white dark:focus:border-primary"
-                    />
-
-                    <span className="absolute right-4 top-4">
-                      <svg
-                        className="fill-current"
-                        width="22"
-                        height="22"
-                        viewBox="0 0 22 22"
-                        fill="none"
-                        xmlns="http://www.w3.org/2000/svg"
-                      >
-                      </svg>
-                    </span>
-                  </div>
-                </div>
-                <div className="mb-4">
-                  <label className="mb-2.5 block font-medium text-black dark:text-white">
-                    Coordenada X
-                  </label>
-                  <div className="relative">
-                    <input
-                      type="number"
-                      id="posicionx"
-                      name="posicionx"
-                      placeholder="Ingrese la posición X del nodo"
-                      onChange={(e) =>
-                        setFormData({ ...formData, posicionx: e.target.value })
-                      }
-                      value={formData.posicionx}
-                      className="w-full rounded-lg border border-stroke bg-transparent py-4 pl-6 pr-10 text-black outline-none focus:border-primary focus-visible:shadow-none dark:border-form-strokedark dark:bg-form-input dark:text-white dark:focus:border-primary"
-                    />
-
-                    <span className="absolute right-4 top-4">
-                      <svg
-                        className="fill-current"
-                        width="22"
-                        height="22"
-                        viewBox="0 0 22 22"
-                        fill="none"
-                        xmlns="http://www.w3.org/2000/svg"
-                      >
-                      </svg>
-                    </span>
-                  </div>
-                </div>
-
-                <div className="mb-4">
-                  <label className="mb-2.5 block font-medium text-black dark:text-white">
-                    Coordenada Y
-                  </label>
-                  <div className="relative">
-                    <input
-                      type="number"
-                      name="posiciony"
-                      id="posiciony"
-                      placeholder="Ingrese la posición Y del nodo"
-                      className="w-full rounded-lg border border-stroke bg-transparent py-4 pl-6 pr-10 text-black outline-none focus:border-primary focus-visible:shadow-none dark:border-form-strokedark dark:bg-form-input dark:text-white dark:focus:border-primary"
-                      onChange={(e) =>
-                        setFormData({ ...formData, posiciony: e.target.value })
-                      }
-                      value={formData.posiciony}
-                    />
-
-                    <span className="absolute right-4 top-4">
-                      <svg
-                        className="fill-current"
-                        width="22"
-                        height="22"
-                        viewBox="0 0 22 22"
-                        fill="none"
-                        xmlns="http://www.w3.org/2000/svg"
-                      >
-                      </svg>
-                    </span>
-                  </div>
-                </div>
-                <div className="mb-4">
-                  <label className="mb-2.5 block font-medium text-black dark:text-white">
-                    Descripción(opcional)
-                  </label>
-                  <div className="relative">
-                    <input
-                      type="string"
-                      id="descripcion"
-                      name="descripcion"
-                      placeholder="Ingrese una descripción"
-                      onChange={(e) =>
-                        setFormData({ ...formData, descripcion: e.target.value })
-                      }
-                      value={formData.descripcion}
-                      className="w-full rounded-lg border border-stroke bg-transparent py-4 pl-6 pr-10 text-black outline-none focus:border-primary focus-visible:shadow-none dark:border-form-strokedark dark:bg-form-input dark:text-white dark:focus:border-primary"
-                    />
-
-                    <span className="absolute right-4 top-4">
-                      <svg
-                        className="fill-current"
-                        width="22"
-                        height="22"
-                        viewBox="0 0 22 22"
-                        fill="none"
-                        xmlns="http://www.w3.org/2000/svg"
-                      >
-                      </svg>
-                    </span>
-                  </div>
-                </div>
-                
-                <AdminMaps onLocationChange={handleLocationChange} nodos={nodos} />
-                
-                <div className="mb-5">
-                  <button
-                    type="submit"
-                    className={`w-full cursor-pointer rounded-lg border p-4 text-white transition hover:bg-opacity-90 ${
-                      isEdit
-                        ? 'bg-yellow-500 border-yellow-500'
-                        : 'bg-primary border-primary'
-                    }`}
-                  >
-                    {isEdit ? 'Modificar Nodo' : 'Crear Nodo'}
-                  </button>
-                    {isEdit && (
-                    <button
-                        type="button"
-                        onClick={() => setIsEdit(false)}
-                        className="mt-2 w-full cursor-pointer rounded-lg border p-4 text-white bg-red-500 hover:bg-red-600"
-                      >
-                      Cancelar Modificación
-                    </button>
-                  )}
-                </div>
-              </form> 
-            </div>
-          </>
-          )}
-        </div> 
+          <div className="md:w-1/2">
+        <button
+          onClick={handleCreateNodo}
+          className="bg-primary text-white px-4 py-2 rounded-lg focus:outline-none hover:bg-primary-dark transition"
+         >
+          Crear Nodo
+          </button>
+        </div>
+    
+           
     </>
   );
 };
