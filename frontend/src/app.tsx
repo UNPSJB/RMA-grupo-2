@@ -17,6 +17,7 @@ import AdminLayout from './layout/AdminLayout';
 import PanelAlarmas from './pages/Admin/PanelAlarmas';
 import DefaultLayout from './layout/DefaultLayout';
 import PaginaDefault from './pages/DefaultView/PaginaDefault';
+import CrearNodo from './pages/Admin/CrearNodo'
 
 function App() {
   const [loading, setLoading] = useState<boolean>(true);
@@ -75,6 +76,11 @@ function App() {
             <PanelNodos />
           </ProtectedRoute>
         }/>
+         <Route path="/admin/crear-nodo" element={
+          <ProtectedRoute requiredRole="admin">
+            <CrearNodo />
+          </ProtectedRoute>
+         }/>
         
         <Route path="/admin/usuarios" element={
           <ProtectedRoute requiredRole="admin">

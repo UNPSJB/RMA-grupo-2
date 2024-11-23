@@ -1,5 +1,6 @@
+
 import React, { useState } from 'react';
-import AlertPopup from '../popUp';
+import AlertPopup from '../../components/AlertPopup'
 
 interface Alarma {
   id: number;
