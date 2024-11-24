@@ -319,18 +319,27 @@ async def leer_sensor(db: AsyncSession, sensor_id: int) -> models.DatosSensores:
         raise HTTPException(status_code=404, detail="Sensor no encontrado")
     return sensor
 
-# Modificar un sensor
-async def modificar_sensor(db: AsyncSession, sensor_id: int, sensor: schemas.DatosSensoresUpdate) -> models.DatosSensores:
-    db_sensor = await leer_sensor(db, sensor_id)
-    for key, value in sensor.dict(exclude_unset=True).items():
-        setattr(db_sensor, key, value)
+async def modificar_sensor(db: AsyncSession, sensor_id: int, sensor: schemas.DatosSensoresUpdate) -> models.DatosSensores | None:
+    # Buscar el sensor por ID
+    result = await db.execute(select(models.DatosSensores).filter(models.DatosSensores.tipo == sensor_id))
+    db_sensor = result.scalar_one_or_none()
+
+    if db_sensor is None:
+        return None  # Si no se encuentra el sensor, retorna None
+
+    # Solo actualizamos 'min' y 'max'
+    db_sensor.min = sensor.min
+    db_sensor.max = sensor.max
+
     try:
+        # Guardar cambios
         await db.commit()
         await db.refresh(db_sensor)
         return db_sensor
     except SQLAlchemyError as e:
         await db.rollback()
-        raise HTTPException(status_code=400, detail=f"Error al modificar sensor: {str(e)}") from e
+        raise HTTPException(status_code=400, detail=f"Error al modificar sensor: {str(e)}")
+
 
 # Eliminar un sensor
 async def eliminar_sensor(db: AsyncSession, sensor_id: int) -> dict:

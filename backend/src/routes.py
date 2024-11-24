@@ -177,7 +177,13 @@ async def leer_sensor_endpoint(sensor_id: int, db: AsyncSession = Depends(get_db
 
 @router.put("/sensor/{sensor_id}", response_model=schemas.DatosSensoresResponse)
 async def modificar_sensor_endpoint(sensor_id: int, sensor: schemas.DatosSensoresUpdate, db: AsyncSession = Depends(get_db)):
-    return await services.modificar_sensor(db, sensor_id, sensor)
+    # Llamamos al servicio para actualizar el sensor
+    updated_sensor = await services.modificar_sensor(db, sensor_id, sensor)
+
+    if not updated_sensor:
+        raise HTTPException(status_code=404, detail="Sensor no encontrado")
+
+    return updated_sensor
 
 @router.delete("/sensor/{sensor_id}")
 async def eliminar_sensor_endpoint(sensor_id: int, db: AsyncSession = Depends(get_db)):

@@ -183,8 +183,12 @@ class DatosSensoresBase(BaseModel):
 class DatosSensoresCreate(DatosSensoresBase):
     pass
 
-class DatosSensoresUpdate(DatosSensoresBase):
-    pass
+class DatosSensoresUpdate(BaseModel):
+    min: float
+    max: float
+
+    class Config:
+        orm_mode = True
 
 class DatosSensoresResponse(DatosSensoresBase):
     pass
