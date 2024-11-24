@@ -6,7 +6,7 @@ from sqlalchemy.ext.asyncio import AsyncSession
 from backend.database import get_db
 from backend.src import schemas, services
 from sqlalchemy.future import select
-from backend.src.models import Medicion, Nodo, Usuario, Alarma
+from backend.src.models import Medicion, Nodo, Usuario, Alarma, DatosSensores
 from typing import List
 from backend.src.auth import authenticate_user
 import jwt
@@ -162,3 +162,31 @@ async def delete_alarma(alarma_id: int, db: AsyncSession = Depends(get_db)):
 @router.get("/alarmas", response_model=List[schemas.Alarma])
 async def get_alarmas(db: AsyncSession = Depends(get_db)):
     return await services.leer_todas_las_alarmas(db)
+
+
+##-----------datos Sensores----------------##
+
+
+@router.post("/sensor", response_model=schemas.DatosSensoresResponse)
+async def crear_sensor_endpoint(sensor: schemas.DatosSensoresCreate, db: AsyncSession = Depends(get_db)):
+    return await services.crear_sensor(db, sensor)
+
+@router.get("/sensor/{sensor_id}", response_model=schemas.DatosSensoresResponse)
+async def leer_sensor_endpoint(sensor_id: int, db: AsyncSession = Depends(get_db)):
+    return await services.leer_sensor(db, sensor_id)
+
+@router.put("/sensor/{sensor_id}", response_model=schemas.DatosSensoresResponse)
+async def modificar_sensor_endpoint(sensor_id: int, sensor: schemas.DatosSensoresUpdate, db: AsyncSession = Depends(get_db)):
+    return await services.modificar_sensor(db, sensor_id, sensor)
+
+@router.delete("/sensor/{sensor_id}")
+async def eliminar_sensor_endpoint(sensor_id: int, db: AsyncSession = Depends(get_db)):
+    return await services.eliminar_sensor(db, sensor_id)
+
+@router.get("/sensores", response_model=List[schemas.DatosSensoresResponse])
+async def leer_todos_los_sensores_endpoint(db: AsyncSession = Depends(get_db)):
+    return await services.leer_todos_los_sensores(db)
+
+@router.get("/sensores/select-options", response_model=List[schemas.Detalle])
+async def listar_sensores_endpoint(db: AsyncSession = Depends(get_db)):
+    return await services.listar_sensores(db)

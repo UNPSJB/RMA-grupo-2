@@ -32,8 +32,9 @@ const TableTwo: React.FC = () => {
     const obtenerMediciones = async () => {
       try {
         const response = await axios.get('http://localhost:8000/medicion/');
-        setMedicionData(response.data);
-        setFilteredData(response.data);
+        const datawithouterror = response.data.filter((item:Medicion) => item.error === false);
+        setMedicionData(datawithouterror);
+        setFilteredData(datawithouterror);
 
         // Extraer nodos únicos para el desplegable
         const nodosUnicos = Array.from(new Set(response.data.map((item: Medicion) => item.nodo))).sort((a, b) => a - b);

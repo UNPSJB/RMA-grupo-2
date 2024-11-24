@@ -78,3 +78,5 @@ class Nodo(Base):
     #bateria: Mapped[float] = mapped_column(Float, index=True, nullable=True)
 
     alarma: Mapped[list["Alarma"]] = relationship("Alarma", back_populates="nodo_info", cascade="all, delete-orphan")
+
+    ##----------------DATOS SENSORES-------------##
