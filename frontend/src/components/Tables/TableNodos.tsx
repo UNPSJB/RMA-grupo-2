@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import AlertPopup from '../AlertPopup';
 import '../../css/AlertPopup.css' 
 import AdminMaps from '../../pages/Admin/AdminMaps' 
@@ -27,9 +27,12 @@ const TableNodos: React.FC<TableNodosProps> = ({ nodos, setNodos, onEditUptMode 
   const [isViewListNodos, setViewListNodos] = useState(false);
   const [isEdit, setIsEdit] = useState(false);
   const toggleIsEdit = () => { setIsEdit((prev) => !prev) };
+  const [ isUpdate, setIsUpdate ]=useState(false);
   const [lat, setLat] = useState<number | null>(null);
   const [lng, setLng] = useState<number | null>(null);
   const toggleDropdown = () => { setViewListNodos((prev) => !prev) };
+  const editFormRef = useRef<HTMLDivElement | null>(null);
+  const formRef = useRef<HTMLFormElement>(null);
   const [formData, setFormData] = useState<Nodo>({
     id: 0,
     nombre: '',
@@ -52,7 +55,6 @@ const TableNodos: React.FC<TableNodosProps> = ({ nodos, setNodos, onEditUptMode 
     };
 
     const handleUpdate = async (nodoUpd: Nodo) => {
-     debugger;
       try {
         const response = await fetch(`http://localhost:8000/nodo/${nodoUpd.id}`, {
           method: 'PUT',
@@ -80,35 +82,41 @@ const TableNodos: React.FC<TableNodosProps> = ({ nodos, setNodos, onEditUptMode 
     console.error('Error:', error);
   }
   setIsEdit(false)
+  setIsUpdate(false);
   setPopUp(null);
-};
+    };
 
-  const deleteNodo = async ( nodo: Nodo) => {
-    debugger;
-    try {
-      const response = await fetch(`http://localhost:8000/nodo/${nodo.id}`, {
-        method: 'DELETE',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({ id: nodo.id }),
-      });
-
-      if (response.ok) {
-        setNodos(nodos.filter((n) => n.id !== nodo.id));
-        setSelectedNodo(nodos.filter((nodo) => nodo.id !== nodo.id));
-        console.log('Nodo eliminado:', nodo);
-      } else {
-        const errorData = await response.json();
-        console.error('Error del servidor:', errorData);
+    useEffect(() => {
+      if (isEdit && editFormRef.current) {
+        editFormRef.current.scrollIntoView({ behavior: 'smooth', block: 'end' });
       }
-    } catch (error) {
-      console.error('Error:', error);
-    }
-    setPopUp(null);
-  };
-{/**
- */}
+    }, [isEdit]);
+
+    const deleteNodo = async ( nodo: Nodo) => {
+      debugger;
+      try {
+        const response = await fetch(`http://localhost:8000/nodo/${nodo.id}`, {
+          method: 'DELETE',
+          headers: {
+            'Content-Type': 'application/json',
+          },
+          body: JSON.stringify({ id: nodo.id }),
+        });
+
+        if (response.ok) {
+          setNodos(nodos.filter((n) => n.id !== nodo.id));
+          setSelectedNodo(nodos.filter((nodo) => nodo.id !== nodo.id));
+          console.log('Nodo eliminado:', nodo);
+        } else {
+          const errorData = await response.json();
+          console.error('Error del servidor:', errorData);
+        }
+      } catch (error) {
+        console.error('Error:', error);
+      }
+      setPopUp(null);
+    };
+
   const obtenerNodos = async () => {
     try {
         const response = await axios.get('http://localhost:8000/nodos/');
@@ -126,36 +134,73 @@ const TableNodos: React.FC<TableNodosProps> = ({ nodos, setNodos, onEditUptMode 
     }
   };
 
-  useEffect(() => {
-    
-    //obtenerNodos();
-  }, []);
 
+  const handleEditToggle = (nodo: Nodo) => {
+    debugger;
+    setIsUpdate(true)
+    if (isEdit && !isUpdate ) {
+      setSelectedNodoUpt(null);
+      setFormData({
+        id: 0,
+        nombre: '',
+        posicionx: 0,
+        posiciony: 0,
+        descripcion: '',
+      }); 
+      setIsEdit(false); // Cambia el estado
+    } else {
+      setSelectedNodoUpt(nodo);
+      setFormData(nodo);
+      onEditUptMode(nodo);
+      if (editFormRef.current) {
+        editFormRef.current.scrollIntoView({ behavior: 'smooth', block: 'end' });
+      }
+      setIsEdit(true);
+    }
+  };
+
+  const startEdit = (nodo: Nodo) => {
+    // Configura el nodo seleccionado para editar
+    setSelectedNodoUpt(nodo); // Suponiendo que tienes un nodo que editar
+    setFormData(nodo); // Carga los datos del nodo en el formulario
+    onEditUptMode(nodo); // Establece el modo de edición, si es necesario
+  };
+
+    const cancelEdit = () => {
+      setFormData({
+        id: 0,
+        nombre: '',
+        posicionx: 0,
+        posiciony: 0,
+        descripcion: '',
+      });
+      setSelectedNodoUpt(null);
+      setIsEdit(false);
+      setIsUpdate(false)
+    };
+  
   if (nodos.length === 0) {
     return <div>Cargando...</div>;
   }
-
   return (
     <>
-      
-        <div className="Alerta mb-4">
-        {alert && (
-          <AlertPopup
-          message={alert.message}
-          description={alert.description}
-          onClose={() => setPopUp(null)}
-          //onConfirm={deleteNodo}
-          onConfirm={() => {
-            if (selectedNodo) deleteNodo(selectedNodo); // Elimina el nodo seleccionado
-            setPopUp(null); // Cierra la alerta
-            if(selectedNodoUpt) handleUpdate(selectedNodoUpt);
-            setPopUp(null);
-          }}/>
-        )}
+      <div className="Alerta mb-4">
+          {alert && (
+            <AlertPopup
+            message={alert.message}
+            description={alert.description}
+            onClose={() => setPopUp(null)}
+            //onConfirm={deleteNodo}
+            onConfirm={() => {
+              if (selectedNodo) deleteNodo(selectedNodo); // Elimina el nodo seleccionado
+              setPopUp(null); // Cierra la alerta
+              if(selectedNodoUpt) handleUpdate(selectedNodoUpt);
+              setPopUp(null);
+            }}/>
+          )}
         </div>
 
-        <AdminMaps onLocationChange={handleLocationChange} nodos={nodos} />
-      
+      <AdminMaps onLocationChange={handleLocationChange} nodos={nodos} />
       
       {/* BOTON MOSTRAR lISTA 
       <div className="md:w-1/2">
@@ -167,10 +212,9 @@ const TableNodos: React.FC<TableNodosProps> = ({ nodos, setNodos, onEditUptMode 
         </button>
       </div>
       */}
-     
 
-        <h4 className="mb-6 text-xl font-semibold text-black dark:text-white">Lista de nodos</h4>
-        <div className="flex flex-col" style={{ maxHeight: '400px', overflowY: 'scroll' }}>
+      <h4 className="mb-6 text-xl font-semibold text-black dark:text-white">Lista de nodos</h4>
+      <div className="flex flex-col" style={{ maxHeight: '400px', overflowY: 'scroll' }}>
           <div className="grid grid-cols-3 rounded-sm bg-gray-2 dark:bg-meta-4 sm:grid-cols-5 sticky top-0 z-10">
             <div className="p-2.5 xl:p-5">
               <h5 className="text-sm font-medium uppercase xsm:text-base">Nombre</h5>
@@ -206,12 +250,7 @@ const TableNodos: React.FC<TableNodosProps> = ({ nodos, setNodos, onEditUptMode 
               <div className="flex items-center justify-center p-2.5 xl:p-5 space-x-5">
                 <button
                   className="bg-yellow-500 text-white px-4 py-2 rounded"
-                  onClick={() => {
-                    setSelectedNodoUpt(nodo);
-                    setFormData(nodo);
-                    setIsEdit(true);
-                    console.log(setIsEdit);
-                  }} >
+                  onClick={() => handleEditToggle(nodo)}>
                   Editar
                 </button>
 
@@ -232,13 +271,12 @@ const TableNodos: React.FC<TableNodosProps> = ({ nodos, setNodos, onEditUptMode 
         </div>
     
       {/* EDICION DE NODOS */}
-      {isEdit && (
+      {isEdit && selectedNodoUpt &&(
         <>
-            <div className="flex flex-col gap-10">   
+            <div className="flex flex-col gap-10" ref={editFormRef} >   
              <form onSubmit={(e) => {
                 e.preventDefault();
-                handleUpdate(formData); // Usa los datos actuales del formulario
-                setIsEdit(false);       // Oculta el panel después de guardar
+                handleUpdate(formData);       
              }}>
                <div className="mb-4">
                  <div className="relative">
@@ -376,19 +414,19 @@ const TableNodos: React.FC<TableNodosProps> = ({ nodos, setNodos, onEditUptMode 
                    </span>
                  </div>
                </div>
-               <button
-                   onClick={() => {
-                     onEditUptMode(nodo)
-                     setSelectedNodoUpt(nodo); // Configura el nodo seleccionado
-                     setPopUp({
-                       message: 'Atención!',
-                       description: '¿Estás seguro de que deseas Editar este nodo?',
-                     });
-                   }} 
-                   className="w-full cursor-pointer rounded-lg border p-4 text-white transition hover:bg-opacity-90 bg-primary border-primary"
-                   >
-                   Modificar nodo
-               </button>
+               <div className="flex space-x-4">
+                  <button
+                    type="submit"
+                    className="w-full cursor-pointer rounded-lg border p-4 text-white bg-green-500 hover:bg-green-600">
+                    Modificar nodo
+                  </button>
+                  <button
+                    type="button"
+                    onClick={cancelEdit}
+                    className="w-full cursor-pointer rounded-lg border p-4 text-white bg-red-500 hover:bg-red-600">
+                    Cancelar
+                  </button> 
+               </div>
              </form> 
            </div>
         </>
