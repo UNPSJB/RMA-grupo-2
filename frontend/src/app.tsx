@@ -18,6 +18,7 @@ import PanelAlarmas from './pages/Admin/PanelAlarmas';
 import DefaultLayout from './layout/DefaultLayout';
 import PaginaDefault from './pages/DefaultView/PaginaDefault';
 import CrearNodo from './pages/Admin/CrearNodo'
+import AdminParametro from './pages/Admin/AdminParametro';
 
 function App() {
   const [loading, setLoading] = useState<boolean>(true);
@@ -91,6 +92,11 @@ function App() {
         <Route path="/admin/alarmas" element={
           <ProtectedRoute requiredRole="admin">
             <PanelAlarmas />
+          </ProtectedRoute>
+        }/>
+        <Route path="/admin/parametros" element={
+          <ProtectedRoute requiredRole="admin">
+            <AdminParametro />
           </ProtectedRoute>
         }/>
         

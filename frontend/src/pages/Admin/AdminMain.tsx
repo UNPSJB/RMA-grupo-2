@@ -43,6 +43,15 @@ return (
                 </Link>
             </div>
         </div>
+        <div className="mb-5">
+            <div
+                className="w-full cursor-pointer rounded-lg border border-primary bg-primary py-6 px-4 p-4 text-white transition hover:bg-opacity-90"
+            >
+                <Link to="/admin/parametros" className="text-white text-xl">
+                    Administrar Parametros
+                </Link>
+            </div>
+        </div>
         </div>
       </div>
     </div>
