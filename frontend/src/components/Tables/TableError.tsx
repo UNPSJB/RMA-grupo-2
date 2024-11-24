@@ -25,7 +25,7 @@ const TableError: React.FC = () => {
 
   const [sortConfig, setSortConfig] = useState<{ key: keyof Medicion; direction: 'asc' | 'desc' }>({
     key: 'tiempo',
-    direction: 'asc',
+    direction: 'desc',
   });
 
   useEffect(() => {

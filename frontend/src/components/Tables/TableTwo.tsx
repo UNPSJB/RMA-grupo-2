@@ -25,7 +25,7 @@ const TableTwo: React.FC = () => {
 
   const [sortConfig, setSortConfig] = useState<{ key: keyof Medicion; direction: 'asc' | 'desc' }>({
     key: 'tiempo',
-    direction: 'asc',
+    direction: 'desc',
   });
 
   useEffect(() => {
@@ -174,7 +174,6 @@ const TableTwo: React.FC = () => {
           >
             <option value="Temperatura">Temperatura</option>
             <option value="Altura">Altura</option>
-            <option value="Otro">Otro</option>
           </select>
         </div>
         <div className="flex flex-col">

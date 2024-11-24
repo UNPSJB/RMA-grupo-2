@@ -135,7 +135,7 @@ const TableSensores: React.FC = () => {
             <div className="flex items-center justify-center p-2.5 xl:p-5 gap-2">
             <button
                 onClick={() => handleEdit(sensor)}
-                className="bg-blue-500 text-white p-1 rounded"
+                className="bg-blue-500 text-white p-2.5 rounded"
               >
                 Editar
               </button>
@@ -148,7 +148,7 @@ const TableSensores: React.FC = () => {
       {editingSensor && (
         <div className="fixed inset-0 flex items-center justify-center bg-gray-600 bg-opacity-50">
           <div className="bg-white p-6 rounded-lg shadow-lg w-96">
-            <h3 className="text-xl font-semibold mb-4">Editar Sensor</h3>
+            <h3 className="text-xl font-semibold mb-4">Editar Sensor: {editingSensor.descripcion}</h3>
             <div className="mb-4">
               <label className="block text-sm font-medium">Valor Mínimo</label>
               <input
@@ -170,7 +170,7 @@ const TableSensores: React.FC = () => {
             <div className="flex justify-end gap-2">
               <button
                 onClick={handleCancel}
-                className="bg-gray-400 text-white px-4 py-2 rounded"
+                className="bg-red-400 text-white px-4 py-2 rounded"
               >
                 Cancelar
               </button>
