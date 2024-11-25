@@ -212,8 +212,9 @@ const TableNodos: React.FC<TableNodosProps> = ({ nodos, setNodos, onEditUptMode 
             onClose={() => setPopUp(null)}
             onConfirm={() => {
               if (selectedNodo) deleteNodo(selectedNodo); 
-              setPopUp(null);
-              setIsDelete(false); 
+                setPopUp(null);
+                setIsDelete(false);
+              if(selectedNodoUpt) handleUpdate(selectedNodoUpt); 
               
               
             }}/>
