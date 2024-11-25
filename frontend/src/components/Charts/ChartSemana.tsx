@@ -3,6 +3,7 @@ import React, { useEffect, useState } from 'react';
 import ReactApexChart from 'react-apexcharts';
 import Select, { SingleValue } from 'react-select';
 import axios from 'axios';
+import { subDays } from 'react-datepicker/dist/date_utils';
 //import { newDate } from 'react-datepicker/dist/date_utils';
 //import selectStyles from './styles';
 
@@ -81,7 +82,7 @@ const ChartSemana: React.FC = () => {
     try {
       // Crear el cuerpo del filtro
       const hoy = new Date()
-      const ayer = new Date(hoy.getDate() - 6)
+      const ayer = new Date(new Date().getTime() - (7 * 24 * 60 * 60 * 1000))
       console.log(hoy)
       console.log(ayer)
       const filtros = {
@@ -118,7 +119,7 @@ const ChartSemana: React.FC = () => {
   // Extraer fechas y valores para el gráfico
   const fechas = filteredData.map((d) => d.tiempo);
   const valores = filteredData.map((d) => d.dato);
-  
+  console.log(valores)
   useEffect(() => {
     fetchNodos();
     fetchDataType();
