@@ -26,12 +26,16 @@ const AdminMaps: React.FC<{
   const [isModalOpen, setIsModalOpen] = useState(false); 
   const [isEditting, setIsEditting] = useState(false);
   const MapClickHandler = () => {
+    debugger;
     useMapEvents({
       click(e) {
         const { lat, lng } = e.latlng;
         setMarkerPosition([lat, lng]);
         setHasClicked(true);
-        onLocationChange(lat, lng); 
+        if(isEditting )
+          handleLocationUpdate(lat, lng);
+        else
+          onLocationChange(lat, lng); 
       }
     });
     return null;
@@ -39,7 +43,19 @@ const AdminMaps: React.FC<{
 
   const openModal = (nodo: Nodo) => {
     setSelectedNodo(nodo);
-    setIsModalOpen(true);     
+    setIsModalOpen(true); 
+    setMarkerPosition([nodo.posicionx, nodo.posiciony]); // Coloca el marcador en la posición del nodo
+    setHasClicked(true);     
+  };
+
+  const handleLocationUpdate = (lat: number, lng: number) => {
+    if (selectedNodo) {
+      setIsEditting(true);
+      const updatedNodo = { ...selectedNodo, posicionx: lat, posiciony: lng };
+      onEdit(updatedNodo);
+      setMarkerPosition([lat, lng]);
+      setSelectedNodo(updatedNodo); 
+    }
   };
 
   const closeModal = () => {

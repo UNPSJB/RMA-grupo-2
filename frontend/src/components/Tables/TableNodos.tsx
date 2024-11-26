@@ -20,7 +20,7 @@ interface TableNodosProps {
   setNodos: (nodos: Nodo[]) => void;
   onEditUptMode: (nodo: Nodo) => void;
 }
-//, onEditUptMode
+
 const TableNodos: React.FC<TableNodosProps> = ({ nodos, setNodos, onEditUptMode }) => {
   const navigate = useNavigate();
   const [alert, setPopUp] = useState<{ message: string; description: string } | null>(null);
@@ -32,7 +32,10 @@ const TableNodos: React.FC<TableNodosProps> = ({ nodos, setNodos, onEditUptMode 
   const [ isUpdate, setIsUpdate ]=useState(false);
   const [lat, setLat] = useState<number | null>(null);
   const [lng, setLng] = useState<number | null>(null);
-  const toggleDropdown = () => { setViewListNodos((prev) => !prev) };
+  const [selectedFilter, setSelectedFilter] = useState(""); 
+  const [filterValue, setFilterValue] = useState(""); 
+  const [filteredNodos, setFilteredNodos] = useState(nodos);
+  const [sortDirection, setSortDirection] = useState('asc'); 
   const editFormRef = useRef<HTMLDivElement | null>(null);
   const [isDelete, setIsDelete] = useState(false);
   const [formData, setFormData] = useState<Nodo>({
@@ -43,6 +46,42 @@ const TableNodos: React.FC<TableNodosProps> = ({ nodos, setNodos, onEditUptMode 
     descripcion: '',
   });
 
+  useEffect(() => {
+    let filtered = nodos;
+    
+    // Filtrar los nodos según el criterio y el valor de búsqueda
+    if (selectedFilter && filterValue.trim() !== '') {
+      filtered = nodos.filter((nodo) => {
+        if (nodo[selectedFilter]) {
+          return nodo[selectedFilter]
+            .toString()
+            .toLowerCase()
+            .includes(filterValue.toLowerCase());
+        }
+        return false;
+      });
+    }
+
+    // Ordenar los nodos por nombre en la dirección seleccionada
+    filtered = filtered.sort((a, b) => {
+      const nameA = a.nombre.toLowerCase();
+      const nameB = b.nombre.toLowerCase();
+      
+      if (sortDirection === 'asc') {
+        return nameA > nameB ? 1 : nameA < nameB ? -1 : 0;
+      } else {
+        return nameA < nameB ? 1 : nameA > nameB ? -1 : 0;
+      }
+    });
+    setFilteredNodos(filtered);
+
+  }, [nodos, selectedFilter, filterValue, sortDirection]);
+
+
+    const toggleSortDirection = () => {
+      setSortDirection(sortDirection === 'asc' ? 'desc' : 'asc');
+    };
+    
     const showAlert = (nodo: Nodo) => {
       setSelectedNodo(nodo);
       setPopUp({
@@ -54,6 +93,12 @@ const TableNodos: React.FC<TableNodosProps> = ({ nodos, setNodos, onEditUptMode 
     const handleLocationChange = (lat: number, lng: number) => {
       setLat(lat);
       setLng(lng);
+      
+    setFormData((prevFormData) => ({
+      ...prevFormData,
+      posicionx: lat,
+      posiciony: lng,
+      }));
     };
 
     const handleUpdate = async (nodoUpd: Nodo) => {
@@ -69,7 +114,6 @@ const TableNodos: React.FC<TableNodosProps> = ({ nodos, setNodos, onEditUptMode 
         obtenerNodos();
         setNodos(nodos.filter((n) => n.id !== nodoUpd.id));
         setSelectedNodoUpt(nodos.filter((nodoUpd) => nodoUpd.id !== nodoUpd.id));
-        //setSelectedNodoUpt(null); // Limpia el nodo seleccionado
         //showAlert('success', isEdit ? 'Nodo modificado correctamente' : 'Nodo creado correctamente', 'El nodo se ha guardado con éxito.');
         {/**
           setTimeout(() => {
@@ -127,7 +171,7 @@ const TableNodos: React.FC<TableNodosProps> = ({ nodos, setNodos, onEditUptMode 
         console.error('Error:', error);
       }
       setPopUp(null);
-    };
+  };
 
   const obtenerNodos = async () => {
     try {
@@ -220,90 +264,125 @@ const TableNodos: React.FC<TableNodosProps> = ({ nodos, setNodos, onEditUptMode 
             }}/>
           )}
         </div>
-        <div className="Alerta mb-4">
+     
+      <div className="Alerta mb-4">
         { alert && isDelete &&(
-            <AlertPopup
-            message={alert.message}
-            description={alert.description}
-            onClose={() => setPopUp(null)}
-            onConfirm={() => {
-              if (selectedNodo || isDelete) deleteNodo(selectedNodo); 
-              setPopUp(null); 
-            }}/>
-        )}
-
-        </div>
-
-        {!isEdit &&(
-          <AdminMaps onLocationChange={handleLocationChange} nodos={nodos} onEdit={startEdit} onDelete={startDelete}/>
-         )}
-      {/* BOTON MOSTRAR lISTA 
-      <div className="md:w-1/2">
-        <button
-          onClick={toggleIsEdit}
-          className="bg-primary text-white px-4 py-2 rounded-lg focus:outline-none hover:bg-primary-dark transition"
-        >
-          {isEdit ? 'Ocultar Lista de Nodos' : 'Mostrar Lista de Nodos'}
-        </button>
+          <AlertPopup
+          message={alert.message}
+          description={alert.description}
+          onClose={() => setPopUp(null)}
+          onConfirm={() => {
+            if (selectedNodo || isDelete) deleteNodo(selectedNodo); 
+             setPopUp(null); 
+        }}/>
+      )}
       </div>
-      */}
 
+
+      {!isEdit &&(
+        <AdminMaps onLocationChange={handleLocationChange} nodos={nodos} onEdit={startEdit} onDelete={startDelete}/>
+        )}
+        
       <h4 className="mb-6 text-xl font-semibold text-black dark:text-white">Lista de nodos</h4>
-      <div className="flex flex-col" style={{ maxHeight: '400px', overflowY: 'scroll' }}>
+        <div className="flex flex-col" style={{ maxHeight: '400px', overflowY: 'scroll' }}>
+          
           <div className="grid grid-cols-3 rounded-sm bg-gray-2 dark:bg-meta-4 sm:grid-cols-5 sticky top-0 z-10">
-            <div className="p-2.5 xl:p-5">
-              <h5 className="text-sm font-medium uppercase xsm:text-base">Nombre</h5>
-            </div>
-            
-            <div className="p-2.5 text-center xl:p-5">
-              <h5 className="text-sm font-medium uppercase xsm:text-base">Latitud</h5>
-            </div>
+              
+              <div className="p-2.5 xl:p-5">
+                <h5 className="text-sm font-medium uppercase xsm:text-base">Nombre</h5>
+              </div>
+              
+              <div className="p-2.5 text-center xl:p-5">
+                <h5 className="text-sm font-medium uppercase xsm:text-base">Latitud</h5>
+              </div>
 
-            <div className="p-2.5 text-center xl:p-5">
-              <h5 className="text-sm font-medium uppercase xsm:text-base">Longitud</h5>
-            </div>
+              <div className="p-2.5 text-center xl:p-5">
+                <h5 className="text-sm font-medium uppercase xsm:text-base">Longitud</h5>
+              </div>
 
-            <div className="p-2.5 text-center xl:p-5">
-              <h5 className="text-sm font-medium uppercase xsm:text-base">Descripción</h5>
+              <div className="p-2.5 text-center xl:p-5">
+                <h5 className="text-sm font-medium uppercase xsm:text-base">Descripción</h5>
+              </div>
+            </div>
+         
+          <div className="mb-4">
+            <label htmlFor="filter" className="block mb-2 text-sm font-medium text-gray-900 dark:text-gray-300">
+           
+              Filtrar por:
+            </label>
+            <select
+              id="filter"
+              value={selectedFilter}
+              onChange={(e) => setSelectedFilter(e.target.value)}
+              className="bg-gray-50 border border-gray-300 text-gray-900 text-sm rounded-lg focus:ring-blue-500 focus:border-blue-500 block w-full p-2.5 dark:bg-gray-700 dark:border-gray-600 dark:placeholder-gray-400 dark:text-white dark:focus:ring-blue-500 dark:focus:border-blue-500"
+            >
+              <option value="">Todos</option>
+              <option value="nombre">Nombre</option>
+            </select>
+          </div>
+          
+            {selectedFilter && (
+              <div className="mb-4">
+                <label htmlFor="filterValue" className="block mb-2 text-sm font-medium text-gray-900 dark:text-gray-300">
+                  Buscar:
+                </label>
+                <input
+                  type="text"
+                  id="filterValue"
+                  value={filterValue}
+                  onChange={(e) => setFilterValue(e.target.value)}
+                  className="bg-gray-50 border border-gray-300 text-gray-900 text-sm rounded-lg focus:ring-blue-500 focus:border-blue-500 block w-full p-2.5 dark:bg-gray-700 dark:border-gray-600 dark:placeholder-gray-400 dark:text-white dark:focus:ring-blue-500 dark:focus:border-blue-500"
+                  placeholder={`Buscar por ${selectedFilter}`}
+                />
+              </div>
+            )}
+             
+            <button
+              onClick={toggleSortDirection}
+              className="bg-blue-500 text-white px-4 py-2 rounded mb-4"
+            >
+              Ordenar por nombre: {sortDirection === 'asc' ? 'Ascendente' : 'Descendente'}
+            </button>
+            {/*
+              {nodos.map((nodo) => (
+            */}
+              {filteredNodos.map((nodo) => (
+          <div className="grid grid-cols-3 sm:grid-cols-5 border-b border-stroke dark:border-strokedark" key={nodo.id}>
+            <div className="flex items-center  gap-3 p-2.5 xl:p-5">
+              <p className="text-black dark:text-white">{nodo.nombre}</p>
+            </div>
+            <div className="flex items-center gap-3 p-2.5 xl:p-5">
+              <p className="text-black dark:text-white">{nodo.posicionx}</p>
+            </div>
+            <div className="flex items-center justify-center p-2.5 xl:p-5">
+              <p className="text-black dark:text-white">{nodo.posiciony}</p>
+            </div>
+            <div className="flex items-center justify-center gap-3 p-2.5 xl:p-5">
+              <p className="text-black dark:text-white">{nodo.descripcion}</p>
+            </div>
+            <div className="flex items-center justify-center p-2.5 xl:p-5 space-x-5">
+              <button
+                className="bg-yellow-500 text-white px-4 py-2 rounded"
+                onClick={() => { handleEditToggle(nodo)}}>
+                Editar
+              </button>
+
+              <button
+                className="bg-red-500 dedbg-red-500 text-white px-4 py-2 rounded"
+                onClick={() => {
+                  setSelectedNodo(nodo); 
+                  setPopUp({
+                    message: 'Atención!',
+                    description: '¿Estás seguro de que deseas eliminar este nodo?',
+                  });
+                }} >
+                Eliminar
+              </button>
             </div>
           </div>
-
-          {nodos.map((nodo) => (
-            <div className="grid grid-cols-3 sm:grid-cols-5 border-b border-stroke dark:border-strokedark" key={nodo.id}>
-              <div className="flex items-center  gap-3 p-2.5 xl:p-5">
-                <p className="text-black dark:text-white">{nodo.nombre}</p>
-              </div>
-              <div className="flex items-center gap-3 p-2.5 xl:p-5">
-                <p className="text-black dark:text-white">{nodo.posicionx}</p>
-              </div>
-              <div className="flex items-center justify-center p-2.5 xl:p-5">
-                <p className="text-black dark:text-white">{nodo.posiciony}</p>
-              </div>
-              <div className="flex items-center justify-center gap-3 p-2.5 xl:p-5">
-                <p className="text-black dark:text-white">{nodo.descripcion}</p>
-              </div>
-              <div className="flex items-center justify-center p-2.5 xl:p-5 space-x-5">
-                <button
-                  className="bg-yellow-500 text-white px-4 py-2 rounded"
-                  onClick={() => { handleEditToggle(nodo)}}>
-                  Editar
-                </button>
-
-                <button
-                  className="bg-red-500 text-white px-4 py-2 rounded"
-                  onClick={() => {
-                    setSelectedNodo(nodo); 
-                    setPopUp({
-                      message: 'Atención!',
-                      description: '¿Estás seguro de que deseas eliminar este nodo?',
-                    });
-                  }} >
-                  Eliminar
-                </button>
-              </div>
-            </div>
-          ))}
-        </div>
+          
+          ))} 
+      </div>
     
       {/* EDICION DE NODOS */}
       {isEdit && selectedNodoUpt &&(
@@ -460,7 +539,7 @@ const TableNodos: React.FC<TableNodosProps> = ({ nodos, setNodos, onEditUptMode 
                < div className="mt-10">
                   <button
                     type="submit"
-                    className="w-full cursor-pointer rounded-lg border p-4 text-white bg-green-500 hover:bg-green-600"
+                    className="w-full cursor-pointer rounded-lg border p-4 text-white bg-yellow-500 hover:bg-yellow-600"
                   > 
                   Modificar nodo
                   </button>

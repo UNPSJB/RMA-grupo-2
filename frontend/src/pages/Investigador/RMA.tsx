@@ -91,13 +91,13 @@ const RMA: React.FC = () => {
   };
 
   useEffect(() => {
-    
-    fetchLastMeasurement();
-    const intervalId = setInterval(fetchLastMeasurement, 60000  
-    );
+    const intervalId = setInterval(fetchLastMeasurement, 60000);
 
-    return () => clearInterval(intervalId);
-  }, []);
+    // Limpieza cuando el componente se desmonta
+    return () => {
+      clearInterval(intervalId); // Limpia el intervalo
+    };
+  }, []); 
 
   if (error) {
     return <div>{error}</div>;

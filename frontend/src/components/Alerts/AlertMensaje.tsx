@@ -13,6 +13,7 @@ const AlertMensaje: React.FC<AlerMensaje> = ({ message, description, onClose, on
       <div className="alert-popup-box">
         <div className="alert-popup-header">{message}</div>
         <div className="alert-popup-description">{description}</div>
+        
       </div>
     </div>
   );

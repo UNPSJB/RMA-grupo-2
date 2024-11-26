@@ -5,59 +5,80 @@
     left: 0;
     right: 0;
     bottom: 0;
-    background-color: rgba(0, 0, 0, 0.5); /* Fondo oscuro con opacidad */
+    background-color: rgba(0, 0, 0, 0.7); 
     display: flex;
     justify-content: center;
     align-items: center;
-    z-index: 9999; /* Asegura que se muestre encima de otros elementos */
-    animation: fadeIn 0.3s ease-out;
-  }
-  
-  .alert-popup-box {
+    z-index: 9999;
+    animation: fadeIn 0.4s ease-out;
+}
+
+.alert-popup-box {
     background-color: white;
-    padding: 20px;
-    border-radius: 8px;
-    max-width: 400px;
-    width: 100%;
-    box-shadow: 0 4px 10px rgba(0, 0, 0, 0.2);
+    padding: 25px;
+    border-radius: 15px;
+    max-width: 450px;
+    width: 90%;
+    box-shadow: 0 8px 20px rgba(0, 0, 0, 0.3);
     text-align: center;
-  }
-  
-  .alert-popup-header {
-    font-size: 1.5rem;
-    margin-bottom: 10px;
-  }
-  
-  .alert-popup-description {
-    font-size: 1rem;
-    margin-bottom: 20px;
-  }
-  
-  .alert-popup-buttons {
+    animation: scaleIn 0.4s ease-out;
+    color: #333; 
+}
+
+.alert-popup-header {
+    font-size: 2rem;
+    font-weight: bold;
+    margin-bottom: 15px;
+    color: #ff4081;
+    text-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+}
+
+.alert-popup-description {
+    font-size: 1.2rem;
+    margin-bottom: 25px;
+    line-height: 1.5;
+    color: #555; 
+}
+
+.alert-popup-buttons {
     display: flex;
-    justify-content: space-around;
-  }
-  
-  .alert-popup-button {
-    padding: 10px 20px;
-    background-color: #f44336;
+    justify-content: center;
+    gap: 15px;
+}
+
+.alert-popup-button {
+    padding: 12px 25px;
+    background-color: #ff4081;
     color: white;
+    font-size: 1rem;
+    font-weight: bold;
     border: none;
-    border-radius: 5px;
+    border-radius: 25px;
     cursor: pointer;
-    transition: background-color 0.3s;
-  }
-  
-  .alert-popup-button:hover {
-    background-color: #d32f2f;
-  }
-  
-  @keyframes fadeIn {
+    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2);
+    transition: transform 0.2s, background-color 0.3s;
+}
+
+.alert-popup-button:hover {
+    background-color: #d32f6f; 
+    transform: translateY(-3px);
+    box-shadow: 0 6px 12px rgba(0, 0, 0, 0.3);
+}
+
+@keyframes fadeIn {
     from {
-      opacity: 0;
+        opacity: 0;
     }
     to {
-      opacity: 1;
+        opacity: 1;
     }
-  }
-  
+}
+
+@keyframes scaleIn {
+    from {
+        transform: scale(0.8);
+    }
+    to {
+        transform: scale(1);
+    }
+}

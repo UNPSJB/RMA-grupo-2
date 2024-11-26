@@ -4,7 +4,7 @@ interface AlertPopupProps {
   message: string;
   description: string;
   onClose: () => void;
-  onConfirm: () => void; // Asegúrate de que se pase correctamente la función
+  onConfirm: () => void;
 }
 
 const AlertPopup: React.FC<AlertPopupProps> = ({ message, description, onClose, onConfirm }) => {
@@ -14,12 +14,11 @@ const AlertPopup: React.FC<AlertPopupProps> = ({ message, description, onClose, 
         <div className="alert-popup-header">{message}</div>
         <div className="alert-popup-description">{description}</div>
         <div className="alert-popup-buttons">
-          <button className="alert-popup-button" onClick={onConfirm}>Confirmar</button>
-          <button className="alert-popup-button" onClick={onClose}>Cerrar</button>
+          <button className="alert-popup-button text-white bg-green-500 hover:bg-green-600" onClick={onConfirm}>Confirmar</button>
+          <button className="alert-popup-button dedbg-red-500 text-white px-4 py-2 roun" onClick={onClose}>Cerrar</button>
         </div>
       </div>
     </div>
   );
 };
-
 export default AlertPopup;
