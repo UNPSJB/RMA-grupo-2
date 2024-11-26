@@ -2,6 +2,7 @@ import React, { useEffect, useRef, useState } from 'react';
 import { NavLink, useLocation } from 'react-router-dom';
 import SidebarLinkGroup from './SidebarLinkGroup';
 import rmalogo from '../../images/logo/rmalogo-svg.svg';
+import { useAuth } from './../../AuthContext';
 
 interface SidebarProps {
   sidebarOpen: boolean;
@@ -11,7 +12,7 @@ interface SidebarProps {
 const AdminSidebar = ({ sidebarOpen, setSidebarOpen }: SidebarProps) => {
   const location = useLocation();
   const { pathname } = location;
-
+  const { logout } = useAuth();
   const trigger = useRef<any>(null);
   const sidebar = useRef<any>(null);
 
@@ -468,15 +469,12 @@ const AdminSidebar = ({ sidebarOpen, setSidebarOpen }: SidebarProps) => {
                       >
                         <ul className="mt-4 mb-5.5 flex flex-col gap-2.5 pl-6">
                           <li>
-                            <NavLink
-                              to="/"
-                              className={({ isActive }) =>
-                                'group relative flex items-center gap-2.5 rounded-md px-4 font-medium text-bodydark2 duration-300 ease-in-out hover:text-white ' +
-                                (isActive && '!text-white')
-                              }
+                            <button
+                              onClick={logout}
+                              className="group relative flex items-center gap-2.5 rounded-md px-4 py-2 font-medium text-bodydark2 duration-300 ease-in-out hover:text-white"
                             >
                               Cerrar Sesión
-                            </NavLink>
+                            </button>
                           </li>
                         </ul>
                       </div>

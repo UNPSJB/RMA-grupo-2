@@ -2,8 +2,8 @@ import React, { useState } from 'react';
 import { MapContainer, TileLayer, Marker, Popup, useMapEvents } from 'react-leaflet';
 import 'leaflet/dist/leaflet.css';
 import Modal from 'react-modal';
-import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
-import { faEye, faTrash, faCog } from '@fortawesome/free-solid-svg-icons';
+//import { FontAwesomeIcon } from 'fortawesome/react-fontawesome';
+//import { faEye, faTrash, faCog } from '@fortawesome/free-solid-svg-icons';
 
 interface Nodo {
   id: number;
