@@ -185,7 +185,7 @@ const PanelNodos = () => {
           <div className="md:w-1/2">
         <button
           onClick={handleCreateNodo}
-          className="bg-primary text-white px-4 py-2 rounded-lg focus:outline-none hover:bg-primary-dark transition"
+          className="bg-green-500 text-white font-semibold px-5 py-3 rounded-lg shadow-md hover:bg-green-600 focus:outline-none focus:ring-2 focus:ring-green-400 focus:ring-offset-2 transition transform hover:scale-105 active:scale-95"
          >
           Crear Nodo
           </button>
