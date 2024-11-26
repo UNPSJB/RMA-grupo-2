@@ -93,7 +93,7 @@ const ChartTwo: React.FC = () => {
         const nodoActual = nodoSeleccionado || nodosUnicos[0];
         setNodoSeleccionado(nodoActual);
         const datosAltura = response.data
-          .filter((medicion) => medicion.tipo === 25 && medicion.nodo === nodoActual)
+          .filter((medicion) => medicion.tipo === 25 && medicion.nodo === nodoActual && medicion.error === false)
           .reduce((acc, medicion) => {
             const fecha = new Date(medicion.tiempo);
             const diaSemana = fecha.getDay(); 
