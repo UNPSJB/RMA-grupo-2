@@ -75,32 +75,34 @@ const ChartTwo: React.FC = () => {
     series: [
       {
         name: 'Altura',
-        data: [], // Datos de altura en metros para la semana
+        data: [], 
       },
     ],
   });
 
+  const [nodos, setNodos] = useState<number[]>([]);
+  const [nodoSeleccionado, setNodoSeleccionado] = useState<number | null>(null); 
   useEffect(() => {
     const obtenerDatosAltura = async () => {
       try {
         const response = await axios.get<Medicion[]>('http://localhost:8000/medicion/');
-        
-        // Filtrar las mediciones de tipo "Altura" (tipo === 25) y agrupar por día de la semana
+
+        const nodosUnicos = Array.from(new Set(response.data.map((medicion) => medicion.nodo))).sort((a, b) => a - b);
+        setNodos(nodosUnicos);
+
+        const nodoActual = nodoSeleccionado || nodosUnicos[0];
+        setNodoSeleccionado(nodoActual);
         const datosAltura = response.data
-          .filter((medicion) => medicion.tipo === 25)
+          .filter((medicion) => medicion.tipo === 25 && medicion.nodo === nodoActual)
           .reduce((acc, medicion) => {
             const fecha = new Date(medicion.tiempo);
-            const diaSemana = fecha.getDay(); // 0 = Domingo, 1 = Lunes, ..., 6 = Sábado
-
-            // Guardamos una medición por día de la semana, usando el último valor si hay varios
+            const diaSemana = fecha.getDay(); 
             acc[diaSemana] = medicion.dato;
             return acc;
-          }, Array(7).fill(null) as (number | null)[]); // Array de 7 elementos para cada día de la semana
+          }, Array(7).fill(null) as (number | null)[]); 
 
-        // Ajustamos datos para la semana (Lunes a Domingo)
         const alturaSemana = [1, 2, 3, 4, 5, 6, 0].map((day) => datosAltura[day] || 0);
 
-        // Actualizamos el estado del gráfico
         setState({
           series: [{ name: 'Altura', data: alturaSemana }],
         });
@@ -110,7 +112,12 @@ const ChartTwo: React.FC = () => {
     };
 
     obtenerDatosAltura();
-  }, []);
+  }, [nodoSeleccionado]); 
+
+  const handleNodoChange = (event: React.ChangeEvent<HTMLSelectElement>) => {
+    setNodoSeleccionado(Number(event.target.value));
+  };
+
 
   return (
     <div className="col-span-12 rounded-sm border border-stroke bg-white p-7.5 shadow-default dark:border-strokedark dark:bg-boxdark xl:col-span-4">
@@ -119,6 +126,19 @@ const ChartTwo: React.FC = () => {
           <h4 className="text-xl font-semibold text-black dark:text-white">
             Gráfico de Altura Semanal
           </h4>
+        </div>
+        <div>
+          <select
+            className="border rounded p-2"
+            value={nodoSeleccionado || ''}
+            onChange={handleNodoChange}
+          >
+            {nodos.map((nodo) => (
+              <option key={nodo} value={nodo}>
+                Nodo {nodo}
+              </option>
+            ))}
+          </select>
         </div>
       </div>
       <div>
