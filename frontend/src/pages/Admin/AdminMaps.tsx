@@ -2,8 +2,8 @@ import React, { useState } from 'react';
 import { MapContainer, TileLayer, Marker, Popup, useMapEvents } from 'react-leaflet';
 import 'leaflet/dist/leaflet.css';
 import Modal from 'react-modal';
-//import { FontAwesomeIcon } from 'fortawesome/react-fontawesome';
-//import { faEye, faTrash, faCog } from '@fortawesome/free-solid-svg-icons';
+import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
+import { faEye, faTrash, faCog } from '@fortawesome/free-solid-svg-icons';
 
 interface Nodo {
   id: number;
@@ -32,8 +32,10 @@ const AdminMaps: React.FC<{
         const { lat, lng } = e.latlng;
         setMarkerPosition([lat, lng]);
         setHasClicked(true);
-        handleLocationUpdate(lat, lng);
-        onLocationChange(lat, lng); 
+        if(isEditting )
+          handleLocationUpdate(lat, lng);
+        else
+          onLocationChange(lat, lng); 
       }
     });
     return null;
