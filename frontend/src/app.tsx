@@ -19,6 +19,7 @@ import DefaultLayout from './layout/DefaultLayout';
 import PaginaDefault from './pages/DefaultView/PaginaDefault';
 import CrearNodo from './pages/Admin/CrearNodo'
 import AdminParametro from './pages/Admin/AdminParametro';
+import MedicionesCSV from './pages/Admin/MedicionesCSV';
 
 function App() {
   const [loading, setLoading] = useState<boolean>(true);
@@ -103,6 +104,12 @@ function App() {
         <Route path="/admin" element={
           <ProtectedRoute requiredRole="admin">
             <AdminMain />
+          </ProtectedRoute>
+        }/>
+
+        <Route path="/admin/medicionescsv" element={
+          <ProtectedRoute requiredRole="admin">
+            <MedicionesCSV />
           </ProtectedRoute>
         }/>
 

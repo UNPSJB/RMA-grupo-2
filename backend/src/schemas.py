@@ -11,7 +11,6 @@ class MedicionBase(BaseModel):
     tipo: int
     dato: float
     tiempo: datetime.datetime
-    bateria: Optional[int]
     error: bool
 
 class Medicion(MedicionBase):
@@ -20,7 +19,6 @@ class Medicion(MedicionBase):
     tipo: int
     dato: float
     tiempo: datetime.datetime
-    bateria: Optional[int]
     error: bool
 
     class Config:
@@ -38,6 +36,8 @@ class MedicionFiltro(BaseModel):
 class MedicionFiltrada(BaseModel):
     dato: float
     tiempo: datetime.datetime
+
+
 
 ## ----------------------- USUARIO
 class UsuarioBase(BaseModel):

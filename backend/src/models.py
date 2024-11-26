@@ -22,7 +22,6 @@ class Medicion(Base):
         DateTime(timezone=True),
         default=func.now()
     )
-    bateria: Mapped[int] = mapped_column(Integer, nullable=True)
     error: Mapped[bool] = mapped_column(Boolean, nullable=False)
 
 ## ----------------------- DATOS SENSORES

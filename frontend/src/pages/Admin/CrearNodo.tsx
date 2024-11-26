@@ -92,8 +92,7 @@ const CrearNodo = () => {
       nombre: formData.nombre,
       posicionx: formData.posicionx,
       posiciony: formData.posiciony,
-      descripcion: formData.descripcion,  
-      bateria: null    
+      descripcion: formData.descripcion,    
     };
     debugger;
   

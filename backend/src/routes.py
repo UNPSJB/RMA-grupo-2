@@ -1,6 +1,6 @@
 import datetime
 from os import getenv
-from fastapi import APIRouter, Depends, HTTPException
+from fastapi import APIRouter, Depends, HTTPException, UploadFile
 from sqlalchemy import and_
 from sqlalchemy.ext.asyncio import AsyncSession
 from backend.database import get_db
@@ -40,6 +40,15 @@ async def leer_mediciones_filtro(
 ):
     try:
         return await services.leer_mediciones_filtro(db, filtros)
+    except HTTPException as e:
+        raise HTTPException(status_code=400, detail=str(e))
+    
+@router.post("/medicioncsv", response_model=dict)
+async def procesar_csv_medicion(
+    archivo: UploadFile, db: AsyncSession = Depends(get_db)    
+):
+    try:
+        return await services.procesar_csv_medicion(db, archivo)
     except HTTPException as e:
         raise HTTPException(status_code=400, detail=str(e))
 

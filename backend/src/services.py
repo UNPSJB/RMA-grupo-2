@@ -1,3 +1,5 @@
+from fastapi.datastructures import FormData
+from pydantic import ValidationError
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy import Enum
 from sqlalchemy.future import select
@@ -5,11 +7,13 @@ from sqlalchemy.exc import SQLAlchemyError
 from sqlalchemy import and_, desc, asc
 from backend.src import schemas, models
 from backend.src.models import Usuario, Nodo, Medicion, Alarma, DatosSensores
-from fastapi import HTTPException
+from fastapi import File, HTTPException, UploadFile
 from backend.database import SessionLocal
 import datetime
 from backend.src.auth import pwd_context
 from backend.src.bot import send_alarm_to_channel
+import csv
+import io
 
 async def get_db():
     db = SessionLocal()
@@ -22,7 +26,7 @@ async def get_db():
 async def crear_medicion(db: AsyncSession, medicion: schemas.MedicionCreate) -> schemas.MedicionCreate:
     result = await db.execute(select(models.DatosSensores).filter(models.DatosSensores.tipo == medicion.tipo))
     sensor_data = result.scalars().first()
-
+    
     if not sensor_data:
         raise ValueError(f"Tipo de dato {medicion.tipo} no encontrado en la base de datos.")
     
@@ -44,7 +48,6 @@ async def crear_medicion(db: AsyncSession, medicion: schemas.MedicionCreate) -> 
         tipo=medicion.tipo,
         dato=medicion.dato,
         tiempo=medicion.tiempo,
-        bateria=medicion.bateria,
         error=mError
     )
     try:
@@ -91,6 +94,34 @@ async def listar_tipos_medicion(db: AsyncSession):
                               .join(DatosSensores, Medicion.tipo == DatosSensores.tipo)
                               .group_by(Medicion.tipo, DatosSensores.descripcion))
     return [{"value": data.tipo, "label": data.descripcion} for data in result.all()]
+
+async def procesar_csv_medicion(db:AsyncSession, archivo: UploadFile = File(...)):
+    # Crear un archivo en memoria a partir del string
+    # Leer el contenido del archivo y decodificarlo
+        contenido = (await archivo.read()).decode('utf-8')  # Decodifica a string
+        
+        # Crear un archivo en memoria con el contenido decodificado
+        archivo_virtual = io.StringIO(contenido)
+        
+        # Leer el archivo como CSV
+        reader = csv.DictReader(archivo_virtual)
+        # Usar csv.DictReader para leer las filas
+        for fila in reader:
+            try:
+                # Convertir y validar los datos de la fila
+                medicion = schemas.MedicionCreate(
+                    nodo=int(fila["nodo"]),
+                    tipo=int(fila["tipo"]),
+                    dato=float(fila["dato"]),
+                    tiempo=datetime.datetime.fromisoformat(fila["tiempo"]),
+                    error=fila["error"].lower() == "true"
+                )
+                await crear_medicion(db, medicion)
+            except ValidationError as e:
+                print(f"Error de validación en la fila {fila}: {e}")
+            except KeyError as e:
+                print(f"Columna faltante en la fila {fila}: {e}")
+        return {"msg": "ok"}
 
 ## ----------------------- USUARIO
 async def crear_usuario(db: AsyncSession, usuario: schemas.UsuarioCreate) -> schemas.UsuarioCreate:
