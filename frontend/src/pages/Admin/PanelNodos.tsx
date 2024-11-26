@@ -157,7 +157,7 @@ const PanelNodos = () => {
     <>
       <Breadcrumb pageName="Nodos" />
     
-     {/* ALERTA */}
+     {/* ALERTA 
       <div className="Alerta mb-4">
         {alert?.message && (
           <AlertPopup
@@ -171,6 +171,7 @@ const PanelNodos = () => {
           />
         )}
       </div>
+            */}
        
 
 
@@ -188,9 +189,7 @@ const PanelNodos = () => {
          >
           Crear Nodo
           </button>
-        </div>
-    
-           
+        </div>       
     </>
   );
 };

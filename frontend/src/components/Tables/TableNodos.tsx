@@ -54,6 +54,12 @@ const TableNodos: React.FC<TableNodosProps> = ({ nodos, setNodos, onEditUptMode 
     const handleLocationChange = (lat: number, lng: number) => {
       setLat(lat);
       setLng(lng);
+      
+    setFormData((prevFormData) => ({
+      ...prevFormData,
+      posicionx: lat,
+      posiciony: lng,
+      }));
     };
 
     const handleUpdate = async (nodoUpd: Nodo) => {
@@ -69,7 +75,6 @@ const TableNodos: React.FC<TableNodosProps> = ({ nodos, setNodos, onEditUptMode 
         obtenerNodos();
         setNodos(nodos.filter((n) => n.id !== nodoUpd.id));
         setSelectedNodoUpt(nodos.filter((nodoUpd) => nodoUpd.id !== nodoUpd.id));
-        //setSelectedNodoUpt(null); // Limpia el nodo seleccionado
         //showAlert('success', isEdit ? 'Nodo modificado correctamente' : 'Nodo creado correctamente', 'El nodo se ha guardado con éxito.');
         {/**
           setTimeout(() => {
@@ -290,7 +295,7 @@ const TableNodos: React.FC<TableNodosProps> = ({ nodos, setNodos, onEditUptMode 
                 </button>
 
                 <button
-                  className="bg-red-500 text-white px-4 py-2 rounded"
+                  className="dedbg-red-500 text-white px-4 py-2 roun"
                   onClick={() => {
                     setSelectedNodo(nodo); 
                     setPopUp({
@@ -460,7 +465,7 @@ const TableNodos: React.FC<TableNodosProps> = ({ nodos, setNodos, onEditUptMode 
                < div className="mt-10">
                   <button
                     type="submit"
-                    className="w-full cursor-pointer rounded-lg border p-4 text-white bg-green-500 hover:bg-green-600"
+                    className="w-full cursor-pointer rounded-lg border p-4 text-white bg-yellow-500 hover:bg-yellow-600"
                   > 
                   Modificar nodo
                   </button>
