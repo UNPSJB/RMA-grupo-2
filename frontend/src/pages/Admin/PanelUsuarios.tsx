@@ -20,7 +20,6 @@ const PanelUsuarios = () => {
 
 const handleUpdateRole = async (id: number, newRole: string) => {
   if (!validRoles.includes(newRole.toLowerCase())) {
-    alert('Rol no válido');
     return;
   }
 
@@ -36,11 +35,9 @@ const handleUpdateRole = async (id: number, newRole: string) => {
 
     if (response.ok) {
       obtenerUsuarios(); // Actualizamos la lista de usuarios
-      alert('Rol modificado con éxito');
     } else {
       const errorData = await response.json();
       console.error('Error del servidor:', errorData);
-      alert('Error al modificar el rol: ' + errorData.detail || 'Error desconocido');
     }
   } catch (error) {
     console.error('Error:', error);
@@ -52,11 +49,11 @@ const handleUpdateRole = async (id: number, newRole: string) => {
   const obtenerUsuarios = async () => {
     try {
       const response = await axios.get('http://localhost:8000/usuarios/');
-      const usuarios = response.data;
+      let usuarios = response.data;
+      usuarios = usuarios.sort((a: Usuario, b: Usuario) => a.id - b.id);
       setUsuarios(usuarios);
     } catch (error) {
       console.error('Error al obtener los usuarios:', error);
-      alert('Error al cargar los datos.');
     }
   };
 

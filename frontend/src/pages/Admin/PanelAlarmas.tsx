@@ -140,10 +140,12 @@ const PanelAlarmas = () => {
     try {
       const response = await axios.get('http://localhost:8000/lista_nodos');
       const nodosData = response.data;
+
       const nodosExtraidos = nodosData.map((nodo: { value: number; label: string }) => ({
         id: nodo.value,
         nombre: nodo.label,
-      }));
+      })).sort((a, b) => a.id - b.id);
+  
       setNodos(nodosExtraidos);
     } catch (error) {
       console.error('Error al obtener nodos:', error);
@@ -154,10 +156,13 @@ const PanelAlarmas = () => {
     try {
       const response = await axios.get('http://localhost:8000/sensores');
       const sensoresData = response.data;
-      const sensoresExtraidos = sensoresData.map((sensor: { tipo: number; descripcion: string }) => ({
-        tipo: sensor.tipo,
-        desc: sensor.descripcion,
-      }));
+  
+      const sensoresExtraidos = sensoresData
+        .map((sensor: { tipo: number; descripcion: string }) => ({
+          tipo: sensor.tipo,
+          desc: sensor.descripcion,
+        })).sort((a, b) => a.tipo - b.tipo);
+  
       setTiposSensores(sensoresExtraidos);
     } catch (error) {
       console.error('Error al obtener tipos de sensores:', error);
@@ -168,7 +173,10 @@ const PanelAlarmas = () => {
     try {
       const response = await axios.get('http://localhost:8000/alarmas/');
       const alarmas = response.data;
-      setAlarmas(alarmas);
+  
+      const alarmasOrdenadas = alarmas.sort((a: { id: number }, b: { id: number }) => a.id - b.id);
+  
+      setAlarmas(alarmasOrdenadas);
     } catch (error) {
       console.error('Error al obtener las alarmas:', error);
       setAlert({
