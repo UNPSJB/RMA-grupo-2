@@ -329,7 +329,7 @@ const CrearNodo = () => {
                 </span>
                 </div>
             </div>
-            <AdminMaps onLocationChange={handleLocationChange} nodos={nodos} />
+             <AdminMaps onLocationChange={handleLocationChange} nodos={nodos} />
             <div className="mb-4">
                 <label className="mb-2.5 block font-medium text-black dark:text-white">
                 Descripción(opcional)
@@ -361,14 +361,26 @@ const CrearNodo = () => {
                 </div>
             </div>
              
-           
+
+             <div className="md:w-1/2">
             <button
-                type="submit"
-                onClick={handleSubmit}
-                className="bg-green-500 text-white font-semibold px-5 py-3 rounded-lg shadow-md hover:bg-green-600 focus:outline-none focus:ring-2 focus:ring-green-400 focus:ring-offset-2 transition transform hover:scale-105 active:scale-95"
-                >
-                Crear Nodo
+              onClick={handleSubmit}
+              className="bg-green-500 text-white font-semibold px-5 py-3 rounded-lg shadow-md hover:bg-green-600 focus:outline-none focus:ring-2 focus:ring-green-400 focus:ring-offset-2 transition transform hover:scale-105 active:scale-95 flex items-center justify-center"
+            >
+              <svg
+                xmlns="http://www.w3.org/2000/svg"
+                className="h-5 w-5 mr-2"
+                fill="none"
+                viewBox="0 0 24 24"
+                stroke="currentColor"
+                strokeWidth={2}
+              >
+                <path strokeLinecap="round" strokeLinejoin="round" d="M12 4v16m8-8H4" />
+              </svg>
+              Crear Nodo
             </button>
+          </div>       
+           
             </form> 
         </div>
     </>

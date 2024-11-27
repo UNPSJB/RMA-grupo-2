@@ -283,30 +283,8 @@ const TableNodos: React.FC<TableNodosProps> = ({ nodos, setNodos, onEditUptMode 
         <AdminMaps onLocationChange={handleLocationChange} nodos={nodos} onEdit={startEdit} onDelete={startDelete}/>
         )}
         
-      <h4 className="mb-6 text-xl font-semibold text-black dark:text-white">Lista de nodos</h4>
-        <div className="flex flex-col" style={{ maxHeight: '400px', overflowY: 'scroll' }}>
-          
-          <div className="grid grid-cols-3 rounded-sm bg-gray-2 dark:bg-meta-4 sm:grid-cols-5 sticky top-0 z-10">
-              
-              <div className="p-2.5 xl:p-5">
-                <h5 className="text-sm font-medium uppercase xsm:text-base">Nombre</h5>
-              </div>
-              
-              <div className="p-2.5 text-center xl:p-5">
-                <h5 className="text-sm font-medium uppercase xsm:text-base">Latitud</h5>
-              </div>
-
-              <div className="p-2.5 text-center xl:p-5">
-                <h5 className="text-sm font-medium uppercase xsm:text-base">Longitud</h5>
-              </div>
-
-              <div className="p-2.5 text-center xl:p-5">
-                <h5 className="text-sm font-medium uppercase xsm:text-base">Descripción</h5>
-              </div>
-            </div>
-         
-          <div className="mb-4">
-            <label htmlFor="filter" className="block mb-2 text-sm font-medium text-gray-900 dark:text-gray-300">
+          <div className="mb-4 sticky top 0 z-10">
+            <label htmlFor="filter" className="block mb-3 text-lg font-medium text-gray-900 dark:text-gray-300">
            
               Filtrar por:
             </label>
@@ -339,13 +317,33 @@ const TableNodos: React.FC<TableNodosProps> = ({ nodos, setNodos, onEditUptMode 
              
             <button
               onClick={toggleSortDirection}
-              className="bg-blue-500 text-white px-4 py-2 rounded mb-4"
+              className="bg-blue-500 text-white font-semibold px-5 py-3 rounded-lg shadow-md hover:bg-blue-600 focus:outline-none focus:ring-2 focus:ring-green-400 focus:ring-offset-2 transition transform hover:scale-105 active:scale-95 my-4"
             >
               Ordenar por nombre: {sortDirection === 'asc' ? 'Ascendente' : 'Descendente'}
             </button>
+        <div className="flex flex-col" style={{ maxHeight: '400px', overflowY: 'scroll' }}>
+          
             {/*
               {nodos.map((nodo) => (
             */}
+             <div className="grid grid-cols-3 rounded-sm bg-gray-2 dark:bg-meta-4 sm:grid-cols-5 sticky top-0 z-10">
+              
+              <div className="p-2.5 xl:p-5">
+                <h5 className="text-sm font-medium uppercase xsm:text-base">Nombre</h5>
+              </div>
+              
+              <div className="p-2.5 text-center xl:p-5">
+                <h5 className="text-sm font-medium uppercase xsm:text-base">Latitud</h5>
+              </div>
+
+              <div className="p-2.5 text-center xl:p-5">
+                <h5 className="text-sm font-medium uppercase xsm:text-base">Longitud</h5>
+              </div>
+
+              <div className="p-2.5 text-center xl:p-5">
+                <h5 className="text-sm font-medium uppercase xsm:text-base">Descripción</h5>
+              </div>
+            </div>
               {filteredNodos.map((nodo) => (
           <div className="grid grid-cols-3 sm:grid-cols-5 border-b border-stroke dark:border-strokedark" key={nodo.id}>
             <div className="flex items-center  gap-3 p-2.5 xl:p-5">
@@ -362,23 +360,57 @@ const TableNodos: React.FC<TableNodosProps> = ({ nodos, setNodos, onEditUptMode 
             </div>
             <div className="flex items-center justify-center p-2.5 xl:p-5 space-x-5">
               <button
-                className="bg-yellow-500 text-white px-4 py-2 rounded"
-                onClick={() => { handleEditToggle(nodo)}}>
+                className="bg-yellow-500 text-white font-semibold px-5 py-3 rounded-lg shadow-md hover:bg-yellow-600 focus:outline-none focus:ring-2 focus:ring-yellow-400 focus:ring-offset-2 transition transform hover:scale-105 active:scale-95 flex items-center"
+                onClick={() => {
+                  handleEditToggle(nodo);
+                }}
+              >
+                <svg
+                  xmlns="http://www.w3.org/2000/svg"
+                  className="h-5 w-5 mr-2"
+                  fill="none"
+                  viewBox="0 0 24 24"
+                  stroke="currentColor"
+                  strokeWidth={2}
+                >
+                  <path
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                    d="M15.232 5.232a3 3 0 114.243 4.243L7.5 21H3v-4.5l11.732-11.732z"
+                  />
+                </svg>
                 Editar
               </button>
 
               <button
-                className="bg-red-500 dedbg-red-500 text-white px-4 py-2 rounded"
+                className="w-full bg-red-500 text-white font-semibold px-5 py-3 rounded-lg shadow-md hover:bg-red-600 focus:outline-none focus:ring-2 focus:ring-red-400 focus:ring-offset-2 transition transform hover:scale-105 active:scale-95 flex items-center"
                 onClick={() => {
-                  setSelectedNodo(nodo); 
+                  setSelectedNodo(nodo);
                   setPopUp({
                     message: 'Atención!',
                     description: '¿Estás seguro de que deseas eliminar este nodo?',
                   });
-                }} >
+                }}
+              >
+                <svg
+                  xmlns="http://www.w3.org/2000/svg"
+                  className="h-5 w-5 mr-2"
+                  fill="none"
+                  viewBox="0 0 24 24"
+                  stroke="currentColor"
+                  strokeWidth={2}
+                >
+                  <path
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                    d="M6 18L6 7M10 7L10 18M14 7L14 18M18 7L18 18M5 7H19M8 4H16M3 7H21"
+                  />
+                </svg>
                 Eliminar
               </button>
+
             </div>
+
           </div>
           
           ))} 
@@ -539,14 +571,15 @@ const TableNodos: React.FC<TableNodosProps> = ({ nodos, setNodos, onEditUptMode 
                < div className="mt-10">
                   <button
                     type="submit"
-                    className="w-full cursor-pointer rounded-lg border p-4 text-white bg-yellow-500 hover:bg-yellow-600"
+                    className="w-full bg-yellow-500 text-white font-semibold px-5 py-3 rounded-lg shadow-md hover:bg-yellow-600 focus:outline-none focus:ring-2 focus:ring-yellow-400 focus:ring-offset-2 transition transform hover:scale-105 active:scale-95"
+                    //""
                   > 
                   Modificar nodo
                   </button>
                   <button
                     type="button"
                     onClick={cancelEdit}
-                    className="w-full cursor-pointer rounded-lg border p-4 text-white bg-red-500 hover:bg-red-600">
+                    className="w-full bg-red-500 text-white font-semibold px-5 py-3 rounded-lg shadow-md hover:bg-red-600 focus:outline-none focus:ring-2 focus:ring-red-400 focus:ring-offset-2 transition transform hover:scale-105 active:scale-95">
                     Cancelar
                   </button> 
                </div>
