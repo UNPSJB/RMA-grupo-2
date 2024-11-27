@@ -31,7 +31,7 @@ const handleUpdateRole = async (id: number, newRole: string) => {
       headers: {
         'Content-Type': 'application/json',
       },
-      body: JSON.stringify({ rol: newRole }), // Solo enviamos el rol
+      body: JSON.stringify({id: id, rol: newRole}),
     });
 
     if (response.ok) {
@@ -71,7 +71,7 @@ const handleUpdateRole = async (id: number, newRole: string) => {
         <TableUsuarios
           usuarios={usuarios}
           setUsuarios={setUsuarios}
-          onUpdateRole={handleUpdateRole} // Pasar la función para actualizar el rol
+          onUpdateRole={handleUpdateRole}
         />
         {usuarioEditando && (
           <div className="mb-4 text-gray-700">

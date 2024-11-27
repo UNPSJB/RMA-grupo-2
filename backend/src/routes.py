@@ -85,7 +85,7 @@ async def get_usuario(usuario_id: int, db: AsyncSession = Depends(get_db)):
 
 @router.put("/usuario/{usuario_id}", response_model=schemas.Usuario)
 async def update_usuario(
-    usuario_id: int, usuario: schemas.UsuarioUpdate, db: AsyncSession = Depends(get_db)
+    usuario_id: int, usuario: schemas.UsuarioUpdateRol, db: AsyncSession = Depends(get_db)
 ):
     return await services.modificar_usuario(db, usuario_id, usuario)
 

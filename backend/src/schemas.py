@@ -62,7 +62,7 @@ class UsuarioBase(BaseModel):
 class Usuario(UsuarioBase):
     id: Optional[int]  # Hacer que id sea opcional
     nombre: str
-    email: EmailStr  # Validación del formato del email
+    email: EmailStr
     contrasena: str
     fecha_registro: datetime.datetime
     rol: str
@@ -92,6 +92,7 @@ class UsuarioUpdate(BaseModel):
     
 class UsuarioUpdateRol(BaseModel):
     rol: str
+    
 class UsuarioLogin(BaseModel):
     email: EmailStr
     contrasena: str

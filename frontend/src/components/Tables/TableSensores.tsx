@@ -100,7 +100,7 @@ const TableSensores: React.FC = () => {
       </h4>
 
       <div className="flex flex-col">
-        <div className="grid grid-cols-4 rounded-sm bg-gray-2 dark:bg-meta-4 sm:grid-cols-4">
+        <div className="grid grid-cols-5 rounded-sm bg-gray-2 dark:bg-meta-4 sm:grid-cols-5">
           <div className="p-2.5 xl:p-5">
             <h5 className="text-sm font-medium uppercase xsm:text-base">Tipo</h5>
           </div>
@@ -117,7 +117,7 @@ const TableSensores: React.FC = () => {
 
         {sensorsData.map((sensor) => (
           <div
-            className="grid grid-cols-4 sm:grid-cols-4 border-b border-stroke dark:border-strokedark"
+            className="grid grid-cols-4 sm:grid-cols-5 border-b border-stroke dark:border-strokedark"
             key={sensor.id}
           >
             <div className="flex items-center gap-3 p-2.5 xl:p-5">

@@ -45,13 +45,11 @@ async def crear_medicion(db: AsyncSession, medicion: schemas.MedicionCreate) -> 
                     alarma_message = f"🚨¡ALERTA! Se ha disparado una alarma para el nodo {medicion.nodo} " \
                                     f"con el valor {medicion.dato} para el tipo de dato {sensor_data.descripcion}. "
                     await send_alarm_to_channel(alarma_message, CHANNEL_ID)
-                    break
             else:
                 if medicion.dato < alarma.valor_min or medicion.dato > alarma.valor_max:
                     alarma_message = f"🚨¡ALERTA! Se ha disparado una alarma para el nodo {medicion.nodo} " \
                                     f"con el valor {medicion.dato} para el tipo de dato {sensor_data.descripcion}. "
                     await send_alarm_to_channel(alarma_message, alarma.chat_id)
-                    break
 
     new_medicion = models.Medicion(
         nodo=medicion.nodo,
@@ -168,7 +166,7 @@ async def leer_usuario(db: AsyncSession, usuario_id: int) -> schemas.Usuario:
             raise HTTPException(status_code=404, detail="Usuario no encontrado")
         
         return db_usuario
-    
+'''   
 async def modificar_usuario(db: AsyncSession, usuario_id: int, usuario: schemas.UsuarioUpdate) -> schemas.Usuario:
     db_usuario = await leer_usuario(db, usuario_id)
     
@@ -181,7 +179,17 @@ async def modificar_usuario(db: AsyncSession, usuario_id: int, usuario: schemas.
         return db_usuario
     else:
         raise HTTPException(status_code=404, detail="Usuario no encontrado")
-     
+'''    
+async def modificar_usuario(db: AsyncSession, usuario_id: int, usuario: schemas.UsuarioUpdateRol) -> schemas.Usuario:
+    db_usuario = await leer_usuario(db, usuario_id)
+    if db_usuario:
+        db_usuario.rol = usuario.rol
+        await db.commit()
+        await db.refresh(db_usuario)
+        return db_usuario
+    else:
+        raise HTTPException(status_code=404, detail="Usuario no encontrado")
+ 
 
 async def modificar_rol_usuario(db: AsyncSession, usuario_id: int, usuario: schemas.UsuarioUpdateRol) -> schemas.Usuario:
     db_usuario = await leer_usuario(db, usuario_id)
