@@ -94,6 +94,9 @@ async def update_usuario(
 async def delete_usuario(usuario_id: int, db: AsyncSession = Depends(get_db)):
     return await services.eliminar_usuario(db, usuario_id)
 
+@router.get("/usuarios/")
+async def read_usuarios( db: AsyncSession = Depends(get_db)):
+    return await services.leer_todos_los_usuarios(db)
 
 ## ---------------------- NODO
 
@@ -172,6 +175,19 @@ async def delete_alarma(alarma_id: int, db: AsyncSession = Depends(get_db)):
 async def get_alarmas(db: AsyncSession = Depends(get_db)):
     return await services.leer_todas_las_alarmas(db)
 
+## ---------------------- ALARMA
+
+@router.get("/verificar-token")
+async def verificar_token(token: str, user_id: int, db: AsyncSession = Depends(get_db)):
+    return await services.verificar_codigo(token, user_id, db)
+
+@router.get("/verificar-vinculacion")
+async def verificar_vinculacion(user_id: int, db: AsyncSession = Depends(get_db)):
+    return await services.verificar_vinculacion(user_id, db)
+
+@router.delete("/eliminar-vinculacion")
+async def eliminar_vinculacion(user_id: int, db: AsyncSession = Depends(get_db)):
+    return await services.eliminar_vinculacion(user_id, db)
 
 ##-----------datos Sensores----------------##
 

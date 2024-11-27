@@ -6,12 +6,14 @@ from sqlalchemy.future import select
 from sqlalchemy.exc import SQLAlchemyError
 from sqlalchemy import and_, desc, asc
 from backend.src import schemas, models
-from backend.src.models import Usuario, Nodo, Medicion, Alarma, DatosSensores
+from backend.src.models import Usuario, Nodo, Medicion, Alarma, DatosSensores, TokenAlarma
 from fastapi import File, HTTPException, UploadFile
 from backend.database import SessionLocal
 import datetime
 from backend.src.auth import pwd_context
 from backend.src.bot import send_alarm_to_channel
+from backend.src.bot import CHANNEL_ID
+import pyotp
 import csv
 import io
 
@@ -26,7 +28,7 @@ async def get_db():
 async def crear_medicion(db: AsyncSession, medicion: schemas.MedicionCreate) -> schemas.MedicionCreate:
     result = await db.execute(select(models.DatosSensores).filter(models.DatosSensores.tipo == medicion.tipo))
     sensor_data = result.scalars().first()
-    
+
     if not sensor_data:
         raise ValueError(f"Tipo de dato {medicion.tipo} no encontrado en la base de datos.")
     
@@ -36,12 +38,20 @@ async def crear_medicion(db: AsyncSession, medicion: schemas.MedicionCreate) -> 
     alarmas = result_alarmas.scalars().all()
     mError = not (sensor_data.min <= medicion.dato <= sensor_data.max)
 
-    for alarma in alarmas:
-        if medicion.dato < alarma.valor_min or medicion.dato > alarma.valor_max:
-            alarma_message = f"🚨¡ALERTA! Se ha disparado una alarma para el nodo {medicion.nodo} " \
-                             f"con el valor {medicion.dato} para el tipo de dato {sensor_data.descripcion}. "
-            await send_alarm_to_channel(alarma_message)
-            break
+    if mError is False:
+        for alarma in alarmas:
+            if alarma.chat_id is None:
+                if medicion.dato < alarma.valor_min or medicion.dato > alarma.valor_max:
+                    alarma_message = f"🚨¡ALERTA! Se ha disparado una alarma para el nodo {medicion.nodo} " \
+                                    f"con el valor {medicion.dato} para el tipo de dato {sensor_data.descripcion}. "
+                    await send_alarm_to_channel(alarma_message, CHANNEL_ID)
+                    break
+            else:
+                if medicion.dato < alarma.valor_min or medicion.dato > alarma.valor_max:
+                    alarma_message = f"🚨¡ALERTA! Se ha disparado una alarma para el nodo {medicion.nodo} " \
+                                    f"con el valor {medicion.dato} para el tipo de dato {sensor_data.descripcion}. "
+                    await send_alarm_to_channel(alarma_message, alarma.chat_id)
+                    break
 
     new_medicion = models.Medicion(
         nodo=medicion.nodo,
@@ -59,6 +69,7 @@ async def crear_medicion(db: AsyncSession, medicion: schemas.MedicionCreate) -> 
          print(f"Error en la base de datos: {errorEnBase}")
          raise HTTPException(status_code=400, detail="Error al crear una nueva medicion") from errorEnBase
     return new_medicion
+
 
 async def leer_medicion(db: AsyncSession, medicion_id: int) -> schemas.Medicion:
     async with db.begin():
@@ -279,7 +290,8 @@ async def crear_alarma(db: AsyncSession, alarma: schemas.AlarmaCreate):
         tipo=alarma.tipo,
         nodo=alarma.nodo,
         valor_min=alarma.valor_min,
-        valor_max=alarma.valor_max
+        valor_max=alarma.valor_max,
+        chat_id=alarma.chat_id
     )
     db.add(new_alarma)
     await db.commit()
@@ -322,6 +334,45 @@ async def eliminar_alarma(db: AsyncSession, alarma_id: int) -> dict:
 async def leer_todas_las_alarmas(db: AsyncSession):
     result = await db.execute(select(Alarma))  
     return result.scalars().all() 
+
+## ----------------------- TOKEN ALARMA
+async def eliminar_vinculacion(usuario_id: int, db:AsyncSession):
+    query = await db.execute(select(TokenAlarma).where(TokenAlarma.usuario_id == usuario_id))
+    data = query.scalar_one_or_none()
+    if data:
+        await db.delete(data)
+        await db.commit()
+        return {"detail": "Vinculacion eliminada"}
+    else:
+        raise HTTPException(status_code=404, detail="Vinculacion no encontrada")
+
+async def verificar_vinculacion(usuario_id: int, db: AsyncSession):
+    query = await db.execute(select(TokenAlarma).where(TokenAlarma.usuario_id == usuario_id))
+    data = query.scalar_one_or_none()
+    
+    if data is None:
+        return {"status": False}
+    else:
+        return {"status": True, "chat_id": data.chat_id }
+
+async def verificar_codigo(token: str, usuario_id: int, db: AsyncSession):
+    token_query = await db.execute(
+        select(TokenAlarma).where(TokenAlarma.otp == str(token))
+    )
+    data = token_query.scalar_one_or_none()
+
+    if not data:
+        raise HTTPException(status_code=401, detail="Token inválido o expirado")
+
+    totp = pyotp.TOTP(data.secret, interval=60)
+    if not totp.verify(token):
+        raise HTTPException(status_code=401, detail="Token expirado")
+
+    data.usuario_id = usuario_id
+    await db.commit()
+    await db.refresh(data)
+
+    return {"status": "success", "message": "Token validado y usuario vinculado correctamente"}
 
 ##-----------------datos sensores---------------------##
 

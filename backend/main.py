@@ -7,7 +7,6 @@ from backend.database import engine, Base
 from backend.src.routes import router as routers
 from sqlalchemy.future import select
 from fastapi.middleware.cors import CORSMiddleware
-from backend.src.bot import start_bot
 
 load_dotenv()#.env
 DATABASE_URL = os.getenv("DB_URL")
@@ -43,7 +42,6 @@ app.add_middleware(
 
 async def main():
     await init_db()
-    bot_task = asyncio.create_task(start_bot())
     await asyncio.Event().wait()
 
 if __name__ == "__main__":

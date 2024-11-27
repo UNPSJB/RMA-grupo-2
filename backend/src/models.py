@@ -42,13 +42,23 @@ class Alarma(Base):
     id: Mapped[int] = mapped_column(Integer, primary_key=True, index=True, autoincrement=True)
     nombre: Mapped[str] = mapped_column(String, nullable=False)
     descripcion: Mapped[str] = mapped_column(String, nullable=False)
-    tipo: Mapped[int] = mapped_column(Integer, ForeignKey('datos_sensores.tipo'), nullable=False)  # Clave foránea de datos_sensores
-    nodo: Mapped[int] = mapped_column(Integer, ForeignKey('nodo.id'), nullable=False)  # Clave foránea de nodo
+    tipo: Mapped[int] = mapped_column(Integer, ForeignKey('datos_sensores.tipo'), nullable=False)
+    nodo: Mapped[int] = mapped_column(Integer, ForeignKey('nodo.id'), nullable=False)
     valor_min: Mapped[float] = mapped_column(Float, nullable=False)
     valor_max: Mapped[float] = mapped_column(Float, nullable=False)
+    chat_id: Mapped[str] = mapped_column(String, nullable=True)
 
     tipo_sensor: Mapped["DatosSensores"] = relationship("DatosSensores", back_populates="alarma")
     nodo_info: Mapped["Nodo"] = relationship("Nodo", back_populates="alarma")
+
+## ----------------------- TOKENALARMAS
+class TokenAlarma(Base):
+    __tablename__ = "token"
+
+    secret: Mapped[str] = mapped_column(String, primary_key=True, nullable=False)
+    usuario_id: Mapped[int] = mapped_column(Integer, nullable=True)
+    chat_id: Mapped[str] = mapped_column(String, nullable=False)
+    otp: Mapped[str] = mapped_column(String, nullable=False)
 
 ## ----------------------- Usuario
 class Usuario(Base):
@@ -74,7 +84,6 @@ class Nodo(Base):
     descripcion : Mapped[str] = mapped_column(String, index=True, nullable=True)
     posicionx : Mapped[float] = mapped_column(Float, index=True, nullable=False)
     posiciony : Mapped[float] = mapped_column(Float, index=True, nullable=False)
-    #bateria: Mapped[float] = mapped_column(Float, index=True, nullable=True)
 
     alarma: Mapped[list["Alarma"]] = relationship("Alarma", back_populates="nodo_info", cascade="all, delete-orphan")
 

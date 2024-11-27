@@ -33,9 +33,11 @@ export const AuthProvider: React.FC = ({ children }) => {
     setTokenState(token);
     const decodedToken: any = jwt.decode(token);
     const userRole = decodedToken?.role; // Asegúrate de que el token contenga el rol
+    const userID = decodedToken?.id
     setRole(userRole);
     localStorage.setItem('token', token);
     localStorage.setItem('role', userRole);
+    localStorage.setItem('id', userID);
     }
   };
 

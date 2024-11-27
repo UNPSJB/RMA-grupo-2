@@ -107,7 +107,6 @@ class NodoBase(BaseModel):
     posiciony: float
     nombre: str
     descripcion: Optional[str]
-    #bateria: Optional[int]
     
 
 class Nodo(NodoBase):
@@ -117,7 +116,6 @@ class Nodo(NodoBase):
     descripcion: Optional[str]
     posicionx: float
     posiciony: float
-    #bateria: Optional[float]
 
     class Config:
         orm_mode = True
@@ -136,6 +134,13 @@ class Token(BaseModel):
     access_token: str
     token_type: str
 
+## ----------------------- TOKEN ALARMA
+class TokenAlarma(BaseModel):
+    secret: str
+    user_id: int
+    chat_id: str
+    otp: str
+
 ## ----------------------- ALARMA
 class AlarmaBase(BaseModel):
     nombre: str
@@ -144,7 +149,7 @@ class AlarmaBase(BaseModel):
     nodo: int
     valor_min: float
     valor_max: float
-    
+    chat_id: Optional[str]
 
 class Alarma(AlarmaBase):
     nombre: str
@@ -153,6 +158,7 @@ class Alarma(AlarmaBase):
     nodo: int
     valor_min: float
     valor_max: float
+    chat_id: Optional[str]
 
     class Config:
         orm_mode = True
