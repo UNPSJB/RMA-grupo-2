@@ -143,6 +143,7 @@ class TokenAlarma(BaseModel):
 
 ## ----------------------- ALARMA
 class AlarmaBase(BaseModel):
+    id: Optional[int]
     nombre: str
     descripcion: str
     tipo: int
@@ -152,6 +153,7 @@ class AlarmaBase(BaseModel):
     chat_id: Optional[str]
 
 class Alarma(AlarmaBase):
+    id: Optional[int]
     nombre: str
     descripcion: str
     tipo: int

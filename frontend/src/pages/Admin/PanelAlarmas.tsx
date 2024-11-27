@@ -5,7 +5,7 @@ import React, { useEffect, useState } from 'react';
 import axios from 'axios';
 
 interface Alarma {
-  id: number
+  id: number;
   nombre: string;
   descripcion: string;  
   tipo: number;
@@ -29,6 +29,7 @@ const PanelAlarmas = () => {
   const [tiposSensores, setTiposSensores] = useState<string[]>([]);
   const [isLinked, setIsLinked] = useState(false);
   const [formData, setFormData] = useState({
+    id: '',
     nombre: '',
     descripcion: '',   
     tipo: '',
@@ -40,13 +41,14 @@ const PanelAlarmas = () => {
 
   const onEditUptMode = (alarma: Alarma) => {
     setFormData({
+      id: alarma.id != null ? alarma.id.toString() : '',
       nombre: alarma.nombre,
       descripcion: alarma.descripcion,
       tipo: alarma.tipo.toString(),
       nodo: alarma.nodo.toString(),
       valor_min: alarma.valor_min.toString(),
       valor_max: alarma.valor_max.toString(),
-      chat_id: alarma.chat_id.toString()
+      chat_id: alarma.chat_id != null ? alarma.chat_id.toString() : ''
     });
     setIsEdit(true);
   };
@@ -54,6 +56,7 @@ const PanelAlarmas = () => {
   const toggleEditMode = () => {
     setIsEdit(false);
     setFormData({
+      id: '',
       nombre: '',
       descripcion: '',   
       tipo: '',
@@ -67,9 +70,10 @@ const PanelAlarmas = () => {
   const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
   
-    const {nombre, descripcion, tipo, nodo, valor_min, valor_max } = formData;
+    const { id, nombre, descripcion, tipo, nodo, valor_min, valor_max } = formData;
   
     const data = {
+      id: id ? parseInt(id, 10) : null,
       nombre,
       descripcion,
       tipo: parseInt(tipo, 10),
@@ -105,6 +109,7 @@ const PanelAlarmas = () => {
       if (response.ok) {
         const newAlarma = await response.json();
         setFormData({
+          id: '',
           nombre: '',
           descripcion: '',   
           tipo: '',

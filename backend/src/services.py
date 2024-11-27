@@ -316,6 +316,7 @@ async def modificar_alarma(db: AsyncSession, alarma_id: int, alarma: schemas.Ala
         db_alarma.nodo = alarma.nodo
         db_alarma.valor_min = alarma.valor_min
         db_alarma.valor_max = alarma.valor_max
+        db_alarma.chat_id = alarma.chat_id
         await db.commit()
         await db.refresh(db_alarma)
         return db_alarma
@@ -336,15 +337,23 @@ async def leer_todas_las_alarmas(db: AsyncSession):
     return result.scalars().all() 
 
 ## ----------------------- TOKEN ALARMA
-async def eliminar_vinculacion(usuario_id: int, db:AsyncSession):
+async def eliminar_vinculacion(usuario_id: int, db: AsyncSession):
     query = await db.execute(select(TokenAlarma).where(TokenAlarma.usuario_id == usuario_id))
-    data = query.scalar_one_or_none()
-    if data:
-        await db.delete(data)
-        await db.commit()
-        return {"detail": "Vinculacion eliminada"}
-    else:
-        raise HTTPException(status_code=404, detail="Vinculacion no encontrada")
+    token_alarma = query.scalar_one_or_none()
+    
+    if not token_alarma:
+        raise HTTPException(status_code=404, detail="Vinculación no encontrada")
+    
+    alarmas_query = await db.execute(select(Alarma).where(Alarma.chat_id == token_alarma.chat_id))
+    alarmas = alarmas_query.scalars().all()
+
+    for alarma in alarmas:
+        await db.delete(alarma)
+    
+    await db.delete(token_alarma)
+    await db.commit()
+    
+    return {"detail": "Vinculación y alarmas asociadas eliminadas"}
 
 async def verificar_vinculacion(usuario_id: int, db: AsyncSession):
     query = await db.execute(select(TokenAlarma).where(TokenAlarma.usuario_id == usuario_id))

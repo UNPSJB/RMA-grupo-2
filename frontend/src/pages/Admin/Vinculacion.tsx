@@ -10,7 +10,7 @@ const Vinculacion = () => {
         description: '',
     });
     const [codigo, setCodigo] = useState<string>('');
-    const [isLinked, setIsLinked] = useState<boolean | null>(null);
+    const [isLinked, setIsLinked] = useState<boolean | null>(null); // Estado para verificar si está vinculado
 
     const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
         e.preventDefault();
@@ -45,8 +45,8 @@ const Vinculacion = () => {
             if (response.ok) {
                 setAlert({
                     type: 'success',
-                    message: 'Usted ha sido vinculado',
-                    description: 'Ahora puede recibir notificaciones personalizadas',
+                    message: '¡Vinculación exitosa!',
+                    description: 'Ahora puedes recibir notificaciones personalizadas.',
                 });
                 setIsLinked(true);
             } else {
@@ -66,9 +66,51 @@ const Vinculacion = () => {
         }
     };
 
+    const handleUnlink = async () => {
+        const userid = localStorage.getItem('id');
+        if (!userid) {
+            setAlert({
+                type: 'error',
+                message: 'Error',
+                description: 'No se encontró el ID de usuario',
+            });
+            return;
+        }
+
+        try {
+            const response = await fetch(`http://localhost:8000/eliminar-vinculacion?user_id=${userid}`, {
+                method: 'DELETE',
+                headers: {
+                    'Content-Type': 'application/json',
+                },
+            });
+
+            if (response.ok) {
+                setAlert({
+                    type: 'success',
+                    message: '¡Desvinculación exitosa!',
+                    description: 'Tu cuenta ya no está vinculada con Telegram.',
+                });
+                setIsLinked(false);
+            } else {
+                setAlert({
+                    type: 'error',
+                    message: 'Error',
+                    description: 'No se pudo completar la desvinculación.',
+                });
+            }
+        } catch (error) {
+            console.error('Error:', error);
+            setAlert({
+                type: 'error',
+                message: 'Error',
+                description: 'Hubo un problema al intentar desvincular al usuario',
+            });
+        }
+    };
+
     const checkVinculacion = async () => {
         const userid = localStorage.getItem('id');
-        console.log("User ID desde localStorage:", userid);
         if (userid) {
             try {
                 const response = await fetch(`http://localhost:8000/verificar-vinculacion?user_id=${userid}`, {
@@ -78,8 +120,15 @@ const Vinculacion = () => {
                     },
                 });
                 if (response.ok) {
-                    const isVinculado = await response.json();
-                    setIsLinked(isVinculado);
+                    const data = await response.json();
+                    setIsLinked(data.status);
+                    if(data.status)
+                    {
+                        setAlert({
+                        type: 'success',
+                        message: '¡Vinculación exitosa!',
+                        description: 'Ahora puedes recibir notificaciones personalizadas.',})
+                    }
                 }
             } catch (error) {
                 console.error('Error al verificar la vinculación:', error);
@@ -104,8 +153,12 @@ const Vinculacion = () => {
                     <p>Verificando...</p>
                 ) : isLinked ? (
                     <div>
-                        <p>¡Ya estás vinculado exitosamente!</p>
-                        <p>Ahora puedes recibir notificaciones personalizadas.</p>
+                        <button
+                            onClick={handleUnlink}
+                            className="bg-red-500 text-white px-4 py-2 rounded-md hover:bg-red-600 dark:bg-red-800 dark:hover:bg-red-700 mt-4"
+                        >
+                            Desvincular Telegram
+                        </button>
                     </div>
                 ) : (
                     <>
@@ -124,7 +177,7 @@ const Vinculacion = () => {
                                         placeholder="token"
                                         onChange={(e) => setCodigo(e.target.value)}
                                         value={codigo}
-                                        className="w-full rounded-lg border border-stroke bg-transparent py-4 pl-6 pr-10 text-black outline-none focus:border-primary focus-visible:shadow-none dark:border-form-strokedark dark:bg-form-input dark:text-white dark:focus:border-primary"
+                                        className="w-full rounded-lg border border-stroke bg-transparent py-4 pl-6 pr-10 text-black outline-none focus:border-primary dark:border-form-strokedark dark:bg-form-input dark:text-white dark:focus:border-primary"
                                     />
                                 </div>
                             </div>

@@ -32,7 +32,7 @@ async def command_start_handler(message: Message) -> None:
 
 @dp.message(Command(commands=["codigo"]))
 async def generate_code_handler(message: Message, db: AsyncSession = None) -> None:
-    chat_id = message.from_user.id
+    chat_id = str(message.from_user.id)
     async with SessionLocal() as db:
         async with db.begin():
             result = await db.execute(select(TokenAlarma).filter(TokenAlarma.chat_id == chat_id))
