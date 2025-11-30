@@ -47,9 +47,11 @@ class Alarma(Base):
     valor_min: Mapped[float] = mapped_column(Float, nullable=False)
     valor_max: Mapped[float] = mapped_column(Float, nullable=False)
     chat_id: Mapped[str] = mapped_column(String, nullable=True)
+    usuario: Mapped[int] = mapped_column(Integer, ForeignKey('usuario.id'), nullable=True)
 
     tipo_sensor: Mapped["DatosSensores"] = relationship("DatosSensores", back_populates="alarma")
     nodo_info: Mapped["Nodo"] = relationship("Nodo", back_populates="alarma")
+    usuario_info: Mapped["Usuario"] = relationship("Usuario")
 
 ## ----------------------- TOKENALARMAS
 class TokenAlarma(Base):

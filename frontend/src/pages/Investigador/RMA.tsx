@@ -4,7 +4,6 @@ import CardDataStats from '../../components/CardDataStats';
 import ChartOne from '../../components/Charts/ChartOne';
 import ChartTwo from '../../components/Charts/ChartTwo';
 import TableOne from '../../components/Tables/TableOne';
-import ChartLineaTemp from '../../components/Charts/ChartLineaTemp';
 import axios from 'axios';
 
 
@@ -33,71 +32,113 @@ enum TipoMensaje {
   LONGITUDE_T = 22,
   ALTITUDE_T = 23,
   HDOP_T = 24,
-  WATER_HEIGHT = 25,
+  WATER_HEIGHT = 26,
 }
 
 const RMA: React.FC = () => {
-//  const [isLoading, setIsLoading] = useState(true);
+  // Filtro global por nodo
+  const [selectedNodo, setSelectedNodo] = useState<number | ''>('');
+  const [nodosDisponibles, setNodosDisponibles] = useState<{ value: number; label: string }[]>([]);
+
   const [lastMeasurement, setLastMeasurement] = useState<
-  { temperature: { value: number | null; nodo: number | null }; height: { value: number | null; nodo: number | null } }>({
-    temperature: { value: null, nodo: null },
-    height: { value: null, nodo: null },
-  });
+    { temperature: { value: number | null; nodo: number | null }; height: { value: number | null; nodo: number | null } }>(
+    {
+      temperature: { value: null, nodo: null },
+      height: { value: null, nodo: null },
+    }
+  );
+
   const [error, setError] = useState<string | null>(null);
-  const { toPDF, targetRef } = usePDF({filename: 'rma-dashboard-reporte.pdf'});
- 
- 
-  const getLastMeasurement = async (type: number) => {
+
+  // Etiqueta seleccionada (si hay nodos cargados, usar su label)
+  const selectedLabel = selectedNodo === '' ? 'Todos' : (nodosDisponibles.find(n => n.value === Number(selectedNodo))?.label ?? `Nodo ${selectedNodo}`);
+
+  // Nombre de archivo para el PDF (sanitizado)
+  const safeLabel = selectedLabel.replace(/[^a-z0-9_\-]/gi, '_');
+  const filename = `rma-dashboard-reporte${selectedNodo !== '' ? `-nodo-${safeLabel}` : ''}.pdf`;
+  const { toPDF, targetRef } = usePDF({ filename });
+
+  // Obtener lista de nodos desde backend (/lista_nodos devuelve objetos {value,label})
+  useEffect(() => {
+    const fetchNodos = async () => {
+      try {
+        const res = await axios.get('http://localhost:8000/lista_nodos');
+        const list = res.data as { value: number; label: string }[];
+        setNodosDisponibles(list);
+      } catch (e) {
+        console.error('No se pudieron obtener los nodos', e);
+        setNodosDisponibles([]);
+      }
+    };
+    fetchNodos();
+  }, []);
+
+  // Obtener última medición filtrando por nodo si se seleccionó uno
+  const getLastMeasurement = async (type: number, nodo?: number) => {
     try {
-      const response = await axios.get(`http://localhost:8000/mediciones/${type}`);
-      const lastData = response.data;
-      if (!lastData) return null;
-      return {value: Math.round(lastData.dato * 100) / 100, nodo: lastData.nodo };
-            
+      const response = await axios.get('http://localhost:8000/mediciones');
+      const datos = response.data as Array<any>;
+      const filtrados = datos
+        .filter((d) => d.tipo === type && (nodo === undefined || Number(d.nodo) === nodo) && d.error === false)
+        .sort((a, b) => new Date(b.tiempo).getTime() - new Date(a.tiempo).getTime());
+      if (filtrados.length > 0) {
+        const lastData = filtrados[0];
+        return { value: Math.round(lastData.dato * 100) / 100, nodo: lastData.nodo };
+      }
+
+      // Fallback: si buscamos temperatura y no hay resultado, probar TEMP2_T
+      if (type === TipoMensaje.TEMP_T) {
+        const alt = datos
+          .filter((d) => d.tipo === TipoMensaje.TEMP2_T && (nodo === undefined || Number(d.nodo) === nodo) && d.error === false)
+          .sort((a, b) => new Date(b.tiempo).getTime() - new Date(a.tiempo).getTime());
+        if (alt.length > 0) {
+          const lastData = alt[0];
+          return { value: Math.round(lastData.dato * 100) / 100, nodo: lastData.nodo };
+        }
+      }
+
+      
+      return null;
     } catch (error) {
       console.error('Error al obtener la última medición:', error);
       setError('Error al cargar la última medición.');
       return null;
     }
   };
+
   const fetchLastMeasurement = async () => {
-    //setIsLoading(true);
     try {
+      const nodoParam = selectedNodo === '' ? undefined : (selectedNodo as number);
       const [lastTemp, lastHeight] = await Promise.all([
-        getLastMeasurement(TipoMensaje.TEMP_T),
-        getLastMeasurement(TipoMensaje.VOLTAGE_T),
+        getLastMeasurement(TipoMensaje.TEMP_T, nodoParam),
+        getLastMeasurement(TipoMensaje.WATER_HEIGHT, nodoParam),
       ]);
 
-      setLastMeasurement((prev) => {
-  const isTemperatureChanged = prev.temperature.value !== lastTemp?.value;
-  const isHeightChanged = prev.height.value !== lastHeight?.value;
-
-  if (isTemperatureChanged || isHeightChanged) {
-    return {
-      temperature: lastTemp ?? { value: null, nodo: null },
-      height: lastHeight ?? { value: null, nodo: null },
-    };
-  }
-
-  return prev; // No actualiza si no hay cambios
-});
       
-  } catch (error) {
-    console.error('Error en al obtener las ultimas temperaturas:', error);
-    setError('Error al cargar los datos.');
-  } //finally {
-  //   setIsLoading(false);
-  // }
+
+      setLastMeasurement((prev) => {
+        const isTemperatureChanged = prev.temperature.value !== lastTemp?.value;
+        const isHeightChanged = prev.height.value !== lastHeight?.value;
+
+        if (isTemperatureChanged || isHeightChanged) {
+          return {
+            temperature: lastTemp ?? { value: null, nodo: null },
+            height: lastHeight ?? { value: null, nodo: null },
+          };
+        }
+        return prev; // No actualiza si no hay cambios
+      });
+    } catch (error) {
+      console.error('Error en al obtener las ultimas temperaturas:', error);
+      setError('Error al cargar los datos.');
+    }
   };
 
   useEffect(() => {
+    fetchLastMeasurement();
     const intervalId = setInterval(fetchLastMeasurement, 60000);
-
-    // Limpieza cuando el componente se desmonta
-    return () => {
-      clearInterval(intervalId); // Limpia el intervalo
-    };
-  }, []); 
+    return () => clearInterval(intervalId);
+  }, [selectedNodo]);
 
   if (error) {
     return <div>{error}</div>;
@@ -105,13 +146,33 @@ const RMA: React.FC = () => {
 
   return (
     <>
-      <button onClick={() => toPDF()} className="mb-4 px-4 py-2 text-sm text-white bg-blue-500 rounded">
-        Descargar Reporte PDF
-      </button>
+      <div className="mb-4 flex items-center gap-4">
+        <button onClick={() => toPDF()} className="px-4 py-2 text-sm text-white bg-blue-500 rounded">
+          Descargar Reporte PDF
+        </button>
+        <label className="text-sm font-medium">Filtrar por nodo:</label>
+        <select
+          className="border rounded px-2 py-1"
+          value={selectedNodo}
+          onChange={e => setSelectedNodo(e.target.value === '' ? '' : Number(e.target.value))}
+        >
+          <option value="">Todos</option>
+            {nodosDisponibles.map(n => (
+              <option key={n.value} value={n.value}>{n.label}</option>
+            ))}
+        </select>
+      </div>
 
       <div ref={targetRef}>
+        {/* Encabezado prominente para el PDF */}
+        <div className="mb-6">
+          <h1 className="text-2xl md:text-3xl font-extrabold text-black dark:text-white">Reporte {selectedNodo === '' ? 'Todos' : selectedLabel}</h1>
+          <div className="mt-2 text-sm text-gray-700 dark:text-gray-200">
+            <strong>Filtro:</strong>  {selectedLabel}
+          </div>
+        </div>
         <div className="grid grid-cols-1 gap-4 md:grid-cols-2 md:gap-6 xl:grid-cols-4 2xl:gap-7.5">
-          <CardDataStats 
+            <CardDataStats 
             title={`Última temperatura registrada (Nodo ${lastMeasurement.temperature.nodo || 'N/A'})`} 
             total={lastMeasurement.temperature.value !== null ? `${lastMeasurement.temperature.value}°C` : 'Cargando...'} 
             rate= '' 
@@ -161,9 +222,15 @@ const RMA: React.FC = () => {
         </div>
     
         <div className="mt-4 grid grid-cols-12 gap-4 md:mt-6 md:gap-6 2xl:mt-7.5 2xl:gap-7.5">
-          <ChartOne />
-          <ChartTwo />
-          <ChartLineaTemp />
+          {(() => {
+            const selectedLabel = selectedNodo === '' ? 'Todos' : (nodosDisponibles.find(n => n.value === Number(selectedNodo))?.label ?? `Nodo ${selectedNodo}`);
+            return (
+              <>
+                <ChartOne nodo={selectedNodo} nodoLabel={selectedLabel} />
+                <ChartTwo nodo={selectedNodo} nodoLabel={selectedLabel} />
+              </>
+            );
+          })()}
           <div className="col-span-12 xl:col-span-8">
             <TableOne />
           </div>

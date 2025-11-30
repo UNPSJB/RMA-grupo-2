@@ -144,14 +144,15 @@ class TokenAlarma(BaseModel):
 
 ## ----------------------- ALARMA
 class AlarmaBase(BaseModel):
-    id: Optional[int]
+    id: Optional[int] = None
     nombre: str
     descripcion: str
     tipo: int
     nodo: int
     valor_min: float
     valor_max: float
-    chat_id: Optional[str]
+    chat_id: Optional[str] = None
+    usuario: Optional[int] = None
 
 class Alarma(AlarmaBase):
     id: Optional[int]
@@ -162,6 +163,7 @@ class Alarma(AlarmaBase):
     valor_min: float
     valor_max: float
     chat_id: Optional[str]
+    usuario: Optional[int]
 
     class Config:
         orm_mode = True

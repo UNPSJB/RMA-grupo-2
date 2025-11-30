@@ -1,11 +1,17 @@
 import { ApexOptions } from 'apexcharts';
 import React, { useEffect, useState } from 'react';
 import ReactApexChart from 'react-apexcharts';
-import Select, { SingleValue } from 'react-select';
+import Select from 'react-select';
 import DatePicker from 'react-datepicker';
 import "react-datepicker/dist/react-datepicker.css";
 import axios from 'axios';
+
 //import selectStyles from './styles';
+
+interface ChartOneProps {
+  nodo?: number | '';
+  nodoLabel?: string | null;
+}
 
 interface Medicion {
   id: number;
@@ -16,7 +22,7 @@ interface Medicion {
   error: boolean;
 }
 
-const ChartOne: React.FC = () => {
+const ChartOne: React.FC<ChartOneProps> = ({ nodo, nodoLabel }) => {
   const [filteredData, setFilteredData] = useState<Medicion[]>([]);
   const [startDate, setStartDate] = useState(new Date());
   const [endDate, setEndDate] = useState(new Date());
@@ -57,9 +63,9 @@ const ChartOne: React.FC = () => {
   });
 
   const yAxisSettings: Record<number, { min: number; max: number; title: string }> = {
-    1: { min: -20, max: 60, title: "Temperatura (ºC)" },
-    16: { min: 0, max: 100, title: "Voltaje(V)" },
-    25: { min: 0, max: 200, title: "Altura del suelo (mm)" },
+    2: { min: -20, max: 60, title: "Temperatura (ºC)" },
+    17: { min: 0, max: 100, title: "Voltaje(V)" },
+    26: { min: 0, max: 200, title: "Altura del suelo (mm)" },
   };
 
   const fetchNodos = async () => {
@@ -75,44 +81,58 @@ const ChartOne: React.FC = () => {
     try {
       const response = await axios.get("http://localhost:8000/lista_tipo_medicion");
       setSelectDataTypeOptions(response.data); // Establecer el listado dinámicamente
+      // Seleccionar por defecto el tipo que contenga 'Temper' en la etiqueta, si existe
+      try {
+        const types = response.data as { value: number; label: string }[];
+        const tempType = types.find(t => /temper/i.test(t.label));
+        if (tempType) {
+          setSelectedDataType(tempType.value);
+        } else if (types.length > 0) {
+          setSelectedDataType(types[0].value);
+        }
+      } catch (e) {
+        // Silenciar errores de parsing
+      }
     } catch (error) {
       console.error("Error al obtener los tipo de medicion:", error);
     }
   };
 
-  const handleSearch = async () => {
-    try {
-      // Crear el cuerpo del filtro
-      const filtros = {
-        nodo: selectedNode,
-        tipo: selectedDataType,
-        fechaDesde: startDate.toISOString(), // Convertir las fechas a formato ISO
-        fechaHasta: endDate.toISOString(),
-      };
-  
-      // Realizar la solicitud POST
-      const response = await axios.post(
-        "http://localhost:8000/medicion/filtrar", // Cambia el endpoint según corresponda
-        filtros
-      );
-  
-      // Procesar los datos devueltos por el backend
-      const data = response.data as Medicion[];
-      setFilteredData(data);
-      const range = yAxisSettings[selectedDataType];
-      setChartOptions((prevOptions) => ({
-        ...prevOptions,
-        yaxis: {
-          ...prevOptions.yaxis,
-          min: range.min,
-          max: range.max,
-          title: { text: range.title },
-        },
-      }));
-    } catch (error) {
-      console.error('Error al obtener las mediciones:', error);
+const handleSearch = async () => {
+  try {
+    const filtros = {
+      nodo: nodo !== undefined && nodo !== '' ? nodo : selectedNode,
+      tipo: selectedDataType,
+      fechaDesde: startDate.toISOString(),
+      fechaHasta: endDate.toISOString(),
+    };
+
+    const response = await axios.post(
+      "http://localhost:8000/medicion/filtrar",
+      filtros
+    );
+
+    const data = response.data as Medicion[];
+    setFilteredData(data);
+
+    const range = yAxisSettings[selectedDataType];
+    setChartOptions((prevOptions) => ({
+      ...prevOptions,
+      yaxis: {
+        ...prevOptions.yaxis,
+        min: range?.min ?? 0,
+        max: range?.max ?? 100,
+        title: { text: range?.title ?? "Dato" },
+      },
+    }));
+
+    if (!range) {
+      console.warn("Tipo de medición no definido en yAxisSettings:", selectedDataType);
     }
-  };
+  } catch (error) {
+    console.error('Error al obtener las mediciones:', error);
+  }
+};
 
   // Extraer fechas y valores para el gráfico
   const fechas = filteredData.map((d) => d.tiempo);
@@ -123,20 +143,110 @@ const ChartOne: React.FC = () => {
     fetchDataType();
   }, []);
 
+  // Si cambia el nodo global, actualizar el nodo seleccionado
+  useEffect(() => {
+    if (nodo !== undefined && nodo !== '') {
+      const nodoNum = Number(nodo);
+      setSelectedNode(nodoNum);
+      // Cargar automáticamente el último mes de temperatura para este nodo
+      fetchLastMonthTemperature(nodoNum);
+    }
+  }, [nodo]);
+
+  const fetchLastMonthTemperature = async (nodoSelected: number) => {
+    try {
+      // Forzar tipo TEMP_T (1)
+      const now = new Date();
+      const oneMonthAgo = new Date(now);
+      oneMonthAgo.setMonth(now.getMonth() - 1);
+
+      const filtrosBase = {
+        nodo: nodoSelected,
+        fechaDesde: oneMonthAgo.toISOString(),
+        fechaHasta: now.toISOString(),
+      };
+
+      // Intentar primero tipo TEMP_T (2) y luego TEMP2_T (3)
+      let response = await axios.post("http://localhost:8000/medicion/filtrar", { ...filtrosBase, tipo: 2 });
+      let data = response.data as Medicion[];
+
+      // Si no hay datos para tipo 2, intentar tipo 3
+      if (!data || data.length === 0) {
+        response = await axios.post("http://localhost:8000/medicion/filtrar", { ...filtrosBase, tipo: 3 });
+        data = response.data as Medicion[];
+      }
+
+      setFilteredData(data);
+
+  // Actualizar opciones y eje Y para temperatura (tipo 2)
+  const range = yAxisSettings[2];
+      setChartOptions((prevOptions) => ({
+        ...prevOptions,
+        yaxis: {
+          ...prevOptions.yaxis,
+          min: range?.min ?? 0,
+          max: range?.max ?? 100,
+          title: { text: range?.title ?? "Dato" },
+        },
+      }));
+
+      // Actualizar selectDataType y fechas locales para reflejar la carga automática
+      // Actualizar selectedDataType según si obtuvimos datos para tipo 2 o tipo 3
+      if (data && data.length > 0) {
+        // No recibimos 'tipo' desde el endpoint filtrado, así que asumimos que si
+        // la primera petición (tipo 2) devolvió datos, usamos 2; si no, usamos 3.
+        // Para simplificar, si la longitud de los datos no es cero y la segunda
+        // petición fue la que devolvió, data proviene de la última petición.
+        // Aquí comprobamos si hubo datos en la primera petición chequeando response.config.data
+        try {
+          const lastRequest = response?.config?.data || '';
+          const parsed = JSON.parse(lastRequest || '{}');
+          const requestedTipo = parsed.tipo;
+          setSelectedDataType(requestedTipo ?? 2);
+        } catch (e) {
+          setSelectedDataType(2);
+        }
+      } else {
+        // No data: dejar en 2 por defecto
+        setSelectedDataType(2);
+      }
+      setStartDate(oneMonthAgo);
+      setEndDate(now);
+    } catch (error) {
+      console.error('Error al cargar último mes de temperatura para nodo', nodoSelected, error);
+    }
+  };
+
   return (
     <div className="col-span-12 rounded-sm border border-stroke bg-white dark:bg-boxdark px-5 pt-7.5 pb-5 shadow-default dark:border-strokedark">
       <div className="flex justify-between items-center mb-5">
-        <Select
-          options={selectNodeOptions}
-          onChange={(option) => option && setSelectedNode(option.value)}
-          defaultValue={""}
-          className="w-full max-w-xs"
-        />
+        <div className="mr-4">
+          {(() => {
+            const labelFromProp = nodo !== undefined && nodo !== '' ? (typeof nodoLabel !== 'undefined' ? nodoLabel : null) : null;
+            const label = labelFromProp ?? (selectNodeOptions.find(opt => opt.value === selectedNode)?.label) ?? (nodo ? `Nodo ${nodo}` : `Nodo ${selectedNode}`);
+            return <div className="text-sm font-medium text-black dark:text-white">Nodo: {label}</div>;
+          })()}
+        </div>
+        {/* Si no hay nodo global, mostrar el selector local */}
+        {nodo === undefined || nodo === '' ? (
+          <Select
+            options={selectNodeOptions}
+            value={selectNodeOptions.find(opt => opt.value === selectedNode) || null}
+            onChange={(option) => setSelectedNode(option ? option.value : 1)}
+            placeholder="Seleccionar nodo"
+            className="w-full max-w-xs"
+          />
+        ) : null}
 
         <Select
           options={selectDataTypeOptions}
-          onChange={(option) => option && setSelectedDataType(option.value)}
-          defaultValue={""}
+          value={selectDataTypeOptions.find(opt => opt.value === selectedDataType) || null}
+          onChange={(option) => {
+            if (option && typeof option === 'object' && 'value' in option) {
+              setSelectedDataType(option.value);
+            }
+          }}
+          placeholder="Seleccionar tipo"
           className="w-full max-w-xs"
         />
 

@@ -2,6 +2,7 @@ import React, { useEffect, useState } from 'react';
 import axios from 'axios';
 
 interface Medicion {
+  id: number;
   nodo: number;
   tipo: number;
   dato: number;
@@ -11,6 +12,7 @@ interface Medicion {
 
 const TableError: React.FC = () => {
   const [medicionData, setMedicionData] = useState<Medicion[]>([]);
+  const [isLoading, setIsLoading] = useState<boolean>(true);
   const [filteredData, setFilteredData] = useState<Medicion[]>([]);
   const [error, setError] = useState<string | null>(null);
   const [currentPage, setCurrentPage] = useState(1);
@@ -21,7 +23,7 @@ const TableError: React.FC = () => {
   const [tipoFilter, setTipoFilter] = useState<string>('Temperatura'); // Por defecto "Temperatura"
   const [fechaInicio, setFechaInicio] = useState<string>('');
   const [fechaFin, setFechaFin] = useState<string>('');
-  const [uniqueNodos, setUniqueNodos] = useState<number[]>([]); // Para el desplegable de nodos
+  const [uniqueNodos, setUniqueNodos] = useState<Array<number | { value?: number | string; label?: string; id?: number }>>([]); // Para el desplegable de nodos
 
   const [sortConfig, setSortConfig] = useState<{ key: keyof Medicion; direction: 'asc' | 'desc' }>({
     key: 'tiempo',
@@ -32,16 +34,18 @@ const TableError: React.FC = () => {
     const obtenerMediciones = async () => {
       try {
         const response = await axios.get('http://localhost:8000/medicion/');
-        const dataWithError = response.data.filter((item: Medicion) => item.error === true);
+        const dataWithError = (response.data || []).filter((item: Medicion) => item.error === true);
         setMedicionData(dataWithError);
         setFilteredData(dataWithError);
 
         // Extraer nodos únicos para el desplegable
         const nodosUnicos = Array.from(new Set(dataWithError.map((item: Medicion) => item.nodo))).sort((a, b) => a - b);
-        setUniqueNodos(nodosUnicos);
+        setUniqueNodos(nodosUnicos as any);
       } catch (error) {
         console.error('Error al obtener las mediciones:', error);
         setError('Error al cargar los datos.');
+      } finally {
+        setIsLoading(false);
       }
     };
 
@@ -52,15 +56,15 @@ const TableError: React.FC = () => {
     let data = medicionData;
 
     if (nodoFilter !== '') {
-      data = data.filter(item => item.nodo === Number(nodoFilter));
+      data = data.filter(item => Number(item.nodo) === Number(nodoFilter));
     }
 
     if (tipoFilter === 'Temperatura') {
-      data = data.filter(item => item.tipo === 1 || item.tipo === 2);
+      data = data.filter(item => Number(item.tipo) === 1 || Number(item.tipo) === 2);
     } else if (tipoFilter === 'Altura') {
-      data = data.filter(item => item.tipo === 25);
+      data = data.filter(item => Number(item.tipo) === 26);
     } else if (tipoFilter === 'Otro') {
-      data = data.filter(item => item.tipo !== 1 && item.tipo !== 2 && item.tipo !== 25);
+      data = data.filter(item => Number(item.tipo) !== 1 && Number(item.tipo) !== 2 && Number(item.tipo) !== 26);
     }
 
     if (fechaInicio) {
@@ -106,8 +110,8 @@ const TableError: React.FC = () => {
 
     const rows = filteredData.map(item => [
       item.nodo,
-      item.tipo === 1 || item.tipo === 2 ? 'Temperatura' : item.tipo === 25 ? 'Altura' : 'Otro',
-      `${Math.round(item.dato * 100) / 100}${item.tipo === 1 || item.tipo === 2 ? ' °C' : item.tipo === 25 ? ' m' : ''}`,
+      Number(item.tipo) === 1 || Number(item.tipo) === 2 ? 'Temperatura' : Number(item.tipo) === 26 ? 'Altura' : 'Otro',
+      `${Math.round(item.dato * 100) / 100}${Number(item.tipo) === 1 || Number(item.tipo) === 2 ? ' °C' : Number(item.tipo) === 26 ? ' m' : ''}`,
       new Date(item.tiempo).toLocaleString('es-ES', {
         year: 'numeric',
         month: '2-digit',
@@ -135,8 +139,12 @@ const TableError: React.FC = () => {
     return <div className="text-red-500 font-bold">{error}</div>;
   }
 
-  if (medicionData.length === 0) {
+  if (isLoading) {
     return <div className="text-center">Cargando...</div>;
+  }
+
+  if (!isLoading && medicionData.length === 0) {
+    return <div className="text-center">No se encontraron mediciones con error.</div>;
   }
 
   return (
@@ -157,11 +165,17 @@ const TableError: React.FC = () => {
             className="px-2 py-1 border rounded bg-white dark:bg-gray-700 dark:text-white"
           >
             <option value="">Todos</option>
-            {uniqueNodos.map(nodo => (
-              <option key={nodo} value={nodo}>
-                Nodo {nodo}
-              </option>
-            ))}
+            {(Array.isArray(uniqueNodos) ? uniqueNodos : []).map((nodo) => {
+              // Aceptar tanto números como objetos { value, label }
+              const value = typeof nodo === 'object' && nodo !== null ? (nodo.value ?? nodo.id ?? JSON.stringify(nodo)) : nodo;
+              const label = typeof nodo === 'object' && nodo !== null ? (nodo.label ?? value) : nodo;
+              const key = String(value);
+              return (
+                <option key={key} value={String(value)}>
+                  Nodo {label}
+                </option>
+              );
+            })}
           </select>
         </div>
         <div className="flex flex-col">
@@ -246,10 +260,10 @@ const TableError: React.FC = () => {
             </div>
           </div>
 
-          {paginatedData.map((item, index) => (
+          {paginatedData.map((item) => (
             <div
               className="grid grid-cols-3 sm:grid-cols-4 border-b border-gray-300 dark:border-gray-600"
-              key={index}
+              key={item.id}
             >
               <div className="flex items-center gap-3 p-2.5 xl:p-5">
                 <p className="text-sm font-medium text-black dark:text-white">{item.nodo}</p>
@@ -262,12 +276,12 @@ const TableError: React.FC = () => {
               <div className="flex items-center justify-center p-2.5 xl:p-5">
                 <p className="text-sm font-medium text-black dark:text-white">
                   {Math.round(item.dato * 100) / 100}
-                  {item.tipo === 1 || item.tipo === 2 ? ' °C' : item.tipo === 25 ? ' m' : ''}
+                  {Number(item.tipo) === 1 || Number(item.tipo) === 2 ? ' °C' : Number(item.tipo) === 26 ? ' m' : ''}
                 </p>
               </div>
               <div className="hidden items-center justify-center p-2.5 sm:flex xl:p-5">
                 <p className="text-sm font-medium text-gray-700 dark:text-gray-300">
-                  {item.tipo === 1 || item.tipo === 2 ? 'Temperatura' : item.tipo === 25 ? 'Altura' : 'Otro'}
+                  {Number(item.tipo) === 1 || Number(item.tipo) === 2 ? 'Temperatura' : Number(item.tipo) === 26 ? 'Altura' : 'Otro'}
                 </p>
               </div>
             </div>

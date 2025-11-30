@@ -175,6 +175,9 @@ async def delete_alarma(alarma_id: int, db: AsyncSession = Depends(get_db)):
 async def get_alarmas(db: AsyncSession = Depends(get_db)):
     return await services.leer_todas_las_alarmas(db)
 
+
+# ...existing code...
+
 ## ---------------------- ALARMA
 
 @router.get("/verificar-token")

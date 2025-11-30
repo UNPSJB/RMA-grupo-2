@@ -43,6 +43,21 @@ const options: ApexOptions = {
   xaxis: {
     categories: ['L', 'M', 'M', 'J', 'V', 'S', 'D'], // Días de la semana en el eje X
   },
+  yaxis: {
+    labels: {
+      formatter: function (val) {
+        // Mostrar sin notación científica ni muchos decimales
+        return Number(val).toFixed(2).replace(/\.00$/, '');
+      },
+    },
+  },
+  tooltip: {
+    y: {
+      formatter: function (val) {
+        return `${Number(val).toFixed(2)}`;
+      },
+    },
+  },
   legend: {
     position: 'top',
     horizontalAlign: 'left',
@@ -70,7 +85,12 @@ interface ChartTwoState {
   }[];
 }
 
-const ChartTwo: React.FC = () => {
+interface ChartTwoProps {
+  nodo?: number | '';
+  nodoLabel?: string | null;
+}
+
+const ChartTwo: React.FC<ChartTwoProps> = ({ nodo, nodoLabel }) => {
   const [state, setState] = useState<ChartTwoState>({
     series: [
       {
@@ -81,28 +101,38 @@ const ChartTwo: React.FC = () => {
   });
 
   const [nodos, setNodos] = useState<number[]>([]);
-  const [nodoSeleccionado, setNodoSeleccionado] = useState<number | null>(null); 
+  const [nodoSeleccionado, setNodoSeleccionado] = useState<number | null>(null);
+
   useEffect(() => {
     const obtenerDatosAltura = async () => {
       try {
-        const response = await axios.get<Medicion[]>('http://localhost:8000/medicion/');
-
+        const response = await axios.get<Medicion[]>('http://localhost:8000/mediciones');
         const nodosUnicos = Array.from(new Set(response.data.map((medicion) => medicion.nodo))).sort((a, b) => a - b);
         setNodos(nodosUnicos);
+        // Si hay nodo global, usarlo, si no, usar el local
+        const nodoActual = nodo !== undefined && nodo !== '' ? Number(nodo) : (nodoSeleccionado !== null ? nodoSeleccionado : nodosUnicos[0]);
+        if (nodo === undefined || nodo === '') setNodoSeleccionado(nodoActual);
 
-        const nodoActual = nodoSeleccionado || nodosUnicos[0];
-        setNodoSeleccionado(nodoActual);
-        const datosAltura = response.data
-          .filter((medicion) => medicion.tipo === 25 && medicion.nodo === nodoActual && medicion.error === false)
-          .reduce((acc, medicion) => {
-            const fecha = new Date(medicion.tiempo);
-            const diaSemana = fecha.getDay(); 
-            acc[diaSemana] = medicion.dato;
-            return acc;
-          }, Array(7).fill(null) as (number | null)[]); 
+        // Filtrar por tipo correcto (26) y por nodo, ordenar por tiempo descendente
+        const datosFiltrados = response.data
+          .filter((medicion) => Number(medicion.tipo) === 26 && Number(medicion.nodo) === Number(nodoActual) && medicion.error === false)
+          .sort((a, b) => new Date(b.tiempo).getTime() - new Date(a.tiempo).getTime());
 
-        const alturaSemana = [1, 2, 3, 4, 5, 6, 0].map((day) => datosAltura[day] || 0);
+        // Reducir para obtener la última medición de cada día (primer elemento después del sort descendente)
+        const datosAltura = datosFiltrados.reduce((acc, medicion) => {
+          const fecha = new Date(medicion.tiempo);
+          const diaSemana = fecha.getDay();
+          if (acc[diaSemana] == null) {
+            const val = typeof medicion.dato === 'string' ? parseFloat(medicion.dato) : Number(medicion.dato);
+            acc[diaSemana] = Number.isNaN(val) ? null : val;
+          }
+          return acc;
+        }, Array(7).fill(null) as (number | null)[]);
 
+        const alturaSemana = [1, 2, 3, 4, 5, 6, 0].map((day) => {
+          const val = datosAltura[day];
+          return val == null ? 0 : val;
+        });
         setState({
           series: [{ name: 'Altura', data: alturaSemana }],
         });
@@ -110,9 +140,15 @@ const ChartTwo: React.FC = () => {
         console.error('Error al obtener las mediciones:', error);
       }
     };
-
     obtenerDatosAltura();
-  }, [nodoSeleccionado]); 
+  }, [nodo, nodoSeleccionado]);
+
+  // Si cambia el nodo global, actualizar el nodo seleccionado local
+  useEffect(() => {
+    if (nodo !== undefined && nodo !== '') {
+      setNodoSeleccionado(Number(nodo));
+    }
+  }, [nodo]);
 
   const handleNodoChange = (event: React.ChangeEvent<HTMLSelectElement>) => {
     setNodoSeleccionado(Number(event.target.value));
@@ -124,22 +160,27 @@ const ChartTwo: React.FC = () => {
       <div className="mb-4 justify-between gap-4 sm:flex">
         <div>
           <h4 className="text-xl font-semibold text-black dark:text-white">
-            Gráfico de Altura Semanal
+            Gráfico de Altura Semanal {nodo !== undefined && nodo !== '' && (
+              <span className="text-base font-normal text-gray-600 dark:text-gray-300">- {nodoLabel ?? `Nodo ${nodo}`}</span>
+            )}
           </h4>
         </div>
-        <div>
-          <select
-            className="border rounded p-2"
-            value={nodoSeleccionado || ''}
-            onChange={handleNodoChange}
-          >
-            {nodos.map((nodo) => (
-              <option key={nodo} value={nodo}>
-                Nodo {nodo}
-              </option>
-            ))}
-          </select>
-        </div>
+        {/* Si no hay nodo global, mostrar el selector local */}
+        {(nodo === undefined || nodo === '') && (
+          <div>
+            <select
+              className="border rounded p-2"
+              value={nodoSeleccionado || ''}
+              onChange={handleNodoChange}
+            >
+              {nodos.map((nodo) => (
+                <option key={nodo} value={nodo}>
+                  Nodo {nodo}
+                </option>
+              ))}
+            </select>
+          </div>
+        )}
       </div>
       <div>
         <div id="chartTwo" className="-ml-5 -mb-9">

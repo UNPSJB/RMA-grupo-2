@@ -2,6 +2,7 @@ import React, { useEffect, useState } from 'react';
 import axios from 'axios';
 
 interface Medicion {
+  id: number;
   nodo: number;
   tipo: number;
   dato: number;
@@ -32,12 +33,15 @@ const TableTwo: React.FC = () => {
     const obtenerMediciones = async () => {
       try {
         const response = await axios.get('http://localhost:8000/medicion/');
-        const dataWithErrorFalse = response.data.filter((item: Medicion) => !item.error);
+        const allData = (response.data || []) as Medicion[];
+        const dataWithErrorFalse = allData.filter((item: Medicion) => !item.error);
         setMedicionData(dataWithErrorFalse);
         setFilteredData(dataWithErrorFalse);
 
         // Extraer nodos únicos para el desplegable
-        const nodosUnicos = Array.from(new Set(response.data.map((item: Medicion) => item.nodo))).sort((a, b) => a - b);
+        const nodosUnicos = Array.from(new Set(allData.map((item: Medicion) => Number(item.nodo))))
+          .map(n => Number(n))
+          .sort((a, b) => a - b);
         setUniqueNodos(nodosUnicos);
       } catch (error) {
         console.error('Error al obtener las mediciones:', error);
@@ -52,15 +56,15 @@ const TableTwo: React.FC = () => {
     let data = medicionData;
 
     if (nodoFilter !== '') {
-      data = data.filter(item => item.nodo === Number(nodoFilter));
+      data = data.filter(item => Number(item.nodo) === Number(nodoFilter));
     }
 
     if (tipoFilter === 'Temperatura') {
-      data = data.filter(item => item.tipo === 1 || item.tipo === 2);
+      data = data.filter(item => Number(item.tipo) === 2 || Number(item.tipo) === 3);
     } else if (tipoFilter === 'Altura') {
-      data = data.filter(item => item.tipo === 25);
+      data = data.filter(item => Number(item.tipo) === 26);
     } else if (tipoFilter === 'Voltaje') {
-      data = data.filter(item => item.tipo === 16);
+      data = data.filter(item => Number(item.tipo) === 17);
     }
 
     if (fechaInicio) {
@@ -101,15 +105,15 @@ const TableTwo: React.FC = () => {
 
     const rows = filteredData.map(item => [
       item.nodo,
-      item.tipo === 1 || item.tipo === 2
+      Number(item.tipo) === 2 || Number(item.tipo) === 3
         ? 'Temperatura'
-        : item.tipo === 25
+        : Number(item.tipo) === 26
         ? 'Altura'
-        : item.tipo === 16
+        : Number(item.tipo) === 17
         ? 'Voltaje'
         : 'Otro',
       `${Math.round(item.dato * 100) / 100}${
-        item.tipo === 1 || item.tipo === 2 ? ' °C' : item.tipo === 25 ? ' m' : item.tipo === 16 ? ' V' : ''
+  Number(item.tipo) === 2 || Number(item.tipo) === 3 ? ' °C' : Number(item.tipo) === 26 ? ' m' : Number(item.tipo) === 17 ? ' V' : ''
       }`,
       new Date(item.tiempo).toLocaleString('es-ES', {
         year: 'numeric',
@@ -219,28 +223,28 @@ const TableTwo: React.FC = () => {
               Fecha
             </div>
           </div>
-          {paginatedData.map((item, index) => (
+          {paginatedData.map((item) => (
             <div
-              key={index}
+              key={item.id}
               className="grid grid-cols-3 items-center border-b border-gray-300 dark:border-gray-600 sm:grid-cols-4"
             >
               <div className="p-2.5">{item.nodo}</div>
               <div className="p-2.5">
-                {item.tipo === 1 || item.tipo === 2
+                {Number(item.tipo) === 2 || Number(item.tipo) === 3
                   ? 'Temperatura'
-                  : item.tipo === 25
+                  : Number(item.tipo) === 26
                   ? 'Altura'
-                  : item.tipo === 16
+                  : Number(item.tipo) === 17
                   ? 'Voltaje'
                   : 'Otro'}
               </div>
               <div className="p-2.5">
                 {Math.round(item.dato * 100) / 100}
-                {item.tipo === 1 || item.tipo === 2
+                {Number(item.tipo) === 2 || Number(item.tipo) === 3
                   ? ' °C'
-                  : item.tipo === 25
+                  : Number(item.tipo) === 26
                   ? ' mm'
-                  : item.tipo === 16
+                  : Number(item.tipo) === 17
                   ? ' V'
                   : ''}
               </div>

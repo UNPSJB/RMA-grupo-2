@@ -26,6 +26,7 @@
     "apexcharts": "^3.41.0",
     "axios": "^1.7.7",
     "button": "^1.1.1",
+    "caniuse-lite": "^1.0.30001731",
     "dotenv": "^16.4.5",
     "flatpickr": "^4.6.13",
     "global": "^4.4.0",

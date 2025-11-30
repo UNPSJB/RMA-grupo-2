@@ -78,12 +78,12 @@ const TableOne: React.FC = () => {
             <div className="flex items-center justify-center p-2.5 xl:p-5">
               <p className="text-meta-3">
                 {Math.round(item.dato * 100) / 100}
-                {item.tipo === 1 || item.tipo === 2 ? ' °C' : item.tipo === 25 ? ' m' : ''}
+                {Number(item.tipo) === 2 || Number(item.tipo) === 3 ? ' °C' : Number(item.tipo) === 26 ? ' mm' : ''}
               </p>
             </div>
             <div className="hidden items-center justify-center p-2.5 sm:flex xl:p-5">
               <p className="text-black dark:text-white">
-                {item.tipo === 1 || item.tipo === 2 ? 'Temperatura' : item.tipo === 25 ? 'Altura' : ''}
+                {Number(item.tipo) === 2 || Number(item.tipo) === 3 ? 'Temperatura' : Number(item.tipo) === 26 ? 'Altura' : ''}
               </p>
             </div>
           </div>

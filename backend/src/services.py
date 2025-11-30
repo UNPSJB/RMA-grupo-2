@@ -105,14 +105,36 @@ async def listar_tipos_medicion(db: AsyncSession):
     return [{"value": data.tipo, "label": data.descripcion} for data in result.all()]
 
 async def procesar_csv_medicion(db:AsyncSession, archivo: UploadFile = File(...)):
-    # Crear un archivo en memoria a partir del string
-    # Leer el contenido del archivo y decodificarlo
-        contenido = (await archivo.read()).decode('utf-8')  # Decodifica a string
-        
-        # Crear un archivo en memoria con el contenido decodificado
-        archivo_virtual = io.StringIO(contenido)
-        
-        # Leer el archivo como CSV
+    # Leer el contenido del archivo como bytes
+    content_bytes = await archivo.read()
+
+    # Intentar decodificar con varias codificaciones comunes
+    decoded = None
+    tried_encodings = []
+    for enc in ("utf-8", "latin-1", "cp1252"):
+        try:
+            decoded = content_bytes.decode(enc)
+            tried_encodings.append(enc)
+            detected_encoding = enc
+            break
+        except UnicodeDecodeError:
+            tried_encodings.append(enc)
+            continue
+
+    if decoded is None:
+        # No se pudo decodificar con las codificaciones probadas
+        detail_msg = (
+            f"No se pudo decodificar el archivo. Codificaciones intentadas: {tried_encodings}. "
+            "Asegúrese de que el CSV esté en UTF-8 o Latin-1."
+        )
+        raise HTTPException(status_code=400, detail=detail_msg)
+
+    # Crear un archivo en memoria con el contenido decodificado
+    # Usar newline='' para que el parser csv maneje correctamente nuevos saltos de línea dentro de campos
+    archivo_virtual = io.StringIO(decoded, newline='')
+
+    # Leer el archivo como CSV
+    try:
         reader = csv.DictReader(archivo_virtual)
         # Usar csv.DictReader para leer las filas
         for fila in reader:
@@ -130,7 +152,18 @@ async def procesar_csv_medicion(db:AsyncSession, archivo: UploadFile = File(...)
                 print(f"Error de validación en la fila {fila}: {e}")
             except KeyError as e:
                 print(f"Columna faltante en la fila {fila}: {e}")
-        return {"msg": "ok"}
+            except Exception as e:
+                print(f"Error procesando fila {fila}: {e}")
+    except csv.Error as csv_err:
+        # CSV parsing failed (likely due to malformed rows or unquoted newlines)
+        detail_msg = (
+            f"Error al leer el CSV: {csv_err}. "
+            "Asegúrese de que las filas estén correctamente separadas y que los campos que contienen saltos de línea estén entrecomillados. "
+            "Como alternativa, abra el CSV en un editor de texto o Excel y vuelva a guardarlo con comillas para campos y codificación UTF-8."
+        )
+        raise HTTPException(status_code=400, detail=detail_msg) from csv_err
+
+    return {"msg": "ok"}
 
 ## ----------------------- USUARIO
 async def crear_usuario(db: AsyncSession, usuario: schemas.UsuarioCreate) -> schemas.UsuarioCreate:

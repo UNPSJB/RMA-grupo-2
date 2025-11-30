@@ -33,7 +33,7 @@ enum TipoMensaje {
   LONGITUDE_T = 22,
   ALTITUDE_T = 23,
   HDOP_T = 24,
-  WATER_HEIGHT = 25,
+  WATER_HEIGHT = 26,
 }
 
 const RMA: React.FC = () => {

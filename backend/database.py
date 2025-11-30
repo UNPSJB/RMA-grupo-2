@@ -5,8 +5,8 @@ from typing import AsyncGenerator
 from dotenv import load_dotenv
 import os
 
-load_dotenv()
 
+load_dotenv()
 DATABASE_URL = os.getenv("DB_URL")
 
 engine = create_async_engine(DATABASE_URL, echo=True)
