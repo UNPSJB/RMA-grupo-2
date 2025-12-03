@@ -1,3 +1,4 @@
+//AdminSidebarindex.tsx
 import React, { useEffect, useRef, useState } from 'react';
 import { NavLink, useLocation } from 'react-router-dom';
 import SidebarLinkGroup from './SidebarLinkGroup';
@@ -258,12 +259,19 @@ const AdminSidebar = ({ sidebarOpen, setSidebarOpen }: SidebarProps) => {
             </ul>
           </div>
           <div>
-          <React.Fragment>
+          <SidebarLinkGroup
+                activeCondition={
+                  pathname === '/admin' || pathname.includes('admin')
+                }
+              >
+                {(handleClick, open) => {
+                  return (
+                    <React.Fragment>
                       <NavLink
                         to="#"
                         className={`group relative flex items-center gap-2.5 rounded-sm px-4 py-2 font-medium text-bodydark1 duration-300 ease-in-out hover:bg-graydark dark:hover:bg-meta-4 ${
-                          (pathname === '/' ||
-                            pathname.includes('dashboard')) &&
+                          (pathname === '/admin' ||
+                            pathname.includes('admin')) &&
                           'bg-graydark dark:bg-meta-4'
                         }`}
                         onClick={(e) => {
@@ -301,7 +309,7 @@ const AdminSidebar = ({ sidebarOpen, setSidebarOpen }: SidebarProps) => {
                         Admin
                         <svg
                           className={`absolute right-4 top-1/2 -translate-y-1/2 fill-current ${
-                            open() && 'rotate-180'
+                            open && 'rotate-180'
                           }`}
                           width="20"
                           height="20"
@@ -405,6 +413,9 @@ const AdminSidebar = ({ sidebarOpen, setSidebarOpen }: SidebarProps) => {
                       </div>
                       {/* <!-- Dropdown Menu End --> */}
                     </React.Fragment>
+                  );
+                }}
+              </SidebarLinkGroup>
           </div>
           {/* <!-- Others Group --> */}
           <div>

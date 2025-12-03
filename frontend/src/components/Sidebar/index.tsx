@@ -1,5 +1,6 @@
+// components/SideBar/index.tsx 
 import React, { useEffect, useRef, useState } from 'react';
-import { NavLink, useLocation } from 'react-router-dom';
+import { NavLink, useLocation} from 'react-router-dom'; //useNavigate
 import SidebarLinkGroup from './SidebarLinkGroup';
 import rmalogo from '../../images/logo/rmalogo-svg.svg';
 import { useAuth } from './../../AuthContext';
@@ -13,6 +14,8 @@ const Sidebar = ({ sidebarOpen, setSidebarOpen }: SidebarProps) => {
   const location = useLocation();
   const { pathname } = location;
   const { logout } = useAuth();
+  //const { logout, role } = useAuth();
+  //const navigate = useNavigate();
   const trigger = useRef<any>(null);
   const sidebar = useRef<any>(null);
 
@@ -20,6 +23,24 @@ const Sidebar = ({ sidebarOpen, setSidebarOpen }: SidebarProps) => {
   const [sidebarExpanded, setSidebarExpanded] = useState(
     storedSidebarExpanded === null ? false : storedSidebarExpanded === 'true'
   );
+
+  // Function for logo Click
+  /**
+   * 
+   * @param e funcion auxiliar
+  const handleLogoClick = (e: React.MouseEvent) => {
+    e.preventDefault();
+    
+    // Navegar según el rol del usuario
+    if (role === 'admin') {
+      navigate('/admin');
+    } else if (role === 'investigador') {
+      navigate('/user/RMA');
+    } else {
+      navigate('/invitado/RMA');
+  }
+};
+*/
 
   // close on click outside
   useEffect(() => {
@@ -65,11 +86,12 @@ const Sidebar = ({ sidebarOpen, setSidebarOpen }: SidebarProps) => {
     >
       {/* <!-- SIDEBAR HEADER --> */}
       <div className="flex items-center justify-between gap-2 px-6 py-5.5 lg:py-6.5">
-        <NavLink to="/">
-          <div className='flex items-center'>
-            <img src={rmalogo} alt="Chubut" className="w-20 h-20"/>
-            Red de Monitoreo
-          </div>
+        <NavLink to="/" onClick={(e) => e.stopPropagation()}
+        >
+        <div className='flex items-center'>
+        <img src={rmalogo} alt="Chubut" className="w-20 h-20"/>
+        Red de Monitoreo
+        </div>
         </NavLink>
 
         <button
@@ -124,6 +146,7 @@ const Sidebar = ({ sidebarOpen, setSidebarOpen }: SidebarProps) => {
                         }`}
                         onClick={(e) => {
                           e.preventDefault();
+                          e.stopPropagation();
                           sidebarExpanded
                             ? handleClick()
                             : setSidebarExpanded(true);
@@ -183,6 +206,10 @@ const Sidebar = ({ sidebarOpen, setSidebarOpen }: SidebarProps) => {
                           <li>
                             <NavLink
                               to="/user/RMA"
+                              onClick={(e) => e.stopPropagation()
+                                
+
+                              }
                               className={({ isActive }) =>
                                 'group relative flex items-center gap-2.5 rounded-md px-4 font-medium text-bodydark2 duration-300 ease-in-out hover:text-white ' +
                                 (isActive && '!text-white')
@@ -194,6 +221,7 @@ const Sidebar = ({ sidebarOpen, setSidebarOpen }: SidebarProps) => {
                           <li>
                             <NavLink
                               to="/user/tablas"
+                              onClick={(e) => e.stopPropagation()}
                               className={({ isActive }) =>
                                 'group relative flex items-center gap-2.5 rounded-md px-4 font-medium text-bodydark2 duration-300 ease-in-out hover:text-white ' +
                                 (isActive && '!text-white')
@@ -227,6 +255,7 @@ const Sidebar = ({ sidebarOpen, setSidebarOpen }: SidebarProps) => {
                         }`}
                         onClick={(e) => {
                           e.preventDefault();
+                          e.stopPropagation();
                           sidebarExpanded
                             ? handleClick()
                             : setSidebarExpanded(true);
@@ -290,6 +319,7 @@ const Sidebar = ({ sidebarOpen, setSidebarOpen }: SidebarProps) => {
                         <li>
                             <NavLink
                               to="/user/perfil"
+                              onClick={(e) => e.stopPropagation()}
                               className={({ isActive }) =>
                                 'group relative flex items-center gap-2.5 rounded-md px-4 font-medium text-bodydark2 duration-300 ease-in-out hover:text-white ' +
                                 (isActive && '!text-white')
@@ -300,7 +330,9 @@ const Sidebar = ({ sidebarOpen, setSidebarOpen }: SidebarProps) => {
                           </li>
                           <li>
                             <button
-                              onClick={logout}
+                              onClick={  
+                                logout
+                              }
                               className="group relative flex items-center gap-2.5 rounded-md px-4 py-2 font-medium text-bodydark2 duration-300 ease-in-out hover:text-white"
                             >
                               Cerrar Sesión

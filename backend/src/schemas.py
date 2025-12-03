@@ -22,7 +22,7 @@ class Medicion(MedicionBase):
     error: bool
 
     class Config:
-        orm_config = True
+        from_attributes = True
         
 class MedicionCreate(MedicionBase):
     pass

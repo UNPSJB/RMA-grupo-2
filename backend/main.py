@@ -24,12 +24,6 @@ async def init_db():
     async with engine.begin() as conn:
         await conn.run_sync(Base.metadata.create_all) # Crear todas las tablas
 
-#Conexion con el frontend
-'''
-origins = [
-    "http://localhost:5173"
-]
-'''
 
 app.add_middleware(
     CORSMiddleware,

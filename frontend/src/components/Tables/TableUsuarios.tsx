@@ -49,7 +49,7 @@ const TableUsuarios: React.FC<TableUsuariosProps> = ({
         </div>
 
         {usuarios.map((usuario) => (
-          <div className="grid grid-cols-4 sm:grid-cols-5 border-b border-stroke dark:border-strokedark" key={usuario.id}>
+          <div className="grid grid-cols-4 sm:grSELECT * FROM nodo;id-cols-5 border-b border-stroke dark:border-strokedark" key={usuario.id}>
             <div className="flex items-center gap-3 p-2.5 xl:p-5"><p className="text-black dark:text-white">{usuario.nombre}</p></div>
             <div className="flex items-center gap-3 p-2.5 xl:p-5"><p className="text-black dark:text-white">{usuario.email}</p></div>
             <div className="flex items-center justify-center p-2.5 xl:p-5"><p className="text-black dark:text-white">{usuario.rol}</p></div>
