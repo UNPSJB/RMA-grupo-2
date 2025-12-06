@@ -7,7 +7,8 @@ from dotenv import load_dotenv
 from backend.src import services
 from backend.src.schemas import MedicionCreate
 from pydantic import BaseModel
-from backend.database import *
+from backend.database import SessionLocal
+import uuid
 
 class Mensaje(BaseModel):
     id: int
@@ -21,24 +22,66 @@ MQTT_PORT = 1883
 MQTT_KEEPALIVE = 60
 TOPIC = "test_topic"
 
-async def message_handling(client, userdata, message):
-    mensaje = message.payload.decode('utf-8').replace("\'", "\"")
-    #timport pdb; pdb.set_trace()
-    try:
-        m = Mensaje.model_validate_json(mensaje)
-        med = MedicionCreate(nodo=m.id, dato=m.data,tipo=m.type, tiempo=m.time, bateria=None, error=False)
-        # print(f"Guardando en la base de datos {med.nodo}--{med.tipo}--{med.dato}--{med.bateria}--{med.error}")
-        # Abrir una nueva sesión de la base de datos en cada mensaje
-        async for db in get_db():  # Crear nueva sesión
-            await services.crear_medicion(db, med)
-            print("Datos Guardados...")
-    except Exception as e:
-        print(e)
-        print("Error al guardar en la base de datos")
+# Cola global para encolar mensajes desde el callback MQTT
+message_queue = None
+loop = None
+
+async def message_worker():
+    """Worker que consume de la cola y persiste en la BD de forma secuencial."""
+    global message_queue
+    while True:
+        try:
+            # Esperar por el próximo payload en la cola
+            payload = await message_queue.get()
+            msg_id = uuid.uuid4().hex[:8]
+            
+            try:
+                # Decodificar y validar
+                print(f"[{msg_id}] Iniciando procesamiento...")
+                mensaje = payload.replace("'", '"')
+                m = Mensaje.model_validate_json(mensaje)
+                med = MedicionCreate(
+                    nodo=m.id, 
+                    dato=m.data, 
+                    tipo=m.type, 
+                    tiempo=m.time, 
+                    bateria=None, 
+                    error=False
+                )
+                
+                # Crear una sesión nueva para este mensaje
+                print(f"[{msg_id}] Creando sesión BD...")
+                async with SessionLocal() as db:
+                    print(f"[{msg_id}] Llamando crear_medicion...")
+                    await services.crear_medicion(db, med)
+                    print(f"[{msg_id}] ✓ Datos Guardados (nodo={med.nodo}, tipo={med.tipo})")
+                    
+            except Exception as e:
+                print(f"[{msg_id}] ✗ Error procesando mensaje: {type(e).__name__}: {e}")
+                import traceback
+                traceback.print_exc()
+            finally:
+                # Marcar la tarea como completada en la cola
+                message_queue.task_done()
+                
+        except asyncio.CancelledError:
+            # El worker fue cancelado (p. ej., al salir del programa)
+            print("Worker cancelado.")
+            break
+        except Exception as e:
+            print(f"Error fatal en worker: {type(e).__name__}: {e}")
+            import traceback
+            traceback.print_exc()
 
 def on_message(client, userdata, message):
-    # Ejecutar la coroutine en el loop de eventos actual usando run_coroutine_threadsafe
-    asyncio.run_coroutine_threadsafe(message_handling(client, userdata, message), loop)
+    """Callback del MQTT: encola el payload sin bloquearse."""
+    global message_queue
+    try:
+        payload = message.payload.decode('utf-8')
+        # Enqueue the payload (non-blocking, runs in the asyncio loop context)
+        loop.call_soon_threadsafe(message_queue.put_nowait, payload)
+    except Exception as e:
+        print(f"Error encolando mensaje: {e}")
 
 def on_connect(client, userdata, flags, rc):
     if rc == 0:
@@ -51,9 +94,18 @@ def on_subscribe(client, userdata, flags, rc):
     print(f"Suscrito a {TOPIC}!")
 
 async def main():
-    global loop  # Necesitamos una referencia global al loop para que on_message lo use
+    global loop, message_queue
+    
+    # Obtener el loop actual
     loop = asyncio.get_running_loop()
-
+    
+    # Crear la cola global
+    message_queue = asyncio.Queue()
+    
+    # Iniciar el worker que consume la cola
+    worker_task = asyncio.create_task(message_worker())
+    
+    # Configurar el cliente MQTT
     client = paho.Client()
     client.on_message = on_message
     client.on_connect = on_connect
@@ -69,13 +121,27 @@ async def main():
     try:
         print("Presione CTRL+C para salir...")
         client.loop_start()  # Iniciar el loop en un hilo separado
+        
+        # Mantener el loop asyncio corriendo
         while True:
-            await asyncio.sleep(1)  # Mantener el loop asyncio corriendo
+            await asyncio.sleep(1)
+            
     except KeyboardInterrupt:
-        print("Desconectando del broker MQTT")
+        print("\nDeteniendo suscriptor...")
     finally:
         client.loop_stop()
         client.disconnect()
+        
+        # Cancelar el worker
+        worker_task.cancel()
+        try:
+            await worker_task
+        except asyncio.CancelledError:
+            pass
+        
+        # Mostrar estadísticas finales
+        print(f"Cola: {message_queue.qsize()} mensajes pendientes")
+        print("Suscriptor desconectado.")
 
 if __name__ == "__main__":
     asyncio.run(main())

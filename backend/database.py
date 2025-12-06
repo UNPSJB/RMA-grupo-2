@@ -1,9 +1,11 @@
+import os
+
 from sqlalchemy.ext.asyncio import create_async_engine, AsyncSession
 from sqlalchemy.orm import sessionmaker
 from sqlalchemy.ext.declarative import declarative_base
 from typing import AsyncGenerator
 from dotenv import load_dotenv
-import os
+
 
 load_dotenv()
 

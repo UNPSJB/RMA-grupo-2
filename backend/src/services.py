@@ -25,32 +25,16 @@ async def get_db():
         db.close()
         
 ## ----------------------- MEDICIONES
+# El cambio que realice fue primero guardar la medicíon, despues 
 async def crear_medicion(db: AsyncSession, medicion: schemas.MedicionCreate) -> schemas.MedicionCreate:
     result = await db.execute(select(models.DatosSensores).filter(models.DatosSensores.tipo == medicion.tipo))
     sensor_data = result.scalars().first()
 
-    if not sensor_data:
-        raise ValueError(f"Tipo de dato {medicion.tipo} no encontrado en la base de datos.")
-    
-    result_alarmas = await db.execute(
-        select(models.Alarma).filter(models.Alarma.tipo == medicion.tipo, models.Alarma.nodo == medicion.nodo)
-    )
-    alarmas = result_alarmas.scalars().all()
     mError = not (sensor_data.min <= medicion.dato <= sensor_data.max)
 
-    if mError is False:
-        for alarma in alarmas:
-            if alarma.chat_id is None:
-                if medicion.dato < alarma.valor_min or medicion.dato > alarma.valor_max:
-                    alarma_message = f"🚨¡ALERTA! Se ha disparado una alarma para el nodo {medicion.nodo} " \
-                                    f"con el valor {medicion.dato} para el tipo de dato {sensor_data.descripcion}. "
-                    await send_alarm_to_channel(alarma_message, CHANNEL_ID)
-            else:
-                if medicion.dato < alarma.valor_min or medicion.dato > alarma.valor_max:
-                    alarma_message = f"🚨¡ALERTA! Se ha disparado una alarma para el nodo {medicion.nodo} " \
-                                    f"con el valor {medicion.dato} para el tipo de dato {sensor_data.descripcion}. "
-                    await send_alarm_to_channel(alarma_message, alarma.chat_id)
-
+    if not sensor_data:
+        raise ValueError(f"Tipo de dato {medicion.tipo} no encontrado en la base de datos.")
+  
     new_medicion = models.Medicion(
         nodo=medicion.nodo,
         tipo=medicion.tipo,
@@ -58,15 +42,44 @@ async def crear_medicion(db: AsyncSession, medicion: schemas.MedicionCreate) -> 
         tiempo=medicion.tiempo,
         error=mError
     )
+
     try:
-         db.add(new_medicion)
-         await db.commit()
-         await db.refresh(new_medicion)
+        db.add(new_medicion)
+        await db.commit()
+        # NO usar refresh aquí: abre transacción implícita que luego hace ROLLBACK
+        # El objeto new_medicion ya tiene el ID asignado por el DB (RETURNING en INSERT)
     except Exception as errorEnBase:
-         await db.rollback()
-         print(f"Error en la base de datos: {errorEnBase}")
-         raise HTTPException(status_code=400, detail="Error al crear una nueva medicion") from errorEnBase
+        await db.rollback()
+        print(f"Error en la base de datos: {errorEnBase}")
+        raise HTTPException(status_code=400, detail="Error al crear una nueva medicion") from errorEnBase
+    
+    # Procesar alarmas en una sesión separada (no afecta a la transacción principal)
+    try:
+        async with SessionLocal() as db_alarmas:
+            async with db_alarmas.begin():
+                result_alarmas = await db_alarmas.execute(
+                    select(models.Alarma).filter(models.Alarma.tipo == medicion.tipo, models.Alarma.nodo == medicion.nodo)
+                )
+                alarmas = result_alarmas.scalars().all()
+
+                if mError is False:
+                    for alarma in alarmas:
+                        if alarma.chat_id is None:
+                            if medicion.dato < alarma.valor_min or medicion.dato > alarma.valor_max:
+                                alarma_message = f"🚨¡ALERTA! Se ha disparado una alarma para el nodo {medicion.nodo} " \
+                                                f"con el valor {medicion.dato} para el tipo de dato {sensor_data.descripcion}. "
+                                await send_alarm_to_channel(alarma_message, CHANNEL_ID)
+                        else:
+                            if medicion.dato < alarma.valor_min or medicion.dato > alarma.valor_max:
+                                alarma_message = f"🚨¡ALERTA! Se ha disparado una alarma para el nodo {medicion.nodo} " \
+                                                f"con el valor {medicion.dato} para el tipo de dato {sensor_data.descripcion}. "
+                                await send_alarm_to_channel(alarma_message, alarma.chat_id)
+    except Exception as e:
+        print(f"Error al enviar alarmas: {e}")
+
     return new_medicion
+    
+
 
 
 async def leer_medicion(db: AsyncSession, medicion_id: int) -> schemas.Medicion:
