@@ -17,7 +17,7 @@ router = APIRouter()
 
 ## ----------------------- MEDICIONES
 
-@router.get("/medicion/", response_model=List[schemas.MedicionCreate])
+@router.get("/medicion/", response_model=List[schemas.Medicion])
 async def read_mdiciones(db: AsyncSession = Depends(get_db)):
     async with db.begin():
         result = await db.execute(select(Medicion))
