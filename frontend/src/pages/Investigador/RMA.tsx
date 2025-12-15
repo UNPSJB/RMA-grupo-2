@@ -91,6 +91,10 @@ const RMA: React.FC = () => {
   };
 
   useEffect(() => {
+    
+    fetchLastMeasurement();
+
+    // Luego ejecutar cada 60 segundos
     const intervalId = setInterval(fetchLastMeasurement, 60000);
 
     // Limpieza cuando el componente se desmonta

@@ -48,7 +48,7 @@ const TableNodos: React.FC<TableNodosProps> = ({ nodos, setNodos, onEditUptMode 
 
   useEffect(() => {
     let filtered = nodos;
-    
+
     // Filtrar los nodos según el criterio y el valor de búsqueda
     if (selectedFilter && filterValue.trim() !== '') {
       filtered = nodos.filter((nodo) => {
@@ -66,7 +66,7 @@ const TableNodos: React.FC<TableNodosProps> = ({ nodos, setNodos, onEditUptMode 
     filtered = filtered.sort((a, b) => {
       const nameA = a.nombre.toLowerCase();
       const nameB = b.nombre.toLowerCase();
-      
+
       if (sortDirection === 'asc') {
         return nameA > nameB ? 1 : nameA < nameB ? -1 : 0;
       } else {
@@ -76,6 +76,19 @@ const TableNodos: React.FC<TableNodosProps> = ({ nodos, setNodos, onEditUptMode 
     setFilteredNodos(filtered);
 
   }, [nodos, selectedFilter, filterValue, sortDirection]);
+
+  // Efecto para manejar ESC y cerrar el formulario de edición
+  useEffect(() => {
+    const handleEscapeKey = (e: KeyboardEvent) => {
+      if (e.key === 'Escape' && isEdit) {
+        e.preventDefault();
+        cancelEdit();
+      }
+    };
+
+    window.addEventListener('keydown', handleEscapeKey);
+    return () => window.removeEventListener('keydown', handleEscapeKey);
+  }, [isEdit]);
 
 
     const toggleSortDirection = () => {
@@ -280,7 +293,7 @@ const TableNodos: React.FC<TableNodosProps> = ({ nodos, setNodos, onEditUptMode 
 
 
       {!isEdit &&(
-        <AdminMaps onLocationChange={handleLocationChange} nodos={nodos} onEdit={startEdit} onDelete={startDelete}/>
+        <AdminMaps onLocationChange={handleLocationChange} nodos={nodos} onEdit={startEdit} onDelete={startDelete} readOnly={true}/>
         )}
         
           <div className="mb-4 sticky top 0 z-10">

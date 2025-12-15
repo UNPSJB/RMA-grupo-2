@@ -22,6 +22,7 @@ import CrearNodo from './pages/Admin/CrearNodo'
 import AdminParametro from './pages/Admin/AdminParametro';
 import MedicionesCSV from './pages/Admin/MedicionesCSV';
 import Vinculacion from './pages/Admin/Vinculacion';
+import PanelCuencas from './pages/Admin/PanelCuencas';
 
 function App() {
   const [loading, setLoading] = useState<boolean>(true);
@@ -85,6 +86,11 @@ function App() {
             <CrearNodo />
           </ProtectedRoute>
          }/>
+        <Route path="/admin/cuencas" element={
+          <ProtectedRoute requiredRole="admin">
+            <PanelCuencas />
+          </ProtectedRoute>
+        }/>
         
         <Route path="/admin/usuarios" element={
           <ProtectedRoute requiredRole="admin">

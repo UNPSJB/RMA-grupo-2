@@ -1,15 +1,8 @@
 import React from 'react';
 import { MapContainer, TileLayer, Marker, Popup } from 'react-leaflet';
-import L from 'leaflet';
 import 'leaflet/dist/leaflet.css';
 import './ChubutMap.css'; // Asegúrate de que la ruta sea correcta
-
-
-const customIcon = L.icon({
-    iconUrl: 'https://raw.githubusercontent.com/pointhi/leaflet-color-markers/master/img/marker-icon-2x-blue.png',
-    iconSize: [25, 41],
-    iconAnchor: [12, 41],
-});
+import { nodoDefaultIcon } from '../../utils/nodoIcon';
 
 
 interface Nodo {
@@ -35,7 +28,7 @@ const ChubutMap: React.FC = () => {
         attribution='&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors'
       />
       {nodos.map((nodo) => (
-        <Marker key={nodo.id} position={[nodo.lat, nodo.lng] } icon={customIcon}>
+        <Marker key={nodo.id} position={[nodo.lat, nodo.lng] } icon={nodoDefaultIcon}>
           <Popup>{nodo.nombre}</Popup>
         </Marker>
       ))}

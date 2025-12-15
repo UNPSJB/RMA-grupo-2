@@ -22,10 +22,10 @@ const TableSensores: React.FC = () => {
     const obtenerSensores = async () => {
       try {
         const response = await axios.get('http://localhost:8000/sensores');
-        
+
         // Ordenar los datos de menor a mayor por tipo
         const sortedData = response.data.sort((a: Sensor, b: Sensor) => a.tipo - b.tipo);
-        
+
         setSensorsData(sortedData);
       } catch (error) {
         console.error('Error al obtener los sensores:', error);
@@ -35,6 +35,19 @@ const TableSensores: React.FC = () => {
 
     obtenerSensores();
   }, []);
+
+  // Efecto para manejar ESC y cerrar el modal
+  useEffect(() => {
+    const handleEscapeKey = (e: KeyboardEvent) => {
+      if (e.key === 'Escape' && editingSensor) {
+        e.preventDefault();
+        handleCancel();
+      }
+    };
+
+    window.addEventListener('keydown', handleEscapeKey);
+    return () => window.removeEventListener('keydown', handleEscapeKey);
+  }, [editingSensor]);
 
   // Abrir el modal de edición
   const handleEdit = (sensor: Sensor) => {

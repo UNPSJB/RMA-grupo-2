@@ -1,5 +1,5 @@
 import datetime
-from sqlalchemy import Integer, Boolean, String, Float, DateTime, ForeignKey
+from sqlalchemy import Integer, Boolean, String, Float, DateTime, ForeignKey, JSON
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 from sqlalchemy.ext.declarative import declarative_base
 from sqlalchemy import func
@@ -74,6 +74,19 @@ class Usuario(Base):
     )
     rol: Mapped[str] = mapped_column(String, index=True, nullable=False)
 
+## ------------------- CUENCA
+
+class Cuenca(Base):
+    __tablename__ = "cuenca"
+
+    id: Mapped[int] = mapped_column(Integer, primary_key=True, index=True, autoincrement=True)
+    nombre: Mapped[str] = mapped_column(String, index=True, nullable=False, unique=True)
+    descripcion: Mapped[str] = mapped_column(String, nullable=True)
+    poligono: Mapped[dict] = mapped_column(JSON, nullable=False)  # GeoJSON polygon coordinates
+
+    # Relación con nodos
+    nodos: Mapped[list["Nodo"]] = relationship("Nodo", back_populates="cuenca_info", cascade="all, delete-orphan")
+
 ## ------------------- NODOS
 
 class Nodo(Base):
@@ -84,7 +97,9 @@ class Nodo(Base):
     descripcion : Mapped[str] = mapped_column(String, index=True, nullable=True)
     posicionx : Mapped[float] = mapped_column(Float, index=True, nullable=False)
     posiciony : Mapped[float] = mapped_column(Float, index=True, nullable=False)
+    cuenca_id: Mapped[int] = mapped_column(Integer, ForeignKey('cuenca.id'), nullable=True)
 
     alarma: Mapped[list["Alarma"]] = relationship("Alarma", back_populates="nodo_info", cascade="all, delete-orphan")
+    cuenca_info: Mapped["Cuenca"] = relationship("Cuenca", back_populates="nodos")
 
     ##----------------DATOS SENSORES-------------##

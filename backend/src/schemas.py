@@ -1,6 +1,6 @@
 from pydantic import BaseModel, EmailStr, field_validator
 #from datetime import datetime
-from typing import Optional
+from typing import Optional, List, Dict, Any
 import datetime
 
 
@@ -97,6 +97,33 @@ class UsuarioLogin(BaseModel):
     email: EmailStr
     contrasena: str
 
+## ----------------------- CUENCA
+
+class CuencaBase(BaseModel):
+    nombre: str
+    descripcion: Optional[str] = None
+    poligono: Dict[str, Any]  # GeoJSON format: {"type": "Polygon", "coordinates": [[[lon, lat], ...]]}
+
+class Cuenca(CuencaBase):
+    id: int
+
+    class Config:
+        from_attributes = True
+
+class CuencaCreate(CuencaBase):
+    pass
+
+class CuencaUpdate(BaseModel):
+    nombre: Optional[str] = None
+    descripcion: Optional[str] = None
+    poligono: Optional[Dict[str, Any]] = None
+
+class CuencaWithNodos(Cuenca):
+    nodos: List["Nodo"] = []
+
+    class Config:
+        from_attributes = True
+
 ##--------NODO
 
 class Detalle(BaseModel):
@@ -108,7 +135,8 @@ class NodoBase(BaseModel):
     posiciony: float
     nombre: str
     descripcion: Optional[str]
-    
+    cuenca_id: Optional[int] = None
+
 
 class Nodo(NodoBase):
 
@@ -117,6 +145,7 @@ class Nodo(NodoBase):
     descripcion: Optional[str]
     posicionx: float
     posiciony: float
+    cuenca_id: Optional[int] = None
 
     class Config:
         orm_mode = True
@@ -128,7 +157,8 @@ class NodoUpdate(NodoBase):
     posicionx: float
     posiciony: float
     nombre: str
-    descripcion: Optional[str]    
+    descripcion: Optional[str]
+    cuenca_id: Optional[int] = None    
 
 
 class Token(BaseModel):

@@ -221,3 +221,38 @@ async def leer_todos_los_sensores_endpoint(db: AsyncSession = Depends(get_db)):
 @router.get("/sensores/select-options", response_model=List[schemas.Detalle])
 async def listar_sensores_endpoint(db: AsyncSession = Depends(get_db)):
     return await services.listar_sensores(db)
+
+## ---------------------- CUENCA
+
+@router.post("/cuenca", response_model=schemas.Cuenca)
+async def crear_cuenca_endpoint(cuenca: schemas.CuencaCreate, db: AsyncSession = Depends(get_db)):
+    try:
+        return await services.crear_cuenca(db, cuenca)
+    except HTTPException as e:
+        raise HTTPException(status_code=400, detail=str(e))
+
+@router.get("/cuenca/{cuenca_id}", response_model=schemas.CuencaWithNodos)
+async def get_cuenca_endpoint(cuenca_id: int, db: AsyncSession = Depends(get_db)):
+    return await services.leer_cuenca_con_nodos(db, cuenca_id)
+
+@router.put("/cuenca/{cuenca_id}", response_model=schemas.Cuenca)
+async def update_cuenca_endpoint(
+    cuenca_id: int, cuenca: schemas.CuencaUpdate, db: AsyncSession = Depends(get_db)
+):
+    return await services.modificar_cuenca(db, cuenca_id, cuenca)
+
+@router.delete("/cuenca/{cuenca_id}")
+async def delete_cuenca_endpoint(cuenca_id: int, db: AsyncSession = Depends(get_db)):
+    return await services.eliminar_cuenca(db, cuenca_id)
+
+@router.get("/cuencas", response_model=List[schemas.CuencaWithNodos])
+async def get_cuencas_endpoint(db: AsyncSession = Depends(get_db)):
+    return await services.leer_todas_las_cuencas(db)
+
+@router.get("/cuencas/select-options", response_model=List[schemas.Detalle])
+async def listar_cuencas_endpoint(db: AsyncSession = Depends(get_db)):
+    return await services.listar_cuencas(db)
+
+@router.post("/cuenca/{cuenca_id}/nodos")
+async def asignar_nodos_endpoint(cuenca_id: int, nodo_ids: List[int], db: AsyncSession = Depends(get_db)):
+    return await services.asignar_nodos_a_cuenca(db, cuenca_id, nodo_ids)

@@ -5,6 +5,7 @@ import AdminMaps from '../../pages/Admin/AdminMaps';
 import '../../css/AlertPopup.css';
 import AlertPopup from '../../components/AlertPopup'
 import AlertMensaje from '../../components/Alerts/'
+import ToastContainer, { ToastData } from '../../components/Toast/ToastContainer';
 import axios from 'axios';
 import {useNavigate} from 'react-router-dom'
 
@@ -13,26 +14,55 @@ interface Nodo {
   nombre: string;
   posicionx: number;
   posiciony: number;
-  descripcion: string;  
+  descripcion: string;
+  cuenca_id?: number;
+}
+
+interface Cuenca {
+  value: number;
+  label: string;
+}
+
+interface CuencaCompleta {
+  id: number;
+  nombre: string;
+  descripcion: string;
+  poligono: {
+    type: string;
+    coordinates: number[][][];
+  };
 }
 
 const CrearNodo = () => {
   const navigate = useNavigate();
   const [isEdit, setIsEdit] = useState(false);
   const [nodos, setNodos] = useState<Nodo[]>([]);
+  const [cuencas, setCuencas] = useState<Cuenca[]>([]);
+  const [cuencasCompletas, setCuencasCompletas] = useState<CuencaCompleta[]>([]);
   const [lat, setLat] = useState<number | null>(null);
   const [lng, setLng] = useState<number | null>(null);
   const [ isViewCreateNodo, setViewCreateNodo ] = useState(false);
-  const toggleDropdown = () => { setViewCreateNodo((prev) => !prev) }; 
+  const toggleDropdown = () => { setViewCreateNodo((prev) => !prev) };
   const [alert, setPopUp] = useState<{type: string; message: string; description: string; onConfirm: () => void;
   } | null>(null);
+  const [toasts, setToasts] = useState<ToastData[]>([]);
   const [formData, setFormData] = useState({
     id: '',
     nombre: '',
     posicionx: '',
     posiciony: '',
-    descripcion: '',    
+    descripcion: '',
+    cuenca_id: '',
   });
+
+  const mostrarToast = (type: 'success' | 'error' | 'info' | 'warning', message: string) => {
+    const id = Date.now().toString();
+    setToasts(prev => [...prev, { id, type, message }]);
+  };
+
+  const removeToast = (id: string) => {
+    setToasts(prev => prev.filter(toast => toast.id !== id));
+  };
     
   {/**
     const showAlert = (type: 'success' | 'error' | 'info' | 'warning', message: string, description = '') => {
@@ -73,6 +103,156 @@ const CrearNodo = () => {
         setLng(lng);
   };
 
+  // Calcular el centroide del polígono de una cuenca
+  const calcularCentroideCuenca = (cuencaId: number) => {
+    const cuenca = cuencasCompletas.find(c => c.id === cuencaId);
+    if (!cuenca || !cuenca.poligono || !cuenca.poligono.coordinates || cuenca.poligono.coordinates.length === 0) {
+      return null;
+    }
+
+    // Obtener las coordenadas del polígono (primer anillo del polígono)
+    const coordenadas = cuenca.poligono.coordinates[0];
+
+    if (coordenadas.length < 3) {
+      return null;
+    }
+
+    // Calcular el centroide
+    let centroLat = 0;
+    let centroLng = 0;
+
+    coordenadas.forEach(coord => {
+      centroLng += coord[0]; // longitude
+      centroLat += coord[1]; // latitude
+    });
+
+    centroLat /= coordenadas.length;
+    centroLng /= coordenadas.length;
+
+    return { lat: centroLat, lng: centroLng };
+  };
+
+  // Calcular una posición cercana al centroide para evitar superposición
+  const calcularPosicionSinSuperposicion = (centroide: { lat: number; lng: number }, cuencaId: number) => {
+    // Obtener todos los nodos de esta cuenca
+    const nodosEnCuenca = nodos.filter(n => n.cuenca_id === cuencaId);
+
+    console.log('=== Debug Posicionamiento ===');
+    console.log('Cuenca ID:', cuencaId);
+    console.log('Total nodos:', nodos.length);
+    console.log('Nodos en esta cuenca:', nodosEnCuenca.length);
+    console.log('Nodos filtrados:', nodosEnCuenca.map(n => ({ id: n.id, nombre: n.nombre, cuenca_id: n.cuenca_id })));
+    console.log('Centroide:', centroide);
+
+    if (nodosEnCuenca.length === 0) {
+      // Si no hay nodos en la cuenca, usar el centroide directamente
+      console.log('No hay nodos en la cuenca, usando centroide directo');
+      return centroide;
+    }
+
+    // Radio de búsqueda inicial (en grados, aproximadamente 100 metros)
+    const radioBase = 0.001;
+    const maxIntentos = 50;
+    const distanciaMinima = 0.0005; // Distancia mínima entre nodos
+
+    // Verificar si una posición está muy cerca de otro nodo
+    const estaDemasiadoCerca = (lat: number, lng: number) => {
+      return nodosEnCuenca.some(nodo => {
+        const distancia = Math.sqrt(
+          Math.pow(nodo.posicionx - lat, 2) +
+          Math.pow(nodo.posiciony - lng, 2)
+        );
+        const cerca = distancia < distanciaMinima;
+        if (cerca) {
+          console.log(`Muy cerca del nodo ${nodo.nombre} (distancia: ${distancia})`);
+        }
+        return cerca;
+      });
+    };
+
+    // Verificar si el centroide está libre
+    if (!estaDemasiadoCerca(centroide.lat, centroide.lng)) {
+      console.log('Centroide está libre, usando posición central');
+      return centroide;
+    }
+
+    console.log('Centroide ocupado, buscando posición alternativa...');
+
+    // Intentar encontrar una posición libre cerca del centroide
+    for (let i = 0; i < maxIntentos; i++) {
+      const angulo = (Math.PI * 2 * i) / 8; // 8 posiciones alrededor del centro
+      const radio = radioBase * (1 + Math.floor(i / 8)); // Aumentar el radio en cada vuelta
+
+      const nuevaLat = centroide.lat + Math.cos(angulo) * radio;
+      const nuevaLng = centroide.lng + Math.sin(angulo) * radio;
+
+      if (!estaDemasiadoCerca(nuevaLat, nuevaLng)) {
+        console.log(`Posición libre encontrada en intento ${i + 1}, radio: ${radio.toFixed(6)}`);
+        return { lat: nuevaLat, lng: nuevaLng };
+      }
+    }
+
+    // Si no encuentra una posición libre, agregar un pequeño offset aleatorio
+    const offsetAleatorio = radioBase * (1 + Math.random());
+    const anguloAleatorio = Math.random() * Math.PI * 2;
+
+    console.log('No se encontró posición libre, usando offset aleatorio');
+
+    return {
+      lat: centroide.lat + Math.cos(anguloAleatorio) * offsetAleatorio,
+      lng: centroide.lng + Math.sin(anguloAleatorio) * offsetAleatorio,
+    };
+  };
+
+  // Manejar el cambio de cuenca
+  const handleCuencaChange = (cuencaId: string) => {
+    setFormData({ ...formData, cuenca_id: cuencaId });
+
+    if (cuencaId) {
+      const centroide = calcularCentroideCuenca(parseInt(cuencaId));
+      if (centroide) {
+        const posicionFinal = calcularPosicionSinSuperposicion(centroide, parseInt(cuencaId));
+        setLat(posicionFinal.lat);
+        setLng(posicionFinal.lng);
+        mostrarToast('info', 'El nodo se ha ubicado en la cuenca seleccionada');
+      }
+    }
+  };
+
+  const obtenerCuencas = async () => {
+    try {
+      const response = await axios.get('http://localhost:8000/cuencas/select-options');
+      setCuencas(response.data);
+
+      // Obtener también las cuencas completas con polígonos
+      const responseCuencasCompletas = await axios.get('http://localhost:8000/cuencas');
+      setCuencasCompletas(responseCuencasCompletas.data);
+    } catch (error) {
+      console.error('Error al obtener las cuencas:', error);
+    }
+  };
+
+  const obtenerNodos = async () => {
+    try {
+      const response = await axios.get('http://localhost:8000/nodos');
+      setNodos(response.data);
+    } catch (error) {
+      console.error('Error al obtener los nodos:', error);
+    }
+  };
+
+  useEffect(() => {
+    obtenerCuencas();
+    obtenerNodos();
+  }, []);
+
+  // Refrescar nodos cuando cambia la cuenca seleccionada para tener datos actualizados
+  useEffect(() => {
+    if (formData.cuenca_id) {
+      obtenerNodos();
+    }
+  }, [formData.cuenca_id]);
+
   useEffect(() => {
     if (lat !== null && lng !== null) {
       setFormData((prevFormData) => ({
@@ -81,89 +261,61 @@ const CrearNodo = () => {
         posiciony: lng.toString(),
       }));
     }
-    
+
   }, [lat, lng]);
   
   const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
 
-    const data = {
-      id: formData.id,
-      nombre: formData.nombre,
-      posicionx: formData.posicionx,
-      posiciony: formData.posiciony,
-      descripcion: formData.descripcion,    
-    };
-    debugger;
-  
-    {/**
-      if (isEdit) {
-          setPopUp({
-            type: 'warning',
-            message: '¿Estás seguro de que quieres modificar el nodo?',
-            description: 'Esta acción no se puede deshacer.',
-          });
-          
-          //showAlert('success', 'Nodo modificado correctamente', 'Los cambios se guardaron con éxito.');
-        }else {
-    */}
-    
-        {/**
-          setPopUp({
-            type: 'warning',
-            message: '¿Estás seguro de que quieres crear el nodo?',
-            description: 'Esta acción no se puede deshacer.',
-          });
-        */}
-          
-        //showAlert('success', 'Nodo creado correctamente', 'El nodo ha sido creado con éxito.');
-   
-            {/**
-            if (!formData.posicionx || !formData.posiciony || !formData.nombre) {
-                setPopUp({
-                    type: 'warning',
-                    message: 'Atencion!',
-                    description: 'Debe rellenar todos los campos.',
-                });
-                return;  
-            }
-        */}
+    // Validar campos requeridos
+    if (!formData.nombre || !formData.posicionx || !formData.posiciony) {
+      mostrarToast('warning', 'Por favor completa todos los campos requeridos');
+      return;
+    }
 
-      try {
-        const response = await fetch('http://localhost:8000/nodo', {
-          method: 'POST',
-          headers: {
-            'Content-Type': 'application/json',
-          },
-          body: JSON.stringify(data),
-        });
-      
-        if (response.ok) {
-          setIsEdit(false);
-      {/**
-        showAlert(
-            'success',
-            isEdit ? 'Nodo modificado correctamente' : 'Nodo creado correctamente',
-            'El nodo se ha guardado con éxito.'
-            );
-            setTimeout(() => {
-                setPopUp(null);
-            }, 3000);
-        */}
+    const data = {
+      nombre: formData.nombre,
+      posicionx: parseFloat(formData.posicionx),
+      posiciony: parseFloat(formData.posiciony),
+      descripcion: formData.descripcion || '',
+      cuenca_id: formData.cuenca_id ? parseInt(formData.cuenca_id) : null,
+    };
+
+    console.log('Enviando datos:', data);
+
+    try {
+      const response = await fetch('http://localhost:8000/nodo', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify(data),
+      });
+
+      if (response.ok) {
+        const nuevoNodo = await response.json();
+        console.log('Nodo creado exitosamente:', nuevoNodo);
+        console.log('Cuenca asignada:', nuevoNodo.cuenca_id);
+
+        if (nuevoNodo.cuenca_id) {
+          mostrarToast('success', `Nodo creado y asignado a la cuenca correctamente`);
         } else {
-          const errorData = await response.json();
-          console.error('Error del servidor:', errorData);
-      
-          //showAlert('error', 'Error al guardar el nodo', 'Hubo un problema al guardar el nodo.');
+          mostrarToast('success', 'Nodo creado correctamente');
         }
-      } catch (error) {
-        console.error('Error:', error);
-        //showAlert('error', 'Error de conexión', 'No se pudo conectar con el servidor.');
-      } finally {
-        setIsEdit(false);
-        setPopUp(null);
-        navigate('/admin/nodos');
-      }      
+
+        // Esperar un momento para que el usuario vea la notificación
+        setTimeout(() => {
+          navigate('/admin/nodos');
+        }, 1500);
+      } else {
+        const errorData = await response.json();
+        console.error('Error del servidor:', errorData);
+        mostrarToast('error', `Error al crear el nodo: ${errorData.detail || 'Error desconocido'}`);
+      }
+    } catch (error) {
+      console.error('Error:', error);
+      mostrarToast('error', 'Error de conexión. No se pudo conectar con el servidor');
+    }
   };
   
   {/**
@@ -201,6 +353,7 @@ const CrearNodo = () => {
   return (
     <>
         <Breadcrumb pageName="Nodos" />
+        <ToastContainer toasts={toasts} onRemoveToast={removeToast} />
 
         {/* ALERTA
         <div className="Alerta mb-4">
@@ -329,10 +482,50 @@ const CrearNodo = () => {
                 </span>
                 </div>
             </div>
-             <AdminMaps onLocationChange={handleLocationChange} nodos={nodos} />
+             <AdminMaps
+                onLocationChange={handleLocationChange}
+                nodos={nodos}
+                externalPosition={lat !== null && lng !== null ? { lat, lng } : null}
+              />
+
             <div className="mb-4">
                 <label className="mb-2.5 block font-medium text-black dark:text-white">
-                Descripción(opcional)
+                Cuenca (opcional)
+                </label>
+                <div className="relative">
+                <select
+                    id="cuenca_id"
+                    name="cuenca_id"
+                    onChange={(e) => handleCuencaChange(e.target.value)}
+                    value={formData.cuenca_id}
+                    className="w-full rounded-lg border border-stroke bg-transparent py-4 pl-6 pr-10 text-black outline-none focus:border-primary focus-visible:shadow-none dark:border-form-strokedark dark:bg-form-input dark:text-white dark:focus:border-primary"
+                >
+                    <option value="">Sin cuenca asignada</option>
+                    {cuencas.map((cuenca) => (
+                      <option key={cuenca.value} value={cuenca.value}>
+                        {cuenca.label}
+                      </option>
+                    ))}
+                </select>
+
+                <span className="absolute right-4 top-4 pointer-events-none">
+                    <svg
+                    className="fill-current"
+                    width="22"
+                    height="22"
+                    viewBox="0 0 22 22"
+                    fill="none"
+                    xmlns="http://www.w3.org/2000/svg"
+                    >
+                      <path d="M11 14.5L6 9.5H16L11 14.5Z" />
+                    </svg>
+                </span>
+                </div>
+            </div>
+
+            <div className="mb-4">
+                <label className="mb-2.5 block font-medium text-black dark:text-white">
+                Descripción (opcional)
                 </label>
                 <div className="relative">
                 <input

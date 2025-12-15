@@ -1,9 +1,10 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { MapContainer, TileLayer, Marker, Popup, useMapEvents } from 'react-leaflet';
 import 'leaflet/dist/leaflet.css';
 import Modal from 'react-modal';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import { faEye, faTrash, faCog } from '@fortawesome/free-solid-svg-icons';
+import { nodoDefaultIcon } from '../../utils/nodoIcon';
 
 interface Nodo {
   id: number;
@@ -13,29 +14,57 @@ interface Nodo {
   descripcion: string;
 }
 
-const AdminMaps: React.FC<{ 
+const AdminMaps: React.FC<{
   onLocationChange: (lat: number, lng: number) => void,
   nodos: Nodo[],
-  onEdit: (nodo: Nodo) => void,
-  onDelete: (nodo: Nodo) => void,
-}> = ({ onLocationChange, nodos, onEdit, onDelete }) => {
+  onEdit?: (nodo: Nodo) => void,
+  onDelete?: (nodo: Nodo) => void,
+  readOnly?: boolean,
+  externalPosition?: { lat: number; lng: number } | null,
+}> = ({ onLocationChange, nodos, onEdit, onDelete, readOnly = false, externalPosition = null }) => {
   const initialPosition: [number, number] = [-43.306843, -65.395059];
   const [markerPosition, setMarkerPosition] = useState<[number, number]>(initialPosition);
   const [hasClicked, setHasClicked] = useState(false);
-  const [selectedNodo, setSelectedNodo] = useState<Nodo | null>(null); 
-  const [isModalOpen, setIsModalOpen] = useState(false); 
+  const [selectedNodo, setSelectedNodo] = useState<Nodo | null>(null);
+  const [isModalOpen, setIsModalOpen] = useState(false);
   const [isEditting, setIsEditting] = useState(false);
+
+  // Actualizar la posición del marcador cuando cambia la posición externa
+  useEffect(() => {
+    if (externalPosition) {
+      setMarkerPosition([externalPosition.lat, externalPosition.lng]);
+      setHasClicked(true);
+    }
+  }, [externalPosition]);
+
+  // Efecto para manejar ESC y cerrar el modal
+  useEffect(() => {
+    const handleEscapeKey = (e: KeyboardEvent) => {
+      if (e.key === 'Escape' && isModalOpen) {
+        e.preventDefault();
+        closeModal();
+      }
+    };
+
+    window.addEventListener('keydown', handleEscapeKey);
+    return () => window.removeEventListener('keydown', handleEscapeKey);
+  }, [isModalOpen]);
+
   const MapClickHandler = () => {
-    debugger;
     useMapEvents({
       click(e) {
+        // Si el mapa es de solo lectura, no permitir clicks
+        if (readOnly) {
+          return;
+        }
+
         const { lat, lng } = e.latlng;
         setMarkerPosition([lat, lng]);
         setHasClicked(true);
         if(isEditting )
           handleLocationUpdate(lat, lng);
         else
-          onLocationChange(lat, lng); 
+          onLocationChange(lat, lng);
       }
     });
     return null;
@@ -52,9 +81,9 @@ const AdminMaps: React.FC<{
     if (selectedNodo) {
       setIsEditting(true);
       const updatedNodo = { ...selectedNodo, posicionx: lat, posiciony: lng };
-      onEdit(updatedNodo);
+      onEdit?.(updatedNodo);
       setMarkerPosition([lat, lng]);
-      setSelectedNodo(updatedNodo); 
+      setSelectedNodo(updatedNodo);
     }
   };
 
@@ -78,7 +107,7 @@ const AdminMaps: React.FC<{
         />
         {/* Renderiza un marcador por cada nodo */}
         {nodos.map((nodo) => (
-          <Marker key={nodo.id} position={[nodo.posicionx, nodo.posiciony]}>
+          <Marker key={nodo.id} position={[nodo.posicionx, nodo.posiciony]} icon={nodoDefaultIcon}>
             <Popup>
               <strong>{nodo.nombre}</strong>
               <div style={{ display: "flex", justifyContent: "space-between", marginTop: "10px", gap: "10px" }}>
@@ -89,27 +118,31 @@ const AdminMaps: React.FC<{
                 >
                   <FontAwesomeIcon icon={faEye} />
                 </button>
-                <button
-                  onClick={() => onEdit(nodo)}
-                  title="Editar nodo"
-                  className="bg-yellow-500 text-white rounded p-2 hover:bg-yellow-600 focus:outline-none"
-                >
-                  <FontAwesomeIcon icon={faCog} />
-                </button>
-                <button
-                  onClick={() => onDelete(nodo)}
-                  title="Eliminar nodo"
-                  className="bg-red-500 text-white rounded p-2 hover:bg-red-600 focus:outline-none"
-                >
-                  <FontAwesomeIcon icon={faTrash} />
-                </button>
+                {onEdit && (
+                  <button
+                    onClick={() => onEdit(nodo)}
+                    title="Editar nodo"
+                    className="bg-yellow-500 text-white rounded p-2 hover:bg-yellow-600 focus:outline-none"
+                  >
+                    <FontAwesomeIcon icon={faCog} />
+                  </button>
+                )}
+                {onDelete && (
+                  <button
+                    onClick={() => onDelete(nodo)}
+                    title="Eliminar nodo"
+                    className="bg-red-500 text-white rounded p-2 hover:bg-red-600 focus:outline-none"
+                  >
+                    <FontAwesomeIcon icon={faTrash} />
+                  </button>
+                )}
               </div>
             </Popup>
           </Marker>
         ))}
         {/* Solo muestra el marcador de posición seleccionada después de un clic */}
         {hasClicked && (
-          <Marker position={markerPosition}>
+          <Marker position={markerPosition} icon={nodoDefaultIcon}>
             <Popup>Ubicación seleccionada.</Popup>
           </Marker>
         )}

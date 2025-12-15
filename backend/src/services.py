@@ -5,8 +5,9 @@ from sqlalchemy import Enum
 from sqlalchemy.future import select
 from sqlalchemy.exc import SQLAlchemyError
 from sqlalchemy import and_, desc, asc
+from sqlalchemy.orm import selectinload
 from backend.src import schemas, models
-from backend.src.models import Usuario, Nodo, Medicion, Alarma, DatosSensores, TokenAlarma
+from backend.src.models import Usuario, Nodo, Medicion, Alarma, DatosSensores, TokenAlarma, Cuenca
 from fastapi import File, HTTPException, UploadFile
 from backend.database import SessionLocal
 import datetime
@@ -241,7 +242,8 @@ async def crear_nodo(db: AsyncSession, nodo: schemas.NodoCreate) -> schemas.Nodo
         posicionx = nodo.posicionx,
         posiciony = nodo.posiciony,
         nombre = nodo.nombre,
-        descripcion = nodo.descripcion,    
+        descripcion = nodo.descripcion,
+        cuenca_id = nodo.cuenca_id,
     )
     try:
         db.add(new_nodo)
@@ -263,12 +265,13 @@ async def leer_nodo(db: AsyncSession, nodo_id: int) -> schemas.Nodo:
     
 async def modificar_nodo(db: AsyncSession, nodo_id: int, nodo: schemas.NodoUpdate) -> schemas.Nodo:
     db_nodo = await leer_nodo(db, nodo_id)
-    
+
     if db_nodo:
         db_nodo.posicionx = nodo.posicionx
         db_nodo.posiciony = nodo.posiciony
         db_nodo.nombre = nodo.nombre
         db_nodo.descripcion = nodo.descripcion
+        db_nodo.cuenca_id = nodo.cuenca_id
         await db.commit()
         await db.refresh(db_nodo)
         return db_nodo
@@ -473,3 +476,136 @@ async def leer_todos_los_sensores(db: AsyncSession) -> list[models.DatosSensores
 async def listar_sensores(db: AsyncSession) -> list[dict]:
     result = await db.execute(select(models.DatosSensores))
     return [{"value": sensor.tipo, "label": sensor.descripcion} for sensor in result.scalars().all()]
+
+## ----------------------- CUENCA
+
+# Crear una nueva cuenca
+async def crear_cuenca(db: AsyncSession, cuenca: schemas.CuencaCreate) -> models.Cuenca:
+    try:
+        # Verificar que el nombre no esté duplicado
+        result = await db.execute(select(models.Cuenca).filter(models.Cuenca.nombre == cuenca.nombre))
+        if result.scalars().first():
+            raise HTTPException(status_code=400, detail="Ya existe una cuenca con ese nombre")
+
+        # Crear la nueva cuenca
+        new_cuenca = models.Cuenca(
+            nombre=cuenca.nombre,
+            descripcion=cuenca.descripcion,
+            poligono=cuenca.poligono
+        )
+        db.add(new_cuenca)
+        await db.commit()
+        await db.refresh(new_cuenca)
+        return new_cuenca
+    except HTTPException:
+        raise
+    except Exception as e:
+        await db.rollback()
+        raise HTTPException(status_code=400, detail=f"Error al crear cuenca: {str(e)}") from e
+
+# Leer una cuenca por ID
+async def leer_cuenca(db: AsyncSession, cuenca_id: int) -> models.Cuenca:
+    result = await db.execute(select(models.Cuenca).filter(models.Cuenca.id == cuenca_id))
+    cuenca = result.scalars().first()
+    if not cuenca:
+        raise HTTPException(status_code=404, detail="Cuenca no encontrada")
+    return cuenca
+
+# Leer una cuenca con sus nodos asociados
+async def leer_cuenca_con_nodos(db: AsyncSession, cuenca_id: int) -> models.Cuenca:
+    result = await db.execute(
+        select(models.Cuenca)
+        .filter(models.Cuenca.id == cuenca_id)
+        .options(selectinload(models.Cuenca.nodos))
+    )
+    cuenca = result.scalars().first()
+    if not cuenca:
+        raise HTTPException(status_code=404, detail="Cuenca no encontrada")
+    return cuenca
+
+# Modificar una cuenca
+async def modificar_cuenca(db: AsyncSession, cuenca_id: int, cuenca_update: schemas.CuencaUpdate) -> models.Cuenca:
+    try:
+        result = await db.execute(select(models.Cuenca).filter(models.Cuenca.id == cuenca_id))
+        db_cuenca = result.scalars().first()
+
+        if not db_cuenca:
+            raise HTTPException(status_code=404, detail="Cuenca no encontrada")
+
+        # Verificar nombre duplicado si se está cambiando
+        if cuenca_update.nombre and cuenca_update.nombre != db_cuenca.nombre:
+            result_check = await db.execute(select(models.Cuenca).filter(models.Cuenca.nombre == cuenca_update.nombre))
+            if result_check.scalars().first():
+                raise HTTPException(status_code=400, detail="Ya existe una cuenca con ese nombre")
+
+        # Actualizar campos
+        if cuenca_update.nombre is not None:
+            db_cuenca.nombre = cuenca_update.nombre
+        if cuenca_update.descripcion is not None:
+            db_cuenca.descripcion = cuenca_update.descripcion
+        if cuenca_update.poligono is not None:
+            db_cuenca.poligono = cuenca_update.poligono
+
+        await db.commit()
+        await db.refresh(db_cuenca)
+        return db_cuenca
+    except HTTPException:
+        raise
+    except Exception as e:
+        await db.rollback()
+        raise HTTPException(status_code=400, detail=f"Error al modificar cuenca: {str(e)}") from e
+
+# Eliminar una cuenca
+async def eliminar_cuenca(db: AsyncSession, cuenca_id: int):
+    try:
+        result = await db.execute(select(models.Cuenca).filter(models.Cuenca.id == cuenca_id))
+        db_cuenca = result.scalars().first()
+
+        if not db_cuenca:
+            raise HTTPException(status_code=404, detail="Cuenca no encontrada")
+
+        await db.delete(db_cuenca)
+        await db.commit()
+        return {"detail": "Cuenca eliminada"}
+    except HTTPException:
+        raise
+    except Exception as e:
+        await db.rollback()
+        raise HTTPException(status_code=400, detail=f"Error al eliminar cuenca: {str(e)}") from e
+
+# Leer todas las cuencas
+async def leer_todas_las_cuencas(db: AsyncSession) -> list[models.Cuenca]:
+    result = await db.execute(
+        select(models.Cuenca).options(selectinload(models.Cuenca.nodos))
+    )
+    return result.scalars().all()
+
+# Listar cuencas con formato para select-options
+async def listar_cuencas(db: AsyncSession) -> list[dict]:
+    result = await db.execute(select(models.Cuenca))
+    return [{"value": cuenca.id, "label": cuenca.nombre} for cuenca in result.scalars().all()]
+
+# Asignar nodos a una cuenca
+async def asignar_nodos_a_cuenca(db: AsyncSession, cuenca_id: int, nodo_ids: list[int]) -> models.Cuenca:
+    try:
+        # Verificar que la cuenca existe
+        result = await db.execute(select(models.Cuenca).filter(models.Cuenca.id == cuenca_id))
+        cuenca = result.scalars().first()
+        if not cuenca:
+            raise HTTPException(status_code=404, detail="Cuenca no encontrada")
+
+        # Actualizar los nodos
+        for nodo_id in nodo_ids:
+            result_nodo = await db.execute(select(models.Nodo).filter(models.Nodo.id == nodo_id))
+            nodo = result_nodo.scalars().first()
+            if nodo:
+                nodo.cuenca_id = cuenca_id
+
+        await db.commit()
+        await db.refresh(cuenca)
+        return cuenca
+    except HTTPException:
+        raise
+    except Exception as e:
+        await db.rollback()
+        raise HTTPException(status_code=400, detail=f"Error al asignar nodos a cuenca: {str(e)}") from e

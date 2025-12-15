@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useEffect } from 'react';
 
 interface AlertPopupProps {
   message: string;
@@ -8,6 +8,19 @@ interface AlertPopupProps {
 }
 
 const AlertPopup: React.FC<AlertPopupProps> = ({ message, description, onClose, onConfirm }) => {
+  // Efecto para manejar ESC y cerrar el popup
+  useEffect(() => {
+    const handleEscapeKey = (e: KeyboardEvent) => {
+      if (e.key === 'Escape') {
+        e.preventDefault();
+        onClose();
+      }
+    };
+
+    window.addEventListener('keydown', handleEscapeKey);
+    return () => window.removeEventListener('keydown', handleEscapeKey);
+  }, [onClose]);
+
   return (
     <div className="alert-popup-overlay">
       <div className="alert-popup-box">
