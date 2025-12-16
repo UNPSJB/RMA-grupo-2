@@ -7,7 +7,7 @@ from sqlalchemy.exc import SQLAlchemyError
 from sqlalchemy import and_, desc, asc
 from sqlalchemy.orm import selectinload
 from backend.src import schemas, models
-from backend.src.models import Usuario, Nodo, Medicion, Alarma, DatosSensores, TokenAlarma, Cuenca
+from backend.src.models import Usuario, Nodo, Medicion, Alarma, DatosSensores, TokenAlarma, Cuenca, HistorialPosiciones
 from fastapi import File, HTTPException, UploadFile
 from backend.database import SessionLocal
 import datetime
@@ -244,6 +244,7 @@ async def crear_nodo(db: AsyncSession, nodo: schemas.NodoCreate) -> schemas.Nodo
         nombre = nodo.nombre,
         descripcion = nodo.descripcion,
         cuenca_id = nodo.cuenca_id,
+        es_movil = nodo.es_movil,
     )
     try:
         db.add(new_nodo)
@@ -267,13 +268,30 @@ async def modificar_nodo(db: AsyncSession, nodo_id: int, nodo: schemas.NodoUpdat
     db_nodo = await leer_nodo(db, nodo_id)
 
     if db_nodo:
+        # Guardar posición anterior para detectar cambios
+        posicion_cambio = (db_nodo.posicionx != nodo.posicionx or db_nodo.posiciony != nodo.posiciony)
+
         db_nodo.posicionx = nodo.posicionx
         db_nodo.posiciony = nodo.posiciony
         db_nodo.nombre = nodo.nombre
         db_nodo.descripcion = nodo.descripcion
         db_nodo.cuenca_id = nodo.cuenca_id
+        db_nodo.es_movil = nodo.es_movil
+
         await db.commit()
         await db.refresh(db_nodo)
+
+        # Si el nodo es móvil y cambió de posición, guardar en historial
+        if db_nodo.es_movil and posicion_cambio:
+            historial_entry = HistorialPosiciones(
+                nodo_id=nodo_id,
+                latitud=nodo.posicionx,
+                longitud=nodo.posiciony,
+                timestamp=datetime.datetime.now(datetime.timezone.utc)
+            )
+            db.add(historial_entry)
+            await db.commit()
+
         return db_nodo
     else:
         raise HTTPException(status_code=404, detail="Nodo no encontrado")
@@ -609,3 +627,93 @@ async def asignar_nodos_a_cuenca(db: AsyncSession, cuenca_id: int, nodo_ids: lis
     except Exception as e:
         await db.rollback()
         raise HTTPException(status_code=400, detail=f"Error al asignar nodos a cuenca: {str(e)}") from e
+
+## ----------------------- HISTORIAL POSICIONES
+
+# Crear una nueva entrada en el historial de posiciones
+async def crear_posicion_historial(db: AsyncSession, posicion: schemas.HistorialPosicionesCreate) -> models.HistorialPosiciones:
+    try:
+        # Verificar que el nodo existe
+        result = await db.execute(select(models.Nodo).filter(models.Nodo.id == posicion.nodo_id))
+        nodo = result.scalars().first()
+        if not nodo:
+            raise HTTPException(status_code=404, detail="Nodo no encontrado")
+
+        # Si no se proporciona timestamp, usar la fecha actual
+        timestamp = posicion.timestamp if posicion.timestamp else datetime.datetime.now(datetime.timezone.utc)
+
+        new_posicion = models.HistorialPosiciones(
+            nodo_id=posicion.nodo_id,
+            latitud=posicion.latitud,
+            longitud=posicion.longitud,
+            timestamp=timestamp
+        )
+        db.add(new_posicion)
+        await db.commit()
+        await db.refresh(new_posicion)
+        return new_posicion
+    except HTTPException:
+        raise
+    except Exception as e:
+        await db.rollback()
+        raise HTTPException(status_code=400, detail=f"Error al crear posición en historial: {str(e)}") from e
+
+# Leer el historial de posiciones de un nodo en un rango de fechas
+async def leer_historial_posiciones_por_nodo(
+    db: AsyncSession,
+    filtro: schemas.HistorialPosicionesFiltro
+) -> list[models.HistorialPosiciones]:
+    try:
+        result = await db.execute(
+            select(models.HistorialPosiciones)
+            .filter(
+                models.HistorialPosiciones.nodo_id == filtro.nodo_id,
+                models.HistorialPosiciones.timestamp >= filtro.fecha_desde,
+                models.HistorialPosiciones.timestamp <= filtro.fecha_hasta
+            )
+            .order_by(asc(models.HistorialPosiciones.timestamp))
+        )
+        return result.scalars().all()
+    except Exception as e:
+        raise HTTPException(status_code=400, detail=f"Error al leer historial de posiciones: {str(e)}") from e
+
+# Leer todo el historial de posiciones de un nodo (sin filtro de fecha)
+async def leer_todo_historial_nodo(db: AsyncSession, nodo_id: int) -> list[models.HistorialPosiciones]:
+    try:
+        result = await db.execute(
+            select(models.HistorialPosiciones)
+            .filter(models.HistorialPosiciones.nodo_id == nodo_id)
+            .order_by(asc(models.HistorialPosiciones.timestamp))
+        )
+        return result.scalars().all()
+    except Exception as e:
+        raise HTTPException(status_code=400, detail=f"Error al leer historial de posiciones: {str(e)}") from e
+
+# Eliminar historial de posiciones de un nodo (útil para limpiar datos antiguos)
+async def eliminar_historial_nodo(db: AsyncSession, nodo_id: int, fecha_hasta: datetime.datetime = None) -> dict:
+    try:
+        if fecha_hasta:
+            # Eliminar solo registros hasta una fecha específica
+            result = await db.execute(
+                select(models.HistorialPosiciones)
+                .filter(
+                    models.HistorialPosiciones.nodo_id == nodo_id,
+                    models.HistorialPosiciones.timestamp <= fecha_hasta
+                )
+            )
+        else:
+            # Eliminar todo el historial del nodo
+            result = await db.execute(
+                select(models.HistorialPosiciones)
+                .filter(models.HistorialPosiciones.nodo_id == nodo_id)
+            )
+
+        posiciones = result.scalars().all()
+        for posicion in posiciones:
+            await db.delete(posicion)
+
+        await db.commit()
+        return {"detail": f"Se eliminaron {len(posiciones)} registros del historial"}
+    except Exception as e:
+        await db.rollback()
+        raise HTTPException(status_code=400, detail=f"Error al eliminar historial: {str(e)}") from e

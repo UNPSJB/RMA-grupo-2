@@ -256,3 +256,62 @@ async def listar_cuencas_endpoint(db: AsyncSession = Depends(get_db)):
 @router.post("/cuenca/{cuenca_id}/nodos")
 async def asignar_nodos_endpoint(cuenca_id: int, nodo_ids: List[int], db: AsyncSession = Depends(get_db)):
     return await services.asignar_nodos_a_cuenca(db, cuenca_id, nodo_ids)
+
+## ---------------------- HISTORIAL POSICIONES
+
+@router.post("/historial-posiciones", response_model=schemas.HistorialPosiciones)
+async def crear_posicion_historial_endpoint(
+    posicion: schemas.HistorialPosicionesCreate,
+    db: AsyncSession = Depends(get_db)
+):
+    """
+    Crea una nueva entrada en el historial de posiciones para un nodo móvil.
+    Si no se proporciona timestamp, se usa la fecha y hora actual.
+    """
+    try:
+        return await services.crear_posicion_historial(db, posicion)
+    except HTTPException as e:
+        raise HTTPException(status_code=e.status_code, detail=str(e.detail))
+
+@router.post("/historial-posiciones/filtrar", response_model=List[schemas.HistorialPosiciones])
+async def leer_historial_filtrado_endpoint(
+    filtro: schemas.HistorialPosicionesFiltro,
+    db: AsyncSession = Depends(get_db)
+):
+    """
+    Obtiene el historial de posiciones de un nodo en un rango de fechas específico.
+    Útil para visualizar la trayectoria del nodo en un período determinado.
+    """
+    try:
+        return await services.leer_historial_posiciones_por_nodo(db, filtro)
+    except HTTPException as e:
+        raise HTTPException(status_code=e.status_code, detail=str(e.detail))
+
+@router.get("/historial-posiciones/nodo/{nodo_id}", response_model=List[schemas.HistorialPosiciones])
+async def leer_todo_historial_endpoint(
+    nodo_id: int,
+    db: AsyncSession = Depends(get_db)
+):
+    """
+    Obtiene todo el historial de posiciones de un nodo (sin filtro de fecha).
+    """
+    try:
+        return await services.leer_todo_historial_nodo(db, nodo_id)
+    except HTTPException as e:
+        raise HTTPException(status_code=e.status_code, detail=str(e.detail))
+
+@router.delete("/historial-posiciones/nodo/{nodo_id}")
+async def eliminar_historial_endpoint(
+    nodo_id: int,
+    fecha_hasta: datetime.datetime = None,
+    db: AsyncSession = Depends(get_db)
+):
+    """
+    Elimina el historial de posiciones de un nodo.
+    Si se proporciona fecha_hasta, solo elimina registros hasta esa fecha.
+    Si no se proporciona, elimina todo el historial del nodo.
+    """
+    try:
+        return await services.eliminar_historial_nodo(db, nodo_id, fecha_hasta)
+    except HTTPException as e:
+        raise HTTPException(status_code=e.status_code, detail=str(e.detail))

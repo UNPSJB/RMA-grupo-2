@@ -98,8 +98,26 @@ class Nodo(Base):
     posicionx : Mapped[float] = mapped_column(Float, index=True, nullable=False)
     posiciony : Mapped[float] = mapped_column(Float, index=True, nullable=False)
     cuenca_id: Mapped[int] = mapped_column(Integer, ForeignKey('cuenca.id'), nullable=True)
+    es_movil: Mapped[bool] = mapped_column(Boolean, default=False, nullable=False)
 
     alarma: Mapped[list["Alarma"]] = relationship("Alarma", back_populates="nodo_info", cascade="all, delete-orphan")
     cuenca_info: Mapped["Cuenca"] = relationship("Cuenca", back_populates="nodos")
+    historial_posiciones: Mapped[list["HistorialPosiciones"]] = relationship("HistorialPosiciones", back_populates="nodo", cascade="all, delete-orphan")
+
+## ------------------- HISTORIAL POSICIONES
+class HistorialPosiciones(Base):
+    __tablename__ = "historial_posiciones"
+
+    id: Mapped[int] = mapped_column(Integer, primary_key=True, index=True, autoincrement=True)
+    nodo_id: Mapped[int] = mapped_column(Integer, ForeignKey('nodo.id'), nullable=False, index=True)
+    latitud: Mapped[float] = mapped_column(Float, nullable=False)
+    longitud: Mapped[float] = mapped_column(Float, nullable=False)
+    timestamp: Mapped[datetime.datetime] = mapped_column(
+        DateTime(timezone=True),
+        default=func.now(),
+        index=True
+    )
+
+    nodo: Mapped["Nodo"] = relationship("Nodo", back_populates="historial_posiciones")
 
     ##----------------DATOS SENSORES-------------##

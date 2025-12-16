@@ -16,6 +16,7 @@ interface Nodo {
   posiciony: number;
   descripcion: string;
   cuenca_id?: number;
+  es_movil?: boolean;
 }
 
 interface Cuenca {
@@ -53,6 +54,7 @@ const CrearNodo = () => {
     posiciony: '',
     descripcion: '',
     cuenca_id: '',
+    es_movil: false,
   });
 
   const mostrarToast = (type: 'success' | 'error' | 'info' | 'warning', message: string) => {
@@ -279,6 +281,7 @@ const CrearNodo = () => {
       posiciony: parseFloat(formData.posiciony),
       descripcion: formData.descripcion || '',
       cuenca_id: formData.cuenca_id ? parseInt(formData.cuenca_id) : null,
+      es_movil: formData.es_movil,
     };
 
     console.log('Enviando datos:', data);
@@ -553,7 +556,34 @@ const CrearNodo = () => {
                 </span>
                 </div>
             </div>
-             
+
+            <div className="mb-6">
+                <label className="flex items-center cursor-pointer">
+                  <input
+                    type="checkbox"
+                    id="es_movil"
+                    name="es_movil"
+                    checked={formData.es_movil}
+                    onChange={(e) =>
+                      setFormData({ ...formData, es_movil: e.target.checked })
+                    }
+                    className="sr-only"
+                  />
+                  <div className="relative">
+                    <div className={`block w-14 h-8 rounded-full transition ${formData.es_movil ? 'bg-primary' : 'bg-gray-300 dark:bg-gray-600'}`}></div>
+                    <div className={`dot absolute left-1 top-1 bg-white w-6 h-6 rounded-full transition transform ${formData.es_movil ? 'translate-x-6' : ''}`}></div>
+                  </div>
+                  <div className="ml-3">
+                    <span className="text-base font-medium text-black dark:text-white">
+                      Nodo móvil
+                    </span>
+                    <p className="text-sm text-gray-500 dark:text-gray-400">
+                      Activa esta opción si el nodo puede cambiar de posición
+                    </p>
+                  </div>
+                </label>
+            </div>
+
 
              <div className="md:w-1/2">
             <button

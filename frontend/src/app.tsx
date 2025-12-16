@@ -23,6 +23,8 @@ import AdminParametro from './pages/Admin/AdminParametro';
 import MedicionesCSV from './pages/Admin/MedicionesCSV';
 import Vinculacion from './pages/Admin/Vinculacion';
 import PanelCuencas from './pages/Admin/PanelCuencas';
+import VisualizadorTrayectorias from './pages/Admin/VisualizadorTrayectorias';
+import EditarNodo from './pages/Admin/EditarNodo';
 
 function App() {
   const [loading, setLoading] = useState<boolean>(true);
@@ -86,6 +88,11 @@ function App() {
             <CrearNodo />
           </ProtectedRoute>
          }/>
+         <Route path="/admin/editar-nodo/:id" element={
+          <ProtectedRoute requiredRole="admin">
+            <EditarNodo />
+          </ProtectedRoute>
+         }/>
         <Route path="/admin/cuencas" element={
           <ProtectedRoute requiredRole="admin">
             <PanelCuencas />
@@ -123,6 +130,11 @@ function App() {
         <Route path="/admin/vinculacion" element={
           <ProtectedRoute requiredRole="admin">
             <Vinculacion />
+          </ProtectedRoute>
+        }/>
+        <Route path="/admin/trayectorias" element={
+          <ProtectedRoute requiredRole="admin">
+            <VisualizadorTrayectorias />
           </ProtectedRoute>
         }/>
 

@@ -28,7 +28,7 @@ if __name__ == "__main__":
         "-n",
         "--nodos",
         type=int,
-        default=5,
+        default=10,
         help="Cantidad de nodos para la cual generar datos. (default=5)",
     )
     parser.add_argument(

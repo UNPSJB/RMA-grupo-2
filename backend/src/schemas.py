@@ -136,6 +136,7 @@ class NodoBase(BaseModel):
     nombre: str
     descripcion: Optional[str]
     cuenca_id: Optional[int] = None
+    es_movil: bool = False
 
 
 class Nodo(NodoBase):
@@ -146,6 +147,7 @@ class Nodo(NodoBase):
     posicionx: float
     posiciony: float
     cuenca_id: Optional[int] = None
+    es_movil: bool = False
 
     class Config:
         orm_mode = True
@@ -158,8 +160,33 @@ class NodoUpdate(NodoBase):
     posiciony: float
     nombre: str
     descripcion: Optional[str]
-    cuenca_id: Optional[int] = None    
+    cuenca_id: Optional[int] = None
+    es_movil: bool = False
 
+## ----------------------- HISTORIAL POSICIONES
+
+class HistorialPosicionesBase(BaseModel):
+    nodo_id: int
+    latitud: float
+    longitud: float
+    timestamp: datetime.datetime
+
+class HistorialPosiciones(HistorialPosicionesBase):
+    id: int
+
+    class Config:
+        from_attributes = True
+
+class HistorialPosicionesCreate(BaseModel):
+    nodo_id: int
+    latitud: float
+    longitud: float
+    timestamp: Optional[datetime.datetime] = None  # Si no se proporciona, se usa la fecha actual
+
+class HistorialPosicionesFiltro(BaseModel):
+    nodo_id: int
+    fecha_desde: datetime.datetime
+    fecha_hasta: datetime.datetime
 
 class Token(BaseModel):
     access_token: str
