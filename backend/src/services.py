@@ -7,7 +7,7 @@ from sqlalchemy.exc import SQLAlchemyError
 from sqlalchemy import and_, desc, asc
 from sqlalchemy.orm import selectinload
 from backend.src import schemas, models
-from backend.src.models import Usuario, Nodo, Medicion, Alarma, DatosSensores, TokenAlarma, Cuenca, HistorialPosiciones
+from backend.src.models import Usuario, Nodo, Medicion, Alarma, DatosSensores, TokenAlarma, Cuenca, HistorialPosiciones, VariableNodo
 from fastapi import File, HTTPException, UploadFile
 from backend.database import SessionLocal
 import datetime
@@ -65,16 +65,13 @@ async def crear_medicion(db: AsyncSession, medicion: schemas.MedicionCreate) -> 
 
                 if mError is False:
                     for alarma in alarmas:
-                        if alarma.chat_id is None:
-                            if medicion.dato < alarma.valor_min or medicion.dato > alarma.valor_max:
-                                alarma_message = f"🚨¡ALERTA! Se ha disparado una alarma para el nodo {medicion.nodo} " \
-                                                f"con el valor {medicion.dato} para el tipo de dato {sensor_data.descripcion}. "
-                                await send_alarm_to_channel(alarma_message, CHANNEL_ID)
-                        else:
-                            if medicion.dato < alarma.valor_min or medicion.dato > alarma.valor_max:
-                                alarma_message = f"🚨¡ALERTA! Se ha disparado una alarma para el nodo {medicion.nodo} " \
-                                                f"con el valor {medicion.dato} para el tipo de dato {sensor_data.descripcion}. "
-                                await send_alarm_to_channel(alarma_message, alarma.chat_id)
+                        # Verificar si el valor está fuera del rango permitido
+                        if medicion.dato < alarma.valor_min or medicion.dato > alarma.valor_max:
+                            alarma_message = f"🚨¡ALERTA! Se ha disparado una alarma para el nodo {medicion.nodo} " \
+                                            f"con el valor {medicion.dato} para el tipo de dato {sensor_data.descripcion}. "
+                            # Enviar al canal grupal o chat personal según configuración
+                            destino = alarma.chat_id if alarma.chat_id else CHANNEL_ID
+                            await send_alarm_to_channel(alarma_message, destino)
     except Exception as e:
         print(f"Error al enviar alarmas: {e}")
 
@@ -498,12 +495,109 @@ async def listar_sensores(db: AsyncSession) -> list[dict]:
 ## ----------------------- CUENCA
 
 # Crear una nueva cuenca
+def poligonos_se_superponen(poligono1: dict, poligono2: dict) -> bool:
+    """
+    Verifica si dos polígonos GeoJSON se superponen.
+
+    Utiliza el algoritmo de separación de ejes (SAT - Separating Axis Theorem)
+    simplificado para verificar si hay intersección entre los polígonos.
+
+    Args:
+        poligono1: Polígono en formato GeoJSON {"type": "Polygon", "coordinates": [[[lon, lat], ...]]}
+        poligono2: Polígono en formato GeoJSON
+
+    Returns:
+        True si los polígonos se superponen, False en caso contrario
+    """
+    try:
+        # Extraer coordenadas (primer anillo de cada polígono)
+        coords1 = poligono1.get('coordinates', [[]])[0]
+        coords2 = poligono2.get('coordinates', [[]])[0]
+
+        if not coords1 or not coords2:
+            return False
+
+        # Función auxiliar para verificar si un punto está dentro de un polígono (Ray casting algorithm)
+        def punto_en_poligono(punto, poligono_coords):
+            x, y = punto[0], punto[1]
+            n = len(poligono_coords)
+            dentro = False
+
+            j = n - 1
+            for i in range(n):
+                xi, yi = poligono_coords[i][0], poligono_coords[i][1]
+                xj, yj = poligono_coords[j][0], poligono_coords[j][1]
+
+                if ((yi > y) != (yj > y)) and (x < (xj - xi) * (y - yi) / (yj - yi) + xi):
+                    dentro = not dentro
+
+                j = i
+
+            return dentro
+
+        # Verificar si algún vértice de poligono1 está dentro de poligono2
+        for punto in coords1:
+            if punto_en_poligono(punto, coords2):
+                return True
+
+        # Verificar si algún vértice de poligono2 está dentro de poligono1
+        for punto in coords2:
+            if punto_en_poligono(punto, coords1):
+                return True
+
+        # Verificar intersección de bordes (simplificado)
+        # Si los polígonos se cruzan pero ningún vértice está dentro del otro
+        def segmentos_se_cruzan(p1, p2, p3, p4):
+            def ccw(A, B, C):
+                return (C[1]-A[1]) * (B[0]-A[0]) > (B[1]-A[1]) * (C[0]-A[0])
+
+            return ccw(p1,p3,p4) != ccw(p2,p3,p4) and ccw(p1,p2,p3) != ccw(p1,p2,p4)
+
+        for i in range(len(coords1) - 1):
+            for j in range(len(coords2) - 1):
+                if segmentos_se_cruzan(coords1[i], coords1[i+1], coords2[j], coords2[j+1]):
+                    return True
+
+        return False
+
+    except Exception as e:
+        print(f"Error al verificar superposición de polígonos: {e}")
+        return False
+
 async def crear_cuenca(db: AsyncSession, cuenca: schemas.CuencaCreate) -> models.Cuenca:
+    """
+    Crea una nueva cuenca validando que no se superponga con cuencas existentes.
+
+    Validaciones:
+    - El nombre no debe estar duplicado
+    - El polígono no debe superponerse con ninguna cuenca existente
+
+    Args:
+        db: Sesión de base de datos asíncrona
+        cuenca: Datos de la cuenca a crear
+
+    Returns:
+        La cuenca creada
+
+    Raises:
+        HTTPException 400: Si el nombre está duplicado o hay superposición de polígonos
+    """
     try:
         # Verificar que el nombre no esté duplicado
         result = await db.execute(select(models.Cuenca).filter(models.Cuenca.nombre == cuenca.nombre))
         if result.scalars().first():
             raise HTTPException(status_code=400, detail="Ya existe una cuenca con ese nombre")
+
+        # Verificar que el polígono no se superponga con cuencas existentes
+        result_cuencas = await db.execute(select(models.Cuenca))
+        cuencas_existentes = result_cuencas.scalars().all()
+
+        for cuenca_existente in cuencas_existentes:
+            if poligonos_se_superponen(cuenca.poligono, cuenca_existente.poligono):
+                raise HTTPException(
+                    status_code=400,
+                    detail=f"El polígono de la cuenca se superpone con la cuenca '{cuenca_existente.nombre}'"
+                )
 
         # Crear la nueva cuenca
         new_cuenca = models.Cuenca(
@@ -543,6 +637,23 @@ async def leer_cuenca_con_nodos(db: AsyncSession, cuenca_id: int) -> models.Cuen
 
 # Modificar una cuenca
 async def modificar_cuenca(db: AsyncSession, cuenca_id: int, cuenca_update: schemas.CuencaUpdate) -> models.Cuenca:
+    """
+    Modifica una cuenca existente validando superposición de polígonos.
+
+    Si se actualiza el polígono, verifica que no se superponga con otras cuencas.
+
+    Args:
+        db: Sesión de base de datos asíncrona
+        cuenca_id: ID de la cuenca a modificar
+        cuenca_update: Datos a actualizar
+
+    Returns:
+        La cuenca actualizada
+
+    Raises:
+        HTTPException 404: Si la cuenca no existe
+        HTTPException 400: Si el nombre está duplicado o hay superposición de polígonos
+    """
     try:
         result = await db.execute(select(models.Cuenca).filter(models.Cuenca.id == cuenca_id))
         db_cuenca = result.scalars().first()
@@ -555,6 +666,20 @@ async def modificar_cuenca(db: AsyncSession, cuenca_id: int, cuenca_update: sche
             result_check = await db.execute(select(models.Cuenca).filter(models.Cuenca.nombre == cuenca_update.nombre))
             if result_check.scalars().first():
                 raise HTTPException(status_code=400, detail="Ya existe una cuenca con ese nombre")
+
+        # Verificar superposición de polígonos si se está actualizando el polígono
+        if cuenca_update.poligono is not None:
+            result_cuencas = await db.execute(
+                select(models.Cuenca).filter(models.Cuenca.id != cuenca_id)
+            )
+            otras_cuencas = result_cuencas.scalars().all()
+
+            for otra_cuenca in otras_cuencas:
+                if poligonos_se_superponen(cuenca_update.poligono, otra_cuenca.poligono):
+                    raise HTTPException(
+                        status_code=400,
+                        detail=f"El polígono actualizado se superpone con la cuenca '{otra_cuenca.nombre}'"
+                    )
 
         # Actualizar campos
         if cuenca_update.nombre is not None:
@@ -717,3 +842,239 @@ async def eliminar_historial_nodo(db: AsyncSession, nodo_id: int, fecha_hasta: d
     except Exception as e:
         await db.rollback()
         raise HTTPException(status_code=400, detail=f"Error al eliminar historial: {str(e)}") from e
+
+## ----------------------- VARIABLES NODO
+
+async def crear_variable_nodo(db: AsyncSession, nodo_id: int, variable: schemas.VariableNodoCreate) -> models.VariableNodo:
+    """
+    Crea una nueva variable configurable para un nodo específico.
+
+    Esta función vincula un nodo con un tipo de sensor del catálogo global (datos_sensores),
+    permitiendo configurar rangos y unidades de medida específicos para ese nodo.
+
+    Args:
+        db: Sesión de base de datos asíncrona
+        nodo_id: ID del nodo al que se asignará la variable
+        variable: Datos de la variable (tipo_sensor_id, unidad_medida, rangos, etc.)
+
+    Returns:
+        La variable creada con todos sus campos
+
+    Raises:
+        HTTPException 404: Si el nodo no existe
+        HTTPException 404: Si el tipo de sensor no existe en el catálogo
+        HTTPException 400: Si el nodo ya tiene una variable de ese tipo de sensor
+        HTTPException 400: Si rango_min > rango_max
+    """
+    try:
+        # 1. Verificar que el nodo existe
+        result = await db.execute(select(models.Nodo).filter(models.Nodo.id == nodo_id))
+        nodo = result.scalars().first()
+        if not nodo:
+            raise HTTPException(status_code=404, detail="Nodo no encontrado")
+
+        # 2. Verificar que el tipo de sensor existe en el catálogo
+        result_sensor = await db.execute(
+            select(models.DatosSensores).filter(models.DatosSensores.tipo == variable.tipo_sensor_id)
+        )
+        tipo_sensor = result_sensor.scalars().first()
+        if not tipo_sensor:
+            raise HTTPException(
+                status_code=404,
+                detail=f"Tipo de sensor con ID {variable.tipo_sensor_id} no encontrado en el catálogo"
+            )
+
+        # 3. Verificar que el nodo no tenga ya una variable de este tipo de sensor
+        # (Un nodo no puede medir el mismo tipo de sensor dos veces)
+        result_check = await db.execute(
+            select(models.VariableNodo).filter(
+                models.VariableNodo.nodo_id == nodo_id,
+                models.VariableNodo.tipo_sensor_id == variable.tipo_sensor_id
+            )
+        )
+        if result_check.scalars().first():
+            raise HTTPException(
+                status_code=400,
+                detail=f"El nodo ya tiene una variable del tipo '{tipo_sensor.descripcion}'"
+            )
+
+        # 4. Validar que rango_min <= rango_max si ambos están definidos
+        if variable.rango_min is not None and variable.rango_max is not None:
+            if variable.rango_min > variable.rango_max:
+                raise HTTPException(status_code=400, detail="El rango mínimo no puede ser mayor que el rango máximo")
+
+        # 5. Crear la nueva variable
+        new_variable = models.VariableNodo(
+            nodo_id=nodo_id,
+            tipo_sensor_id=variable.tipo_sensor_id,
+            unidad_medida=variable.unidad_medida,
+            rango_min=variable.rango_min,
+            rango_max=variable.rango_max,
+            activo=variable.activo
+        )
+        db.add(new_variable)
+        await db.commit()
+        await db.refresh(new_variable)
+        return new_variable
+    except HTTPException:
+        raise
+    except Exception as e:
+        await db.rollback()
+        raise HTTPException(status_code=400, detail=f"Error al crear variable: {str(e)}") from e
+
+# Leer una variable específica por ID
+async def leer_variable_nodo(db: AsyncSession, variable_id: int) -> models.VariableNodo:
+    result = await db.execute(select(models.VariableNodo).filter(models.VariableNodo.id == variable_id))
+    variable = result.scalars().first()
+    if not variable:
+        raise HTTPException(status_code=404, detail="Variable no encontrada")
+    return variable
+
+async def leer_variables_por_nodo(db: AsyncSession, nodo_id: int) -> list[models.VariableNodo]:
+    """
+    Obtiene todas las variables configuradas para un nodo específico.
+
+    La consulta incluye un JOIN con datos_sensores para tener acceso
+    a la información del tipo de sensor (nombre, rangos globales).
+
+    Args:
+        db: Sesión de base de datos asíncrona
+        nodo_id: ID del nodo
+
+    Returns:
+        Lista de variables del nodo ordenadas por el nombre del tipo de sensor
+
+    Raises:
+        HTTPException 404: Si el nodo no existe
+    """
+    try:
+        # 1. Verificar que el nodo existe
+        result_nodo = await db.execute(select(models.Nodo).filter(models.Nodo.id == nodo_id))
+        nodo = result_nodo.scalars().first()
+        if not nodo:
+            raise HTTPException(status_code=404, detail="Nodo no encontrado")
+
+        # 2. Obtener todas las variables del nodo con la relación tipo_sensor cargada
+        # Esto permite acceder a tipo_sensor.descripcion en la respuesta
+        result = await db.execute(
+            select(models.VariableNodo)
+            .options(selectinload(models.VariableNodo.tipo_sensor))  # Carga la relación
+            .filter(models.VariableNodo.nodo_id == nodo_id)
+            .order_by(asc(models.VariableNodo.tipo_sensor_id))
+        )
+        return result.scalars().all()
+    except HTTPException:
+        raise
+    except Exception as e:
+        raise HTTPException(status_code=400, detail=f"Error al leer variables del nodo: {str(e)}") from e
+
+async def leer_variables_activas_por_nodo(db: AsyncSession, nodo_id: int) -> list[models.VariableNodo]:
+    """
+    Obtiene solo las variables activas de un nodo.
+
+    Útil para mostrar únicamente las variables que están actualmente en uso.
+
+    Args:
+        db: Sesión de base de datos asíncrona
+        nodo_id: ID del nodo
+
+    Returns:
+        Lista de variables activas ordenadas por tipo de sensor
+    """
+    try:
+        result = await db.execute(
+            select(models.VariableNodo)
+            .options(selectinload(models.VariableNodo.tipo_sensor))
+            .filter(
+                models.VariableNodo.nodo_id == nodo_id,
+                models.VariableNodo.activo == True
+            )
+            .order_by(asc(models.VariableNodo.tipo_sensor_id))
+        )
+        return result.scalars().all()
+    except Exception as e:
+        raise HTTPException(status_code=400, detail=f"Error al leer variables activas: {str(e)}") from e
+
+async def modificar_variable_nodo(
+    db: AsyncSession,
+    variable_id: int,
+    variable_update: schemas.VariableNodoUpdate
+) -> models.VariableNodo:
+    """
+    Modifica una variable existente de un nodo.
+
+    Permite actualizar: unidad_medida, rangos (min/max), y estado activo.
+    NO permite cambiar el tipo_sensor_id (para eso se debe eliminar y crear una nueva).
+
+    Args:
+        db: Sesión de base de datos asíncrona
+        variable_id: ID de la variable a modificar
+        variable_update: Campos a actualizar
+
+    Returns:
+        La variable actualizada
+
+    Raises:
+        HTTPException 404: Si la variable no existe
+        HTTPException 400: Si rango_min > rango_max
+    """
+    try:
+        result = await db.execute(select(models.VariableNodo).filter(models.VariableNodo.id == variable_id))
+        db_variable = result.scalars().first()
+
+        if not db_variable:
+            raise HTTPException(status_code=404, detail="Variable no encontrada")
+
+        # Actualizar campos permitidos
+        if variable_update.unidad_medida is not None:
+            db_variable.unidad_medida = variable_update.unidad_medida
+        if variable_update.rango_min is not None:
+            db_variable.rango_min = variable_update.rango_min
+        if variable_update.rango_max is not None:
+            db_variable.rango_max = variable_update.rango_max
+        if variable_update.activo is not None:
+            db_variable.activo = variable_update.activo
+
+        # Validar rangos después de la actualización
+        if db_variable.rango_min is not None and db_variable.rango_max is not None:
+            if db_variable.rango_min > db_variable.rango_max:
+                raise HTTPException(status_code=400, detail="El rango mínimo no puede ser mayor que el rango máximo")
+
+        await db.commit()
+        await db.refresh(db_variable)
+        return db_variable
+    except HTTPException:
+        raise
+    except Exception as e:
+        await db.rollback()
+        raise HTTPException(status_code=400, detail=f"Error al modificar variable: {str(e)}") from e
+
+async def eliminar_variable_nodo(db: AsyncSession, variable_id: int) -> dict:
+    """
+    Elimina una variable de un nodo.
+
+    Args:
+        db: Sesión de base de datos asíncrona
+        variable_id: ID de la variable a eliminar
+
+    Returns:
+        Mensaje de confirmación
+
+    Raises:
+        HTTPException 404: Si la variable no existe
+    """
+    try:
+        result = await db.execute(select(models.VariableNodo).filter(models.VariableNodo.id == variable_id))
+        db_variable = result.scalars().first()
+
+        if not db_variable:
+            raise HTTPException(status_code=404, detail="Variable no encontrada")
+
+        await db.delete(db_variable)
+        await db.commit()
+        return {"detail": "Variable eliminada exitosamente"}
+    except HTTPException:
+        raise
+    except Exception as e:
+        await db.rollback()
+        raise HTTPException(status_code=400, detail=f"Error al eliminar variable: {str(e)}") from e

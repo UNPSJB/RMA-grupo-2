@@ -103,6 +103,7 @@ class Nodo(Base):
     alarma: Mapped[list["Alarma"]] = relationship("Alarma", back_populates="nodo_info", cascade="all, delete-orphan")
     cuenca_info: Mapped["Cuenca"] = relationship("Cuenca", back_populates="nodos")
     historial_posiciones: Mapped[list["HistorialPosiciones"]] = relationship("HistorialPosiciones", back_populates="nodo", cascade="all, delete-orphan")
+    variables: Mapped[list["VariableNodo"]] = relationship("VariableNodo", back_populates="nodo", cascade="all, delete-orphan")
 
 ## ------------------- HISTORIAL POSICIONES
 class HistorialPosiciones(Base):
@@ -119,5 +120,59 @@ class HistorialPosiciones(Base):
     )
 
     nodo: Mapped["Nodo"] = relationship("Nodo", back_populates="historial_posiciones")
+
+## ------------------- VARIABLES NODO
+class VariableNodo(Base):
+    """
+    Modelo que representa las variables configurables que mide cada nodo.
+
+    Este modelo vincula cada nodo con los tipos de sensores del catálogo global (datos_sensores),
+    permitiendo que cada nodo tenga rangos de medición personalizados para cada tipo de sensor.
+
+    Cumple con el requisito del profesor:
+    - nombre: Se obtiene de la relación con DatosSensores (tipo_sensor.descripcion)
+    - unidad_medida: Personalizable por nodo (ej: °C vs °F)
+    - rango_min/rango_max: Rango aceptable específico del nodo
+
+    Ejemplo:
+    - Catálogo global: "Temperatura" existe con rangos generales 0-100°C
+    - Nodo 1: Mide "Temperatura" con rango específico 10-40°C, unidad °C
+    - Nodo 2: Mide "Temperatura" con rango específico 50-104°F, unidad °F
+    """
+    __tablename__ = "variables_nodo"
+
+    id: Mapped[int] = mapped_column(Integer, primary_key=True, index=True, autoincrement=True)
+    nodo_id: Mapped[int] = mapped_column(Integer, ForeignKey('nodo.id'), nullable=False, index=True)
+
+    # Foreign key al catálogo de tipos de sensores
+    # Esto vincula la variable del nodo con un tipo de sensor del sistema
+    tipo_sensor_id: Mapped[int] = mapped_column(Integer, ForeignKey('datos_sensores.tipo'), nullable=False, index=True)
+
+    # Unidad de medida personalizada por nodo (puede diferir del sensor global)
+    # Ejemplo: Un nodo puede usar °C y otro °F para el mismo tipo de sensor "Temperatura"
+    unidad_medida: Mapped[str] = mapped_column(String(20), nullable=True)
+
+    # Rango aceptable de medición específico para este nodo
+    # Pueden ser más restrictivos que los rangos globales del tipo de sensor
+    rango_min: Mapped[float] = mapped_column(Float, nullable=True)
+    rango_max: Mapped[float] = mapped_column(Float, nullable=True)
+
+    # Permite activar/desactivar variables sin eliminarlas
+    activo: Mapped[bool] = mapped_column(Boolean, default=True, nullable=False)
+
+    # Timestamps para auditoría
+    created_at: Mapped[datetime.datetime] = mapped_column(
+        DateTime(timezone=True),
+        default=func.now()
+    )
+    updated_at: Mapped[datetime.datetime] = mapped_column(
+        DateTime(timezone=True),
+        default=func.now(),
+        onupdate=func.now()
+    )
+
+    # Relaciones
+    nodo: Mapped["Nodo"] = relationship("Nodo", back_populates="variables")
+    tipo_sensor: Mapped["DatosSensores"] = relationship("DatosSensores")
 
     ##----------------DATOS SENSORES-------------##

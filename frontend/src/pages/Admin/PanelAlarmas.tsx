@@ -69,9 +69,9 @@ const PanelAlarmas = () => {
 
   const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
-  
+
     const { id, nombre, descripcion, tipo, nodo, valor_min, valor_max } = formData;
-  
+
     const data = {
       id: id ? parseInt(id, 10) : null,
       nombre,
@@ -88,6 +88,16 @@ const PanelAlarmas = () => {
         type: 'warning',
         message: 'Atencion!',
         description: 'Debe rellenar todos los campos.',
+      });
+      return;
+    }
+
+    // Validación de rango: valor_min debe ser menor que valor_max
+    if (data.valor_min >= data.valor_max) {
+      setAlert({
+        type: 'error',
+        message: 'Error en rango de valores',
+        description: 'El valor mínimo debe ser menor que el valor máximo.',
       });
       return;
     }

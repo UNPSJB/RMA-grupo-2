@@ -7,10 +7,18 @@ from backend.src.models import TokenAlarma
 from backend.database import SessionLocal
 from sqlalchemy.future import select
 from sqlalchemy.ext.asyncio import AsyncSession
-import pyotp, sys, logging, asyncio
+import pyotp, sys, logging, asyncio, os
+from dotenv import load_dotenv
 
-API_TOKEN = '7609847784:AAFmy1uIAsqlUovuGaThPD8oiZPk528srSI'
-CHANNEL_ID = '@RMAgrupo2'
+load_dotenv()
+
+API_TOKEN = os.getenv('TELEGRAM_BOT_TOKEN')
+CHANNEL_ID = os.getenv('TELEGRAM_CHANNEL_ID')
+
+if not API_TOKEN:
+    raise ValueError("TELEGRAM_BOT_TOKEN no está configurado en el archivo .env")
+if not CHANNEL_ID:
+    raise ValueError("TELEGRAM_CHANNEL_ID no está configurado en el archivo .env")
 
 bot = Bot(token=API_TOKEN, default=DefaultBotProperties(parse_mode=ParseMode.HTML))
 dp = Dispatcher(bot=bot)

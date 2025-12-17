@@ -315,3 +315,122 @@ async def eliminar_historial_endpoint(
         return await services.eliminar_historial_nodo(db, nodo_id, fecha_hasta)
     except HTTPException as e:
         raise HTTPException(status_code=e.status_code, detail=str(e.detail))
+
+## ---------------------- VARIABLES NODO
+##
+## Endpoints para gestionar las variables configurables de cada nodo.
+## Las variables vinculan nodos con tipos de sensores del catálogo (datos_sensores).
+##
+
+@router.post("/nodos/{nodo_id}/variables", response_model=schemas.VariableNodo)
+async def crear_variable_nodo_endpoint(
+    nodo_id: int,
+    variable: schemas.VariableNodoCreate,
+    db: AsyncSession = Depends(get_db)
+):
+    """
+    Crea una nueva variable configurable para un nodo específico.
+
+    La variable vincula el nodo con un tipo de sensor del catálogo global (datos_sensores),
+    permitiendo configurar rangos y unidades de medida personalizados.
+
+    Body esperado:
+    {
+        "tipo_sensor_id": 1,              # ID del tipo de sensor (datos_sensores.tipo)
+        "unidad_medida": "°C",            # Opcional: Unidad personalizada
+        "rango_min": 10.0,                # Opcional: Rango mínimo específico del nodo
+        "rango_max": 40.0,                # Opcional: Rango máximo específico del nodo
+        "activo": true                    # Opcional: Por defecto true
+    }
+
+    Ejemplo: Para medir Temperatura en un nodo
+    - tipo_sensor_id = 1 (supongamos que 1 = Temperatura en datos_sensores)
+    - unidad_medida = "°C"
+    - rango_min = 10, rango_max = 40 (este nodo acepta 10-40°C)
+    """
+    try:
+        return await services.crear_variable_nodo(db, nodo_id, variable)
+    except HTTPException as e:
+        raise HTTPException(status_code=e.status_code, detail=str(e.detail))
+
+@router.get("/nodos/{nodo_id}/variables", response_model=List[schemas.VariableNodo])
+async def leer_variables_nodo_endpoint(
+    nodo_id: int,
+    solo_activas: bool = False,
+    db: AsyncSession = Depends(get_db)
+):
+    """
+    Obtiene todas las variables configuradas para un nodo.
+
+    Query params:
+    - solo_activas: Si es true, devuelve solo variables con activo=true
+
+    La respuesta incluye información del tipo de sensor mediante la relación.
+    Para acceder al nombre del sensor: variable.tipo_sensor.descripcion
+    """
+    try:
+        if solo_activas:
+            return await services.leer_variables_activas_por_nodo(db, nodo_id)
+        else:
+            return await services.leer_variables_por_nodo(db, nodo_id)
+    except HTTPException as e:
+        raise HTTPException(status_code=e.status_code, detail=str(e.detail))
+
+@router.get("/variables/{variable_id}", response_model=schemas.VariableNodo)
+async def leer_variable_endpoint(
+    variable_id: int,
+    db: AsyncSession = Depends(get_db)
+):
+    """
+    Obtiene una variable específica por su ID.
+    """
+    try:
+        return await services.leer_variable_nodo(db, variable_id)
+    except HTTPException as e:
+        raise HTTPException(status_code=e.status_code, detail=str(e.detail))
+
+@router.put("/variables/{variable_id}", response_model=schemas.VariableNodo)
+async def modificar_variable_endpoint(
+    variable_id: int,
+    variable_update: schemas.VariableNodoUpdate,
+    db: AsyncSession = Depends(get_db)
+):
+    """
+    Modifica una variable existente.
+
+    Campos modificables:
+    - unidad_medida: Cambiar unidad de medida
+    - rango_min/rango_max: Ajustar rangos aceptables
+    - activo: Activar/desactivar la variable
+
+    NO se puede cambiar tipo_sensor_id. Para cambiar el tipo de sensor,
+    elimina la variable y crea una nueva.
+
+    Body ejemplo:
+    {
+        "unidad_medida": "°F",  # Cambiar de °C a °F
+        "rango_min": 50,
+        "rango_max": 104,
+        "activo": true
+    }
+    """
+    try:
+        return await services.modificar_variable_nodo(db, variable_id, variable_update)
+    except HTTPException as e:
+        raise HTTPException(status_code=e.status_code, detail=str(e.detail))
+
+@router.delete("/variables/{variable_id}")
+async def eliminar_variable_endpoint(
+    variable_id: int,
+    db: AsyncSession = Depends(get_db)
+):
+    """
+    Elimina una variable de un nodo.
+
+    Esto NO elimina el tipo de sensor del catálogo global (datos_sensores),
+    solo desvincula el nodo de ese tipo de sensor.
+    """
+    try:
+        return await services.eliminar_variable_nodo(db, variable_id)
+    except HTTPException as e:
+        raise HTTPException(status_code=e.status_code, detail=str(e.detail))

@@ -6,6 +6,7 @@ import '../../css/AlertPopup.css';
 import AlertPopup from '../../components/AlertPopup'
 import AlertMensaje from '../../components/Alerts/'
 import ToastContainer, { ToastData } from '../../components/Toast/ToastContainer';
+import VariablesModal from '../../components/Modal/VariablesModal';
 import axios from 'axios';
 import {useNavigate} from 'react-router-dom'
 
@@ -34,6 +35,15 @@ interface CuencaCompleta {
   };
 }
 
+interface VariableNodo {
+  nombre: string;
+  unidad_medida: string;
+  valor_actual: number | null;
+  rango_min: number | null;
+  rango_max: number | null;
+  activo: boolean;
+}
+
 const CrearNodo = () => {
   const navigate = useNavigate();
   const [isEdit, setIsEdit] = useState(false);
@@ -42,6 +52,10 @@ const CrearNodo = () => {
   const [cuencasCompletas, setCuencasCompletas] = useState<CuencaCompleta[]>([]);
   const [lat, setLat] = useState<number | null>(null);
   const [lng, setLng] = useState<number | null>(null);
+
+  // Guardar la posición original antes de asignar a cuenca
+  // Esto permite restaurar la posición si el usuario deselecciona la cuenca
+  const [posicionOriginal, setPosicionOriginal] = useState<{ lat: number; lng: number } | null>(null);
   const [ isViewCreateNodo, setViewCreateNodo ] = useState(false);
   const toggleDropdown = () => { setViewCreateNodo((prev) => !prev) };
   const [alert, setPopUp] = useState<{type: string; message: string; description: string; onConfirm: () => void;
@@ -56,6 +70,8 @@ const CrearNodo = () => {
     cuenca_id: '',
     es_movil: false,
   });
+  const [variables, setVariables] = useState<VariableNodo[]>([]);
+  const [showVariablesModal, setShowVariablesModal] = useState(false);
 
   const mostrarToast = (type: 'success' | 'error' | 'info' | 'warning', message: string) => {
     const id = Date.now().toString();
@@ -206,17 +222,51 @@ const CrearNodo = () => {
     };
   };
 
-  // Manejar el cambio de cuenca
+  /**
+   * Maneja el cambio de cuenca del nodo.
+   *
+   * Comportamiento:
+   * 1. Si se selecciona una cuenca:
+   *    - Guarda la posición actual como "posición original" (solo la primera vez)
+   *    - Calcula el centroide de la cuenca
+   *    - Coloca el nodo en una posición sin superposición dentro de la cuenca
+   *
+   * 2. Si se deselecciona la cuenca (cuencaId = ''):
+   *    - Restaura la posición original del nodo
+   *    - Limpia la posición original guardada
+   */
   const handleCuencaChange = (cuencaId: string) => {
     setFormData({ ...formData, cuenca_id: cuencaId });
 
     if (cuencaId) {
+      // Se está asignando a una cuenca
+
+      // Guardar la posición original SOLO si no se ha guardado antes
+      // Esto permite que si el usuario cambia entre cuencas, siempre pueda volver a la posición inicial
+      if (!posicionOriginal && lat !== null && lng !== null) {
+        setPosicionOriginal({ lat, lng });
+        console.log('💾 Posición original guardada:', { lat, lng });
+      }
+
       const centroide = calcularCentroideCuenca(parseInt(cuencaId));
       if (centroide) {
         const posicionFinal = calcularPosicionSinSuperposicion(centroide, parseInt(cuencaId));
         setLat(posicionFinal.lat);
         setLng(posicionFinal.lng);
         mostrarToast('info', 'El nodo se ha ubicado en la cuenca seleccionada');
+      }
+    } else {
+      // Se está deseleccionando la cuenca (volver a "Sin cuenca")
+
+      if (posicionOriginal) {
+        // Restaurar la posición original
+        setLat(posicionOriginal.lat);
+        setLng(posicionOriginal.lng);
+        console.log('🔄 Posición restaurada a la original:', posicionOriginal);
+        mostrarToast('info', 'El nodo volvió a su posición original');
+
+        // Limpiar la posición original guardada
+        setPosicionOriginal(null);
       }
     }
   };
@@ -265,7 +315,69 @@ const CrearNodo = () => {
     }
 
   }, [lat, lng]);
+
+  // Efecto para manejar Ctrl+Z (restaurar posición original)
+  useEffect(() => {
+    const handleKeyPress = (e: KeyboardEvent) => {
+      // Ctrl+Z: Restaurar posición original del nodo
+      if ((e.ctrlKey || e.metaKey) && e.key === 'z') {
+        e.preventDefault();
+        if (posicionOriginal) {
+          setLat(posicionOriginal.lat);
+          setLng(posicionOriginal.lng);
+          setFormData(prev => ({
+            ...prev,
+            cuenca_id: '', // También deseleccionar la cuenca
+          }));
+          console.log('⏪ Ctrl+Z - Posición restaurada a la original:', posicionOriginal);
+          mostrarToast('info', 'Posición restaurada a la original (Ctrl+Z)');
+          // Limpiar la posición original guardada
+          setPosicionOriginal(null);
+        }
+      }
+    };
+
+    window.addEventListener('keydown', handleKeyPress);
+    return () => window.removeEventListener('keydown', handleKeyPress);
+  }, [posicionOriginal]);
   
+  const crearVariablesDelNodo = async (nodoId: number) => {
+    if (variables.length === 0) {
+      return true; // No hay variables que crear
+    }
+
+    const token = localStorage.getItem('token');
+    let errores = 0;
+
+    for (const variable of variables) {
+      try {
+        const response = await fetch(`http://localhost:8000/nodos/${nodoId}/variables`, {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+            Authorization: `Bearer ${token}`,
+          },
+          body: JSON.stringify(variable),
+        });
+
+        if (!response.ok) {
+          errores++;
+          console.error('Error al crear variable:', variable.nombre);
+        }
+      } catch (error) {
+        errores++;
+        console.error('Error al crear variable:', error);
+      }
+    }
+
+    if (errores > 0) {
+      mostrarToast('warning', `Se crearon ${variables.length - errores} de ${variables.length} variables`);
+      return false;
+    }
+
+    return true;
+  };
+
   const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
 
@@ -299,6 +411,11 @@ const CrearNodo = () => {
         const nuevoNodo = await response.json();
         console.log('Nodo creado exitosamente:', nuevoNodo);
         console.log('Cuenca asignada:', nuevoNodo.cuenca_id);
+
+        // Crear las variables del nodo si hay alguna
+        if (variables.length > 0) {
+          await crearVariablesDelNodo(nuevoNodo.id);
+        }
 
         if (nuevoNodo.cuenca_id) {
           mostrarToast('success', `Nodo creado y asignado a la cuenca correctamente`);
@@ -584,6 +701,34 @@ const CrearNodo = () => {
                 </label>
             </div>
 
+            {/* Botón para configurar variables */}
+            <div className="mb-6">
+              <button
+                type="button"
+                onClick={() => setShowVariablesModal(true)}
+                className="flex items-center gap-2 rounded bg-blue-500 py-3 px-5 font-semibold text-white hover:bg-blue-600 focus:outline-none focus:ring-2 focus:ring-blue-400 focus:ring-offset-2 transition transform hover:scale-105 active:scale-95"
+              >
+                <svg
+                  className="w-5 h-5"
+                  fill="none"
+                  stroke="currentColor"
+                  viewBox="0 0 24 24"
+                >
+                  <path
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                    strokeWidth={2}
+                    d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z"
+                  />
+                </svg>
+                Configurar Variables ({variables.length})
+              </button>
+              {variables.length > 0 && (
+                <p className="mt-2 text-sm text-gray-600 dark:text-gray-400">
+                  Se crearán {variables.length} variable(s) junto con el nodo
+                </p>
+              )}
+            </div>
 
              <div className="md:w-1/2">
             <button
@@ -604,8 +749,15 @@ const CrearNodo = () => {
             </button>
           </div>       
            
-            </form> 
+            </form>
         </div>
+
+        {/* Modal de Variables */}
+        <VariablesModal
+          isOpen={showVariablesModal}
+          onClose={() => setShowVariablesModal(false)}
+          onVariablesChange={setVariables}
+        />
     </>
   );
 };

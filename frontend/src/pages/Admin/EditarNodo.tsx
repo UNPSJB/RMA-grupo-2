@@ -8,6 +8,7 @@ import axios from 'axios';
 import { nodoDefaultIcon } from '../../utils/nodoIcon';
 import ToastContainer, { ToastData } from '../../components/Toast/ToastContainer';
 import ConfirmDialog, { ConfirmType } from '../../components/Modal/ConfirmDialog';
+import VariablesModal from '../../components/Modal/VariablesModal';
 
 interface Nodo {
   id: number;
@@ -20,8 +21,18 @@ interface Nodo {
 }
 
 interface Cuenca {
+  value: number;
+  label: string;
+}
+
+interface CuencaCompleta {
   id: number;
   nombre: string;
+  descripcion: string;
+  poligono: {
+    type: string;
+    coordinates: number[][][];
+  };
 }
 
 const EditarNodo = () => {
@@ -42,6 +53,12 @@ const EditarNodo = () => {
   const [markerPosition, setMarkerPosition] = useState<[number, number]>([-43.306843, -65.395059]);
   const [toasts, setToasts] = useState<ToastData[]>([]);
   const [cuencas, setCuencas] = useState<Cuenca[]>([]);
+  const [cuencasCompletas, setCuencasCompletas] = useState<CuencaCompleta[]>([]);
+  const [nodos, setNodos] = useState<Nodo[]>([]);
+
+  // Guardar la posición original del nodo cuando se carga por primera vez
+  // Esto permite restaurar la posición si el usuario deselecciona la cuenca
+  const [posicionOriginalNodo, setPosicionOriginalNodo] = useState<[number, number] | null>(null);
   const [confirmDialog, setConfirmDialog] = useState<{
     isOpen: boolean;
     title: string;
@@ -55,6 +72,7 @@ const EditarNodo = () => {
     type: 'warning',
     onConfirm: () => {},
   });
+  const [showVariablesModal, setShowVariablesModal] = useState(false);
 
   const initialPosition: [number, number] = [-43.306843, -65.395059];
 
@@ -62,22 +80,45 @@ const EditarNodo = () => {
     if (nodoInicial) {
       setFormData(nodoInicial);
       setMarkerPosition([nodoInicial.posicionx, nodoInicial.posiciony]);
+
+      // Guardar la posición original del nodo para poder restaurarla
+      // si el usuario deselecciona la cuenca
+      setPosicionOriginalNodo([nodoInicial.posicionx, nodoInicial.posiciony]);
+      console.log('💾 Posición original del nodo guardada:', [nodoInicial.posicionx, nodoInicial.posiciony]);
     }
     obtenerCuencas();
+    obtenerNodos();
   }, [nodoInicial]);
 
-  // Efecto para manejar ESC y volver
+  // Efecto para manejar ESC (volver) y Ctrl+Z (restaurar posición)
   useEffect(() => {
-    const handleEscapeKey = (e: KeyboardEvent) => {
+    const handleKeyPress = (e: KeyboardEvent) => {
+      // ESC: Volver a la página anterior
       if (e.key === 'Escape') {
         e.preventDefault();
         handleVolver();
       }
+
+      // Ctrl+Z: Restaurar posición original del nodo
+      if ((e.ctrlKey || e.metaKey) && e.key === 'z') {
+        e.preventDefault();
+        if (posicionOriginalNodo) {
+          setMarkerPosition(posicionOriginalNodo);
+          setFormData(prev => ({
+            ...prev,
+            posicionx: posicionOriginalNodo[0],
+            posiciony: posicionOriginalNodo[1],
+            cuenca_id: undefined, // También deseleccionar la cuenca
+          }));
+          console.log('⏪ Ctrl+Z - Posición restaurada a la original:', posicionOriginalNodo);
+          mostrarToast('info', 'Posición restaurada a la original (Ctrl+Z)');
+        }
+      }
     };
 
-    window.addEventListener('keydown', handleEscapeKey);
-    return () => window.removeEventListener('keydown', handleEscapeKey);
-  }, []);
+    window.addEventListener('keydown', handleKeyPress);
+    return () => window.removeEventListener('keydown', handleKeyPress);
+  }, [posicionOriginalNodo]);
 
   const mostrarToast = (type: 'success' | 'error' | 'info' | 'warning', message: string) => {
     const id = `${Date.now()}-${Math.random()}`;
@@ -90,14 +131,153 @@ const EditarNodo = () => {
 
   const obtenerCuencas = async () => {
     try {
-      const response = await axios.get('http://localhost:8000/cuencas');
+      const response = await axios.get('http://localhost:8000/cuencas/select-options');
       setCuencas(response.data);
+
+      // Obtener también las cuencas completas con polígonos para calcular centroides
+      const responseCuencasCompletas = await axios.get('http://localhost:8000/cuencas');
+      setCuencasCompletas(responseCuencasCompletas.data);
     } catch (error) {
       console.error('Error al obtener las cuencas:', error);
       mostrarToast('error', 'No se pudieron obtener las cuencas');
     }
   };
 
+  const obtenerNodos = async () => {
+    try {
+      const response = await axios.get('http://localhost:8000/nodos');
+      setNodos(response.data);
+    } catch (error) {
+      console.error('Error al obtener los nodos:', error);
+    }
+  };
+
+  /**
+   * Calcula el centroide (centro geométrico) de una cuenca a partir de su polígono.
+   *
+   * @param cuencaId - ID de la cuenca
+   * @returns Objeto con lat y lng del centroide, o null si no se pudo calcular
+   */
+  const calcularCentroideCuenca = (cuencaId: number): { lat: number; lng: number } | null => {
+    const cuenca = cuencasCompletas.find(c => c.id === cuencaId);
+    if (!cuenca || !cuenca.poligono || !cuenca.poligono.coordinates || cuenca.poligono.coordinates.length === 0) {
+      return null;
+    }
+
+    // Obtener las coordenadas del polígono (primer anillo del polígono)
+    const coordenadas = cuenca.poligono.coordinates[0];
+
+    if (coordenadas.length < 3) {
+      return null;
+    }
+
+    // Calcular el centroide
+    let centroLat = 0;
+    let centroLng = 0;
+
+    coordenadas.forEach(coord => {
+      centroLng += coord[0]; // longitude
+      centroLat += coord[1]; // latitude
+    });
+
+    centroLat /= coordenadas.length;
+    centroLng /= coordenadas.length;
+
+    return { lat: centroLat, lng: centroLng };
+  };
+
+  /**
+   * Calcula una posición cercana al centroide que no esté superpuesta con otros nodos.
+   *
+   * Implementa un algoritmo de búsqueda en espiral para encontrar una posición libre
+   * alrededor del centroide de la cuenca.
+   *
+   * @param centroide - Coordenadas del centroide de la cuenca
+   * @param cuencaId - ID de la cuenca
+   * @returns Objeto con lat y lng de una posición sin superposición
+   */
+  const calcularPosicionSinSuperposicion = (
+    centroide: { lat: number; lng: number },
+    cuencaId: number
+  ): { lat: number; lng: number } => {
+    // Obtener todos los nodos de esta cuenca, excluyendo el nodo actual que se está editando
+    const nodosEnCuenca = nodos.filter(n => n.cuenca_id === cuencaId && n.id !== formData.id);
+
+    console.log('=== Debug Posicionamiento (EditarNodo) ===');
+    console.log('Cuenca ID:', cuencaId);
+    console.log('Nodo actual ID:', formData.id);
+    console.log('Total nodos:', nodos.length);
+    console.log('Nodos en esta cuenca (excluyendo actual):', nodosEnCuenca.length);
+    console.log('Centroide:', centroide);
+
+    if (nodosEnCuenca.length === 0) {
+      // Si no hay otros nodos en la cuenca, usar el centroide directamente
+      console.log('No hay otros nodos en la cuenca, usando centroide directo');
+      return centroide;
+    }
+
+    // Radio de búsqueda inicial (en grados, aproximadamente 100 metros)
+    const radioBase = 0.001;
+    const maxIntentos = 50;
+    const distanciaMinima = 0.0005; // Distancia mínima entre nodos
+
+    // Verificar si una posición está muy cerca de otro nodo
+    const estaDemasiadoCerca = (lat: number, lng: number) => {
+      return nodosEnCuenca.some(nodo => {
+        const distancia = Math.sqrt(
+          Math.pow(nodo.posicionx - lat, 2) +
+          Math.pow(nodo.posiciony - lng, 2)
+        );
+        const cerca = distancia < distanciaMinima;
+        if (cerca) {
+          console.log(`Muy cerca del nodo ${nodo.nombre} (distancia: ${distancia})`);
+        }
+        return cerca;
+      });
+    };
+
+    // Verificar si el centroide está libre
+    if (!estaDemasiadoCerca(centroide.lat, centroide.lng)) {
+      console.log('Centroide está libre, usando posición central');
+      return centroide;
+    }
+
+    console.log('Centroide ocupado, buscando posición alternativa...');
+
+    // Intentar encontrar una posición libre cerca del centroide usando búsqueda en espiral
+    for (let i = 0; i < maxIntentos; i++) {
+      const angulo = (Math.PI * 2 * i) / 8; // 8 posiciones alrededor del centro
+      const radio = radioBase * (1 + Math.floor(i / 8)); // Aumentar el radio en cada vuelta
+
+      const nuevaLat = centroide.lat + Math.cos(angulo) * radio;
+      const nuevaLng = centroide.lng + Math.sin(angulo) * radio;
+
+      if (!estaDemasiadoCerca(nuevaLat, nuevaLng)) {
+        console.log(`Posición libre encontrada en intento ${i + 1}, radio: ${radio.toFixed(6)}`);
+        return { lat: nuevaLat, lng: nuevaLng };
+      }
+    }
+
+    // Si no encuentra una posición libre, agregar un pequeño offset aleatorio
+    const offsetAleatorio = radioBase * (1 + Math.random());
+    const anguloAleatorio = Math.random() * Math.PI * 2;
+
+    console.log('No se encontró posición libre, usando offset aleatorio');
+
+    return {
+      lat: centroide.lat + Math.cos(anguloAleatorio) * offsetAleatorio,
+      lng: centroide.lng + Math.sin(anguloAleatorio) * offsetAleatorio,
+    };
+  };
+
+  /**
+   * Maneja los cambios en los inputs del formulario.
+   *
+   * Lógica especial para cuenca_id:
+   * - Si se deselecciona la cuenca (valor vacío): restaura la posición original del nodo
+   * - Si se selecciona una cuenca: calcula el centroide y mueve el nodo automáticamente
+   *   a una posición sin superposición dentro de la cuenca
+   */
   const handleInputChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement | HTMLSelectElement>) => {
     const { name, value, type } = e.target;
 
@@ -105,7 +285,53 @@ const EditarNodo = () => {
       const checked = (e.target as HTMLInputElement).checked;
       setFormData(prev => ({ ...prev, [name]: checked }));
     } else if (name === 'cuenca_id') {
-      setFormData(prev => ({ ...prev, [name]: value === '' ? undefined : parseInt(value) }));
+      // Manejar el cambio de cuenca
+
+      if (value === '') {
+        // El usuario está deseleccionando la cuenca (volviendo a "Sin cuenca asignada")
+
+        if (posicionOriginalNodo) {
+          // Restaurar la posición original del nodo
+          setMarkerPosition(posicionOriginalNodo);
+          setFormData(prev => ({
+            ...prev,
+            cuenca_id: undefined,
+            posicionx: posicionOriginalNodo[0],
+            posiciony: posicionOriginalNodo[1],
+          }));
+          console.log('🔄 Posición del nodo restaurada a la original:', posicionOriginalNodo);
+          mostrarToast('info', 'El nodo volvió a su posición original');
+        } else {
+          // No hay posición original guardada, solo deseleccionar
+          setFormData(prev => ({ ...prev, cuenca_id: undefined }));
+        }
+      } else {
+        // El usuario está seleccionando una cuenca
+        const cuencaId = parseInt(value);
+
+        // Calcular el centroide de la cuenca
+        const centroide = calcularCentroideCuenca(cuencaId);
+        if (centroide) {
+          // Calcular posición sin superposición
+          const posicionFinal = calcularPosicionSinSuperposicion(centroide, cuencaId);
+
+          // Actualizar la posición del marcador y el formData en tiempo real
+          setMarkerPosition([posicionFinal.lat, posicionFinal.lng]);
+          setFormData(prev => ({
+            ...prev,
+            cuenca_id: cuencaId,
+            posicionx: posicionFinal.lat,
+            posiciony: posicionFinal.lng,
+          }));
+
+          console.log('📍 Nodo movido automáticamente a cuenca:', { cuencaId, posicion: posicionFinal });
+          mostrarToast('info', 'El nodo se ha ubicado en la cuenca seleccionada');
+        } else {
+          // Si no se pudo calcular el centroide, solo asignar la cuenca sin mover
+          console.warn('No se pudo calcular el centroide de la cuenca', cuencaId);
+          setFormData(prev => ({ ...prev, cuenca_id: cuencaId }));
+        }
+      }
     } else {
       setFormData(prev => ({ ...prev, [name]: value }));
     }
@@ -115,12 +341,34 @@ const EditarNodo = () => {
     navigate('/admin/nodos');
   };
 
+  /**
+   * Maneja el envío del formulario de edición.
+   *
+   * Verifica si se realizaron cambios comparando formData con nodoInicial.
+   * Si no hay cambios, muestra una notificación y no envía la petición.
+   */
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
 
     if (!formData.nombre.trim()) {
       mostrarToast('error', 'El nombre del nodo es requerido');
       return;
+    }
+
+    // Verificar si se realizaron cambios
+    if (nodoInicial) {
+      const sinCambios =
+        formData.nombre === nodoInicial.nombre &&
+        formData.descripcion === nodoInicial.descripcion &&
+        formData.posicionx === nodoInicial.posicionx &&
+        formData.posiciony === nodoInicial.posiciony &&
+        (formData.cuenca_id || null) === (nodoInicial.cuenca_id || null) &&
+        (formData.es_movil || false) === (nodoInicial.es_movil || false);
+
+      if (sinCambios) {
+        mostrarToast('info', 'No se realizaron cambios en el nodo');
+        return;
+      }
     }
 
     setConfirmDialog({
@@ -258,8 +506,8 @@ const EditarNodo = () => {
             >
               <option value="">Sin cuenca asignada</option>
               {cuencas.map(cuenca => (
-                <option key={cuenca.id} value={cuenca.id}>
-                  {cuenca.nombre}
+                <option key={cuenca.value} value={cuenca.value}>
+                  {cuenca.label}
                 </option>
               ))}
             </select>
@@ -343,6 +591,33 @@ const EditarNodo = () => {
             </MapContainer>
           </div>
 
+          {/* Botón para gestionar variables */}
+          <div className="mb-6">
+            <button
+              type="button"
+              onClick={() => setShowVariablesModal(true)}
+              className="flex items-center gap-2 rounded bg-blue-500 py-3 px-5 font-semibold text-white hover:bg-blue-600 focus:outline-none focus:ring-2 focus:ring-blue-400 focus:ring-offset-2 transition transform hover:scale-105 active:scale-95"
+            >
+              <svg
+                className="w-5 h-5"
+                fill="none"
+                stroke="currentColor"
+                viewBox="0 0 24 24"
+              >
+                <path
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                  strokeWidth={2}
+                  d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z"
+                />
+              </svg>
+              Gestionar Variables
+            </button>
+            <p className="mt-2 text-sm text-gray-600 dark:text-gray-400">
+              Configura las variables que mide este nodo (temperatura, humedad, pH, etc.)
+            </p>
+          </div>
+
           <div className="flex gap-4 justify-end">
             <button
               type="button"
@@ -372,6 +647,13 @@ const EditarNodo = () => {
         type={confirmDialog.type}
         onConfirm={confirmDialog.onConfirm}
         onCancel={() => setConfirmDialog(prev => ({ ...prev, isOpen: false }))}
+      />
+
+      {/* Modal de Variables */}
+      <VariablesModal
+        nodoId={formData.id}
+        isOpen={showVariablesModal}
+        onClose={() => setShowVariablesModal(false)}
       />
     </>
   );

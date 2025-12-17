@@ -41,9 +41,11 @@ const PanelCuencas = () => {
   const [polygonPoints, setPolygonPoints] = useState<[number, number][]>([]);
   const [isDrawingMode, setIsDrawingMode] = useState(false);
   const [toasts, setToasts] = useState<ToastData[]>([]);
+  const [haySuperposicion, setHaySuperposicion] = useState(false);
 
   // Estados para gestión de nodos
   const [nodosCuenca, setNodosCuenca] = useState<Nodo[]>([]);
+  const [nodosOriginalesCuenca, setNodosOriginalesCuenca] = useState<Nodo[]>([]); // Nodos originales para detectar desvinculaciones
   const [todosNodos, setTodosNodos] = useState<Nodo[]>([]); // Todos los nodos disponibles
   const [activeTab, setActiveTab] = useState<'cuenca' | 'nodos'>('cuenca');
   const [nodoParaReubicar, setNodoParaReubicar] = useState<Nodo | null>(null); // Nodo que se está reubicando
@@ -129,16 +131,22 @@ const PanelCuencas = () => {
   }, [isModalOpen]);
 
   // Obtener todos los nodos cuando se activa la pestaña de nodos
+  // Esto garantiza que siempre tengamos la lista más actualizada
   useEffect(() => {
-    if (activeTab === 'nodos' && isEdit) {
+    if (activeTab === 'nodos' && isModalOpen) {
       obtenerTodosNodos();
     }
-  }, [activeTab, isEdit]);
+  }, [activeTab, isModalOpen]);
 
-  const obtenerNodosCuenca = async (cuencaId: string) => {
+  const obtenerNodosCuenca = async (cuencaId: string, guardarOriginales: boolean = false) => {
     try {
       const response = await axios.get(`http://localhost:8000/cuenca/${cuencaId}`);
-      setNodosCuenca(response.data.nodos || []);
+      const nodos = response.data.nodos || [];
+      setNodosCuenca(nodos);
+      // Si se solicita, guardar copia de los nodos originales para detectar cambios
+      if (guardarOriginales) {
+        setNodosOriginalesCuenca(JSON.parse(JSON.stringify(nodos)));
+      }
     } catch (error) {
       console.error('Error al obtener nodos de la cuenca:', error);
     }
@@ -174,6 +182,10 @@ const PanelCuencas = () => {
   };
 
   const handleOpenModal = async (cuenca?: Cuenca) => {
+    // SIEMPRE recargar la lista global de nodos desde el backend
+    // Esto asegura que veamos los nodos más recientes (desvinculados de otras cuencas, etc.)
+    await obtenerTodosNodos();
+
     if (cuenca) {
       setFormData({
         id: cuenca.id.toString(),
@@ -185,9 +197,8 @@ const PanelCuencas = () => {
       console.log('Polígono cargado para cuenca:', cuenca.nombre, 'Puntos:', coords.length);
       setPolygonPoints(coords);
       setIsEdit(true);
-      // Obtener nodos de la cuenca y todos los nodos disponibles
-      await obtenerNodosCuenca(cuenca.id.toString());
-      await obtenerTodosNodos();
+      // Obtener nodos de la cuenca y guardar originales para detectar cambios
+      await obtenerNodosCuenca(cuenca.id.toString(), true);
     } else {
       setFormData({
         id: '',
@@ -196,6 +207,7 @@ const PanelCuencas = () => {
       });
       setPolygonPoints([]);
       setNodosCuenca([]);
+      setNodosOriginalesCuenca([]);
       setIsEdit(false);
     }
     // Resetear historial al abrir modal
@@ -211,6 +223,7 @@ const PanelCuencas = () => {
     setFormData({ id: '', nombre: '', descripcion: '' });
     setPolygonPoints([]);
     setNodosCuenca([]);
+    setNodosOriginalesCuenca([]);
     setIsDrawingMode(false);
     setActiveTab('cuenca');
   };
@@ -220,12 +233,16 @@ const PanelCuencas = () => {
     setFormData((prev) => ({ ...prev, [name]: value }));
   };
 
-  const handleSubmit = async (e: React.FormEvent) => {
-    e.preventDefault();
-
+  // Función auxiliar para guardar los cambios de nodos (usada tanto desde pestaña Cuenca como Nodos)
+  const guardarCambiosCuenca = async () => {
     if (polygonPoints.length < 3) {
       mostrarToast('error', 'Debe dibujar un polígono con al menos 3 puntos');
-      return;
+      return false;
+    }
+
+    if (haySuperposicion) {
+      mostrarToast('error', 'El polígono se superpone con una cuenca existente. Por favor, ajusta el área.');
+      return false;
     }
 
     try {
@@ -249,20 +266,109 @@ const PanelCuencas = () => {
       };
 
       if (isEdit) {
+        // Actualizar la cuenca
         await axios.put(`http://localhost:8000/cuenca/${formData.id}`, data);
-        mostrarToast('success', 'Cuenca actualizada exitosamente');
+
+        // Detectar nodos que fueron desvinculados (estaban en originales pero ya no están en nodosCuenca)
+        const nodosDesvinculados = nodosOriginalesCuenca.filter(
+          nodoOriginal => !nodosCuenca.some(n => n.id === nodoOriginal.id)
+        );
+
+        // Desvincular los nodos removidos
+        if (nodosDesvinculados.length > 0) {
+          for (const nodo of nodosDesvinculados) {
+            if (nodo.id) {
+              try {
+                const nodoData = {
+                  nombre: nodo.nombre,
+                  descripcion: nodo.descripcion,
+                  posicionx: nodo.posicionx,
+                  posiciony: nodo.posiciony,
+                  cuenca_id: null,
+                };
+                await axios.put(`http://localhost:8000/nodo/${nodo.id}`, nodoData);
+              } catch (error) {
+                console.error(`Error al desvincular nodo ${nodo.id}:`, error);
+              }
+            }
+          }
+        }
+
+        // Actualizar todos los nodos asignados a esta cuenca
+        // Esto incluye nuevas asignaciones y cambios de posición
+        if (nodosCuenca.length > 0) {
+          for (const nodo of nodosCuenca) {
+            if (nodo.id) {
+              try {
+                const nodoData = {
+                  nombre: nodo.nombre,
+                  descripcion: nodo.descripcion,
+                  posicionx: nodo.posicionx,
+                  posiciony: nodo.posiciony,
+                  cuenca_id: parseInt(formData.id),
+                };
+                await axios.put(`http://localhost:8000/nodo/${nodo.id}`, nodoData);
+              } catch (error) {
+                console.error(`Error al actualizar nodo ${nodo.id}:`, error);
+              }
+            }
+          }
+        }
+
+        mostrarToast('success', 'Cuenca y nodos actualizados exitosamente');
       } else {
-        await axios.post('http://localhost:8000/cuenca', data);
-        mostrarToast('success', 'Cuenca creada exitosamente');
+        // Crear la cuenca
+        const response = await axios.post('http://localhost:8000/cuenca', data);
+        const nuevaCuencaId = response.data.id;
+
+        // Si hay nodos asignados temporalmente, vincularlos a la cuenca recién creada
+        if (nodosCuenca.length > 0) {
+          mostrarToast('info', `Vinculando ${nodosCuenca.length} nodo(s) a la cuenca...`);
+
+          for (const nodo of nodosCuenca) {
+            if (nodo.id) {
+              try {
+                const nodoData = {
+                  nombre: nodo.nombre,
+                  descripcion: nodo.descripcion,
+                  posicionx: nodo.posicionx,
+                  posiciony: nodo.posiciony,
+                  cuenca_id: nuevaCuencaId,
+                };
+                await axios.put(`http://localhost:8000/nodo/${nodo.id}`, nodoData);
+              } catch (error) {
+                console.error(`Error al vincular nodo ${nodo.id}:`, error);
+              }
+            }
+          }
+
+          mostrarToast('success', `Cuenca creada exitosamente con ${nodosCuenca.length} nodo(s) vinculado(s)`);
+        } else {
+          mostrarToast('success', 'Cuenca creada exitosamente');
+        }
       }
 
       handleCloseModal();
+      // Recargar cuencas Y todos los nodos para reflejar los cambios globalmente
       obtenerCuencas();
+      obtenerTodosNodosInicial();
+      return true;
     } catch (error: any) {
       console.error('Error al guardar la cuenca:', error);
       const errorMsg = error.response?.data?.detail || 'Error al guardar la cuenca';
       mostrarToast('error', errorMsg);
+      return false;
     }
+  };
+
+  const handleSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    await guardarCambiosCuenca();
+  };
+
+  // Guardar cambios desde la pestaña de Nodos
+  const handleGuardarDesdeNodos = async () => {
+    await guardarCambiosCuenca();
   };
 
   const handleDelete = async (cuencaId: number) => {
@@ -294,6 +400,98 @@ const PanelCuencas = () => {
       polygon.map((coord) => [coord[1], coord[0]] as [number, number])
     );
   };
+
+  // Función para verificar si un punto está dentro de un polígono (Ray casting algorithm)
+  const puntoEnPoligono = (punto: [number, number], poligonoCoords: [number, number][]): boolean => {
+    const [x, y] = punto;
+    const n = poligonoCoords.length;
+    let dentro = false;
+
+    let j = n - 1;
+    for (let i = 0; i < n; i++) {
+      const [xi, yi] = poligonoCoords[i];
+      const [xj, yj] = poligonoCoords[j];
+
+      if ((yi > y) !== (yj > y) && x < ((xj - xi) * (y - yi)) / (yj - yi) + xi) {
+        dentro = !dentro;
+      }
+
+      j = i;
+    }
+
+    return dentro;
+  };
+
+  // Función para verificar si dos segmentos se cruzan
+  const segmentosSeCruzan = (
+    p1: [number, number],
+    p2: [number, number],
+    p3: [number, number],
+    p4: [number, number]
+  ): boolean => {
+    const ccw = (A: [number, number], B: [number, number], C: [number, number]) => {
+      return (C[1] - A[1]) * (B[0] - A[0]) > (B[1] - A[1]) * (C[0] - A[0]);
+    };
+
+    return ccw(p1, p3, p4) !== ccw(p2, p3, p4) && ccw(p1, p2, p3) !== ccw(p1, p2, p4);
+  };
+
+  // Función para verificar si dos polígonos se superponen
+  const poligonosSeSuperponenLocal = (
+    coords1: [number, number][],
+    coords2: [number, number][]
+  ): boolean => {
+    if (coords1.length < 3 || coords2.length < 3) return false;
+
+    // Verificar si algún vértice de coords1 está dentro de coords2
+    for (const punto of coords1) {
+      if (puntoEnPoligono(punto, coords2)) {
+        return true;
+      }
+    }
+
+    // Verificar si algún vértice de coords2 está dentro de coords1
+    for (const punto of coords2) {
+      if (puntoEnPoligono(punto, coords1)) {
+        return true;
+      }
+    }
+
+    // Verificar intersección de bordes
+    for (let i = 0; i < coords1.length - 1; i++) {
+      for (let j = 0; j < coords2.length - 1; j++) {
+        if (segmentosSeCruzan(coords1[i], coords1[i + 1], coords2[j], coords2[j + 1])) {
+          return true;
+        }
+      }
+    }
+
+    return false;
+  };
+
+  // Verificar superposición cada vez que cambia el polígono
+  useEffect(() => {
+    if (polygonPoints.length >= 3) {
+      const cuencasFiltradas = cuencas.filter(c => !isEdit || c.id !== parseInt(formData.id));
+      let superposicion = false;
+
+      for (const cuenca of cuencasFiltradas) {
+        try {
+          const coordsCuencaExistente = convertCoordinates(cuenca.poligono.coordinates)[0];
+          if (poligonosSeSuperponenLocal(polygonPoints, coordsCuencaExistente)) {
+            superposicion = true;
+            break;
+          }
+        } catch (error) {
+          console.error('Error al verificar superposición:', error);
+        }
+      }
+
+      setHaySuperposicion(superposicion);
+    } else {
+      setHaySuperposicion(false);
+    }
+  }, [polygonPoints, cuencas, isEdit, formData.id]);
 
   // Componente para auto-ajustar el zoom al polígono
   const FitBoundsToPolygon = ({ points }: { points: [number, number][] }) => {
@@ -599,67 +797,29 @@ const PanelCuencas = () => {
   };
 
   const handleDesvincularNodo = async (nodo: Nodo) => {
+    // En AMBOS modos (creación y edición), simplemente quitar el nodo de la lista local
+    // Los cambios se persistirán cuando el usuario presione "Guardar"
     setConfirmDialog({
       isOpen: true,
-      title: 'Desvincular Nodo',
-      message: `¿Está seguro que desea quitar "${nodo.nombre}" de esta cuenca?\n\nEl nodo no se eliminará, solo se desvinculará de la cuenca.`,
+      title: 'Quitar Nodo',
+      message: `¿Está seguro que desea quitar "${nodo.nombre}" de esta cuenca?\n\nEl nodo volverá a estar disponible. ${isEdit ? 'Recuerda guardar los cambios.' : ''}`,
       type: 'info',
-      onConfirm: async () => {
+      onConfirm: () => {
         setConfirmDialog(prev => ({ ...prev, isOpen: false }));
-        try {
-          if (!nodo.id) return;
 
-          const nodoData = {
-            nombre: nodo.nombre,
-            descripcion: nodo.descripcion,
-            posicionx: nodo.posicionx,
-            posiciony: nodo.posiciony,
-            cuenca_id: null, // Desvincular
-          };
+        // Quitar de la lista local de nodos de la cuenca
+        setNodosCuenca(prev => prev.filter(n => n.id !== nodo.id));
 
-          // Actualizar inmediatamente en el estado local (optimistic update)
-          // Remover de nodosCuenca
-          setNodosCuenca(prev => prev.filter(n => n.id !== nodo.id));
+        // NO modificamos todosNodos aquí porque son cambios temporales
+        // La lista de nodos disponibles se actualizará desde el backend cuando:
+        // 1. El usuario guarde los cambios (handleSubmit recarga obtenerTodosNodosInicial)
+        // 2. El usuario cambie de pestaña (useEffect recarga obtenerTodosNodos)
+        // Esto garantiza consistencia con el estado real del backend
 
-          // Agregar a todosNodos como disponible (sin cuenca_id)
-          setTodosNodos(prev => {
-            const exists = prev.some(n => n.id === nodo.id);
-            if (exists) {
-              // Actualizar el nodo existente para quitarle el cuenca_id
-              return prev.map(n => n.id === nodo.id ? { ...n, cuenca_id: undefined } : n);
-            } else {
-              // Si por alguna razón no está en la lista, agregarlo
-              return [...prev, { ...nodo, cuenca_id: undefined }];
-            }
-          });
-
-          await axios.put(`http://localhost:8000/nodo/${nodo.id}`, nodoData);
-          mostrarToast('success', `Nodo "${nodo.nombre}" desvinculado de la cuenca`);
-
-          // Actualizar listas desde el backend para sincronizar
-          if (formData.id) {
-            const responseCuenca = await axios.get(`http://localhost:8000/cuenca/${formData.id}`);
-            const nodosActualizados = responseCuenca.data.nodos || [];
-            setNodosCuenca(nodosActualizados);
-          }
-
-          const responseTodos = await axios.get('http://localhost:8000/nodos');
-          setTodosNodos(responseTodos.data);
-          await obtenerCuencas();
-          await obtenerTodosNodosInicial(); // Actualizar también en el mapa principal
-        } catch (error: any) {
-          console.error('Error al desvincular nodo:', error);
-          mostrarToast('error', 'Error al desvincular el nodo');
-
-          // En caso de error, revertir los cambios optimistas
-          if (formData.id) {
-            const responseCuenca = await axios.get(`http://localhost:8000/cuenca/${formData.id}`);
-            const nodosActualizados = responseCuenca.data.nodos || [];
-            setNodosCuenca(nodosActualizados);
-          }
-          const responseTodos = await axios.get('http://localhost:8000/nodos');
-          setTodosNodos(responseTodos.data);
-        }
+        const mensaje = isEdit
+          ? `Nodo "${nodo.nombre}" quitado de la cuenca. Guarda los cambios para confirmar.`
+          : `Nodo "${nodo.nombre}" quitado de la cuenca temporal`;
+        mostrarToast('success', mensaje);
       },
     });
   };
@@ -680,67 +840,9 @@ const PanelCuencas = () => {
     });
   };
 
-  // Calcular posición sin superposición para asignar nodo
-  const calcularPosicionSinSuperposicion = (centroLat: number, centroLng: number) => {
-    // Radio de búsqueda inicial (en grados, aproximadamente 100 metros)
-    const radioBase = 0.001;
-    const maxIntentos = 50;
-    const distanciaMinima = 0.0005; // Distancia mínima entre nodos
-
-    // Verificar si una posición está muy cerca de otro nodo
-    // IMPORTANTE: Revisar TODOS los nodos, no solo los de esta cuenca
-    // Esto evita superposición con nodos desvinculados o de otras cuencas
-    const estaDemasiadoCerca = (lat: number, lng: number) => {
-      // Combinar nodos de la cuenca actual con todos los nodos disponibles
-      const todosLosNodosRelevantes = [
-        ...nodosCuenca,
-        ...todosNodos.filter(n => !nodosCuenca.some(nc => nc.id === n.id))
-      ];
-
-      return todosLosNodosRelevantes.some(nodo => {
-        const distancia = Math.sqrt(
-          Math.pow(nodo.posicionx - lat, 2) +
-          Math.pow(nodo.posiciony - lng, 2)
-        );
-        return distancia < distanciaMinima;
-      });
-    };
-
-    // Verificar si el centroide está libre
-    if (!estaDemasiadoCerca(centroLat, centroLng)) {
-      return { lat: centroLat, lng: centroLng };
-    }
-
-    // Intentar encontrar una posición libre cerca del centroide
-    for (let i = 0; i < maxIntentos; i++) {
-      const angulo = (Math.PI * 2 * i) / 8; // 8 posiciones alrededor del centro
-      const radio = radioBase * (1 + Math.floor(i / 8)); // Aumentar el radio en cada vuelta
-
-      const nuevaLat = centroLat + Math.cos(angulo) * radio;
-      const nuevaLng = centroLng + Math.sin(angulo) * radio;
-
-      if (!estaDemasiadoCerca(nuevaLat, nuevaLng)) {
-        return { lat: nuevaLat, lng: nuevaLng };
-      }
-    }
-
-    // Si no encuentra una posición libre, agregar un pequeño offset aleatorio
-    const offsetAleatorio = radioBase * (1 + Math.random());
-    const anguloAleatorio = Math.random() * Math.PI * 2;
-
-    return {
-      lat: centroLat + Math.cos(anguloAleatorio) * offsetAleatorio,
-      lng: centroLng + Math.sin(anguloAleatorio) * offsetAleatorio,
-    };
-  };
 
   // Asignar un nodo disponible a la cuenca actual
   const handleAsignarNodo = async (nodo: Nodo) => {
-    if (!formData.id) {
-      mostrarToast('error', 'Debe guardar la cuenca primero');
-      return;
-    }
-
     // Guardar estado antes de asignar
     guardarEnHistorial();
 
@@ -762,33 +864,100 @@ const PanelCuencas = () => {
       centroLng = nodo.posiciony;
     }
 
-    // Calcular posición final evitando superposición
-    const posicionFinal = calcularPosicionSinSuperposicion(centroLat, centroLng);
-
-    // Crear el nodo con la nueva posición sin superposición
-    const nodoEnCuenca = {
-      ...nodo,
-      posicionx: posicionFinal.lat,
-      posiciony: posicionFinal.lng,
-      cuenca_id: parseInt(formData.id),
-    };
-
-    // Agregar inmediatamente el nodo a la cuenca con su nueva posición
+    // USAR CALLBACK EN setNodosCuenca PARA ACCEDER AL ESTADO MÁS RECIENTE
+    // Esto garantiza que calcularPosicionSinSuperposicion tenga acceso a todos los nodos ya asignados
     setNodosCuenca(prev => {
+      // Verificar si el nodo ya existe
       const exists = prev.some(n => n.id === nodo.id);
       if (exists) {
-        return prev.map(n => n.id === nodo.id ? nodoEnCuenca : n);
-      } else {
-        return [...prev, nodoEnCuenca];
+        // Si ya existe, solo actualizar su información
+        return prev.map(n => n.id === nodo.id ? {
+          ...nodo,
+          cuenca_id: formData.id ? parseInt(formData.id) : undefined,
+        } : n);
       }
+
+      // Calcular posición sin superposición usando el estado más reciente (prev)
+      const calcularPosicionActualizada = () => {
+        const radioBase = 0.001;
+        const maxIntentos = 100;
+        const distanciaMinima = 0.0008;
+
+        const estaDemasiadoCerca = (lat: number, lng: number) => {
+          // Usar 'prev' (estado actualizado) en lugar de nodosCuenca (que puede estar desactualizado)
+          const todosLosNodosRelevantes = [
+            ...prev, // Nodos ya en esta cuenca (estado más reciente)
+            ...todosNodos.filter(n => !prev.some(nc => nc.id === n.id))
+          ];
+
+          for (const nodoExistente of todosLosNodosRelevantes) {
+            const distancia = Math.sqrt(
+              Math.pow(nodoExistente.posicionx - lat, 2) +
+              Math.pow(nodoExistente.posiciony - lng, 2)
+            );
+
+            if (distancia < distanciaMinima) {
+              console.log(`Posición (${lat.toFixed(6)}, ${lng.toFixed(6)}) muy cerca del nodo "${nodoExistente.nombre}" (distancia: ${distancia.toFixed(6)})`);
+              return true;
+            }
+          }
+          return false;
+        };
+
+        // Verificar si el centroide está libre
+        if (!estaDemasiadoCerca(centroLat, centroLng)) {
+          console.log(`Nodo colocado en el centroide (${centroLat.toFixed(6)}, ${centroLng.toFixed(6)})`);
+          return { lat: centroLat, lng: centroLng };
+        }
+
+        // Intentar encontrar una posición libre usando patrón en espiral
+        for (let i = 1; i <= maxIntentos; i++) {
+          const angulo = (Math.PI * 2 * i) / 12;
+          const radio = radioBase * (1 + Math.floor(i / 12));
+
+          const nuevaLat = centroLat + Math.cos(angulo) * radio;
+          const nuevaLng = centroLng + Math.sin(angulo) * radio;
+
+          if (!estaDemasiadoCerca(nuevaLat, nuevaLng)) {
+            console.log(`Nodo colocado en intento ${i}, radio ${radio.toFixed(4)}, ángulo ${(angulo * 180 / Math.PI).toFixed(0)}°, posición (${nuevaLat.toFixed(6)}, ${nuevaLng.toFixed(6)})`);
+            return { lat: nuevaLat, lng: nuevaLng };
+          }
+        }
+
+        // Fallback: offset grande
+        const offsetFinal = radioBase * (2 + maxIntentos / 12);
+        const anguloAleatorio = Math.random() * Math.PI * 2;
+        console.warn('No se encontró posición libre, usando offset final:', offsetFinal);
+
+        return {
+          lat: centroLat + Math.cos(anguloAleatorio) * offsetFinal,
+          lng: centroLng + Math.sin(anguloAleatorio) * offsetFinal,
+        };
+      };
+
+      const posicionFinal = calcularPosicionActualizada();
+
+      // Crear el nodo con la nueva posición
+      const nodoEnCuenca = {
+        ...nodo,
+        posicionx: posicionFinal.lat,
+        posiciony: posicionFinal.lng,
+        cuenca_id: formData.id ? parseInt(formData.id) : undefined,
+      };
+
+      // Retornar el nuevo array con el nodo agregado
+      return [...prev, nodoEnCuenca];
     });
 
-    // Actualizar en el backend
-    if (nodo.id) {
-      handleUpdateNodo(nodoEnCuenca);
-    }
+    // IMPORTANTE: NO guardamos inmediatamente en el backend, ni siquiera en modo edición
+    // Los cambios se aplicarán cuando el usuario presione "Guardar" en el formulario
+    // Esto previene que los nodos se persistan al presionar ESC
 
-    mostrarToast('success', `Nodo "${nodo.nombre}" asignado a la cuenca. Puedes arrastrarlo para ajustar su posición.`);
+    const mensaje = isEdit
+      ? `Nodo "${nodo.nombre}" asignado a la cuenca. Guarda los cambios para confirmar la asignación.`
+      : `Nodo "${nodo.nombre}" vinculado temporalmente. Guarda la cuenca en la pestaña "Cuenca" para confirmar la asignación.`;
+
+    mostrarToast('success', mensaje);
   };
 
   // Marcador personalizado draggable
@@ -805,7 +974,8 @@ const PanelCuencas = () => {
         const newPos = marker.getLatLng();
         setPosition([newPos.lat, newPos.lng]);
 
-        // Actualizar el nodo en el estado
+        // Actualizar el nodo en el estado local
+        // Los cambios se guardarán al backend cuando el usuario presione "Guardar"
         setNodosCuenca(prev => {
           const updated = [...prev];
           updated[index] = {
@@ -816,15 +986,8 @@ const PanelCuencas = () => {
           return updated;
         });
 
-        // Si el nodo ya existe en la BD, actualizarlo
-        if (nodo.id) {
-          const updatedNodo = {
-            ...nodo,
-            posicionx: newPos.lat,
-            posiciony: newPos.lng,
-          };
-          handleUpdateNodo(updatedNodo);
-        }
+        // NO guardamos inmediatamente en el backend para evitar persistencia no deseada
+        // Los cambios se aplicarán al presionar "Guardar" en el formulario
       },
     };
 
@@ -872,18 +1035,6 @@ const PanelCuencas = () => {
   return (
     <>
       <Breadcrumb pageName="Gestión de Cuencas" />
-
-      {alert && (
-        <div
-          className={`mb-4 rounded-lg p-4 ${
-            alert.type === 'success'
-              ? 'bg-green-100 text-green-800 dark:bg-green-900 dark:text-green-200'
-              : 'bg-red-100 text-red-800 dark:bg-red-900 dark:text-red-200'
-          }`}
-        >
-          {alert.message}
-        </div>
-      )}
 
       <div className="flex justify-end mb-4">
         <button
@@ -1041,18 +1192,18 @@ const PanelCuencas = () => {
                 >
                   Cuenca
                 </button>
-                {isEdit && (
-                  <button
-                    onClick={() => setActiveTab('nodos')}
-                    className={`pb-2 px-4 font-medium transition-colors ${
-                      activeTab === 'nodos'
-                        ? 'border-b-2 border-primary text-primary'
-                        : 'text-gray-500 hover:text-primary'
-                    }`}
-                  >
-                    Nodos ({nodosCuenca.length})
-                  </button>
-                )}
+                <button
+                  onClick={() => setActiveTab('nodos')}
+                  disabled={polygonPoints.length < 3}
+                  className={`pb-2 px-4 font-medium transition-colors ${
+                    activeTab === 'nodos'
+                      ? 'border-b-2 border-primary text-primary'
+                      : 'text-gray-500 hover:text-primary'
+                  } ${polygonPoints.length < 3 ? 'opacity-50 cursor-not-allowed' : ''}`}
+                  title={polygonPoints.length < 3 ? 'Primero dibuja el polígono de la cuenca' : ''}
+                >
+                  Nodos ({nodosCuenca.length})
+                </button>
               </div>
             </div>
 
@@ -1096,6 +1247,42 @@ const PanelCuencas = () => {
                       ? 'Haz clic en el mapa para agregar puntos al polígono'
                       : 'Haz clic en "Comenzar a dibujar" y luego haz clic en el mapa para crear el polígono'}
                   </p>
+                  <div className="mb-2 flex items-center gap-4 text-xs">
+                    <div className="flex items-center gap-2">
+                      <div className="w-4 h-4 rounded" style={{ backgroundColor: '#10b981', opacity: 0.5 }} />
+                      <span className="text-gray-600 dark:text-gray-400">Tu cuenca (verde)</span>
+                    </div>
+                    <div className="flex items-center gap-2">
+                      <div className="w-4 h-4 rounded border-2 border-dashed" style={{ borderColor: '#ef4444', backgroundColor: '#ef4444', opacity: 0.3 }} />
+                      <span className="text-gray-600 dark:text-gray-400">Cuencas existentes (rojo) - Evita superponer</span>
+                    </div>
+                  </div>
+
+                  {!isEdit && nodosCuenca.length > 0 && (
+                    <div className="mb-3 rounded-lg bg-green-100 border border-green-500 p-3 dark:bg-green-900 dark:border-green-700">
+                      <div className="flex items-center gap-2">
+                        <svg className="w-5 h-5 text-green-600 dark:text-green-300" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
+                        </svg>
+                        <p className="text-sm font-semibold text-green-800 dark:text-green-200">
+                          {nodosCuenca.length} nodo(s) vinculado(s) temporalmente. Se asignarán al guardar la cuenca.
+                        </p>
+                      </div>
+                    </div>
+                  )}
+
+                  {haySuperposicion && polygonPoints.length >= 3 && (
+                    <div className="mb-3 rounded-lg bg-red-100 border-2 border-red-500 p-3 dark:bg-red-900 dark:border-red-700">
+                      <div className="flex items-center gap-2">
+                        <svg className="w-5 h-5 text-red-600 dark:text-red-300" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" />
+                        </svg>
+                        <p className="text-sm font-semibold text-red-800 dark:text-red-200">
+                          ¡Advertencia! El polígono se superpone con una cuenca existente. Ajusta el área antes de guardar.
+                        </p>
+                      </div>
+                    </div>
+                  )}
 
                   <div className="mb-3 flex gap-2">
                     {!isDrawingMode ? (
@@ -1153,6 +1340,41 @@ const PanelCuencas = () => {
                       <FitBoundsToPolygon points={polygonPoints} />
                     )}
 
+                    {/* Mostrar cuencas existentes en modo semi-transparente */}
+                    {cuencas
+                      .filter(c => !isEdit || c.id !== parseInt(formData.id))
+                      .map((cuenca) => {
+                        try {
+                          const positions = convertCoordinates(cuenca.poligono.coordinates);
+                          return (
+                            <Polygon
+                              key={`cuenca-existing-${cuenca.id}`}
+                              positions={positions[0]}
+                              pathOptions={{
+                                color: '#ef4444',
+                                fillColor: '#ef4444',
+                                fillOpacity: 0.15,
+                                weight: 2,
+                                dashArray: '5, 5',
+                              }}
+                            >
+                              <Popup>
+                                <div className="p-2">
+                                  <p className="font-bold text-sm text-red-600">Cuenca existente</p>
+                                  <p className="font-semibold">{cuenca.nombre}</p>
+                                  {cuenca.descripcion && (
+                                    <p className="text-xs mt-1">{cuenca.descripcion}</p>
+                                  )}
+                                </div>
+                              </Popup>
+                            </Polygon>
+                          );
+                        } catch (error) {
+                          console.error(`Error al renderizar cuenca ${cuenca.id}:`, error);
+                          return null;
+                        }
+                      })}
+
                     {/* Mostrar puntos marcados arrastrables */}
                     {polygonPoints.map((point, index) => (
                       <DraggablePolygonPoint key={`point-${index}`} position={point} index={index} />
@@ -1168,10 +1390,10 @@ const PanelCuencas = () => {
                       <Polygon
                         positions={polygonPoints}
                         pathOptions={{
-                          color: '#10b981',
-                          fillColor: '#10b981',
-                          fillOpacity: 0.3,
-                          weight: 2,
+                          color: haySuperposicion ? '#ef4444' : '#10b981',
+                          fillColor: haySuperposicion ? '#ef4444' : '#10b981',
+                          fillOpacity: haySuperposicion ? 0.4 : 0.3,
+                          weight: haySuperposicion ? 3 : 2,
                         }}
                       />
                     )}
@@ -1188,8 +1410,9 @@ const PanelCuencas = () => {
                   </button>
                   <button
                     type="submit"
-                    disabled={polygonPoints.length < 3}
+                    disabled={polygonPoints.length < 3 || haySuperposicion}
                     className="rounded bg-primary px-6 py-2 text-white hover:bg-opacity-90 disabled:bg-gray-400 disabled:cursor-not-allowed"
+                    title={haySuperposicion ? 'No se puede guardar: hay superposición con otra cuenca' : ''}
                   >
                     {isEdit ? 'Actualizar' : 'Crear'}
                   </button>
@@ -1198,12 +1421,22 @@ const PanelCuencas = () => {
             )}
 
             {/* Contenido de la pestaña Nodos */}
-            {activeTab === 'nodos' && isEdit && (
+            {activeTab === 'nodos' && (
               <div>
+                {!isEdit && (
+                  <div className="mb-4 rounded-lg bg-blue-50 border border-blue-200 p-3 dark:bg-blue-900 dark:border-blue-700">
+                    <p className="text-sm text-blue-800 dark:text-blue-200">
+                      <strong>Modo Creación:</strong> Los nodos se vincularán temporalmente a esta cuenca.
+                      Debes regresar a la pestaña "Cuenca" y guardar la cuenca primero antes de poder crear nodos nuevos.
+                    </p>
+                  </div>
+                )}
                 <p className="mb-4 text-sm text-gray-600 dark:text-gray-400">
                   {isCreatingNode
                     ? '📍 Haz clic en el mapa para colocar el nuevo nodo.'
-                    : 'Usa el botón "+ Crear Nodo" para agregar un nuevo nodo en el mapa. Arrastra los marcadores verdes para mover los nodos existentes.'}
+                    : isEdit
+                      ? 'Usa el botón "+ Crear Nodo" para agregar un nuevo nodo en el mapa. Arrastra los marcadores verdes para mover los nodos existentes.'
+                      : 'Asigna nodos disponibles a esta cuenca. Puedes ajustar su posición después de asignarlos.'}
                 </p>
                 <div className="mb-4 flex items-center justify-between">
                   <div className="flex gap-4 text-xs">
@@ -1221,31 +1454,33 @@ const PanelCuencas = () => {
                     </div>
                   </div>
                   <div className="flex gap-2">
-                    <button
-                      onClick={() => setIsCreatingNode(!isCreatingNode)}
-                      className={`px-4 py-2 rounded text-sm font-medium flex items-center gap-2 ${
-                        isCreatingNode
-                          ? 'bg-red-500 text-white hover:bg-red-600'
-                          : 'bg-green-500 text-white hover:bg-green-600'
-                      }`}
-                      title={isCreatingNode ? 'Cancelar creación de nodo' : 'Crear un nuevo nodo en el mapa'}
-                    >
-                      {isCreatingNode ? (
-                        <>
-                          <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
-                          </svg>
-                          Cancelar
-                        </>
-                      ) : (
-                        <>
-                          <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4v16m8-8H4" />
-                          </svg>
-                          Crear Nodo
-                        </>
-                      )}
-                    </button>
+                    {isEdit && (
+                      <button
+                        onClick={() => setIsCreatingNode(!isCreatingNode)}
+                        className={`px-4 py-2 rounded text-sm font-medium flex items-center gap-2 ${
+                          isCreatingNode
+                            ? 'bg-red-500 text-white hover:bg-red-600'
+                            : 'bg-green-500 text-white hover:bg-green-600'
+                        }`}
+                        title={isCreatingNode ? 'Cancelar creación de nodo' : 'Crear un nuevo nodo en el mapa'}
+                      >
+                        {isCreatingNode ? (
+                          <>
+                            <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+                            </svg>
+                            Cancelar
+                          </>
+                        ) : (
+                          <>
+                            <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4v16m8-8H4" />
+                            </svg>
+                            Crear Nodo
+                          </>
+                        )}
+                      </button>
+                    )}
                     <button
                       onClick={handleDeshacer}
                       disabled={!puedeDeshacer}
@@ -1296,7 +1531,17 @@ const PanelCuencas = () => {
                           </td>
                           <td className="px-4 py-2">
                             <div className="flex gap-2 flex-wrap">
-                              {!nodo.id ? (
+                              {!isEdit ? (
+                                // Modo creación: solo permitir quitar nodos temporalmente
+                                <button
+                                  onClick={() => handleDesvincularNodo(nodo)}
+                                  className="bg-yellow-500 text-white px-2 py-1 rounded text-xs hover:bg-yellow-600"
+                                  title="Quitar de esta cuenca temporal"
+                                >
+                                  Quitar
+                                </button>
+                              ) : !nodo.id ? (
+                                // Modo edición: nodo nuevo sin ID
                                 <button
                                   onClick={() => handleCreateNodo(nodo)}
                                   className="bg-green-500 text-white px-2 py-1 rounded text-xs hover:bg-green-600"
@@ -1304,6 +1549,7 @@ const PanelCuencas = () => {
                                   Guardar
                                 </button>
                               ) : (
+                                // Modo edición: nodo existente con ID
                                 <>
                                   <button
                                     onClick={() => handleUpdateNodo(nodo)}
@@ -1341,7 +1587,7 @@ const PanelCuencas = () => {
                     Nodos Disponibles para Asignar
                   </h5>
                   <div className="max-h-60 overflow-y-auto border border-stroke dark:border-strokedark rounded">
-                    {todosNodos.filter(nodo => !nodo.cuenca_id).length === 0 ? (
+                    {todosNodos.filter(nodo => !nodo.cuenca_id && !nodosCuenca.some(n => n.id === nodo.id)).length === 0 ? (
                       <div className="p-4 text-center text-gray-500 dark:text-gray-400">
                         No hay nodos disponibles sin asignar
                       </div>
@@ -1357,7 +1603,7 @@ const PanelCuencas = () => {
                         </thead>
                         <tbody>
                           {todosNodos
-                            .filter(nodo => !nodo.cuenca_id)
+                            .filter(nodo => !nodo.cuenca_id && !nodosCuenca.some(n => n.id === nodo.id))
                             .map((nodo) => (
                               <tr key={`disponible-${nodo.id}`} className="border-b dark:border-gray-700 hover:bg-gray-50 dark:hover:bg-gray-800">
                                 <td className="px-4 py-2 text-sm">{nodo.nombre}</td>
@@ -1495,14 +1741,56 @@ const PanelCuencas = () => {
                   </MapContainer>
                 </div>
 
-                <div className="flex justify-end">
-                  <button
-                    type="button"
-                    onClick={handleCloseModal}
-                    className="rounded bg-gray-200 px-6 py-2 text-black hover:bg-gray-300 dark:bg-gray-700 dark:text-white dark:hover:bg-gray-600"
-                  >
-                    Cerrar
-                  </button>
+                <div className="flex justify-between items-center">
+                  {!isEdit && nodosCuenca.length > 0 && (
+                    <div className="bg-green-50 border border-green-200 rounded px-4 py-2 dark:bg-green-900 dark:border-green-700">
+                      <p className="text-sm text-green-800 dark:text-green-200">
+                        {nodosCuenca.length} nodo(s) vinculado(s) temporalmente
+                      </p>
+                    </div>
+                  )}
+                  <div className="flex gap-2 ml-auto">
+                    {/* Botón para guardar cambios directamente desde la pestaña Nodos */}
+                    {isEdit ? (
+                      <button
+                        type="button"
+                        onClick={handleGuardarDesdeNodos}
+                        className="inline-flex items-center gap-2 rounded bg-green-600 px-6 py-2 text-white hover:bg-green-700 font-medium"
+                      >
+                        <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
+                        </svg>
+                        Guardar Cambios
+                      </button>
+                    ) : (
+                      <>
+                        <button
+                          type="button"
+                          onClick={() => setActiveTab('cuenca')}
+                          className="rounded bg-gray-400 px-6 py-2 text-white hover:bg-gray-500"
+                        >
+                          Volver a Cuenca
+                        </button>
+                        <button
+                          type="button"
+                          onClick={handleGuardarDesdeNodos}
+                          className="inline-flex items-center gap-2 rounded bg-green-600 px-6 py-2 text-white hover:bg-green-700 font-medium"
+                        >
+                          <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
+                          </svg>
+                          Guardar Cuenca y Nodos
+                        </button>
+                      </>
+                    )}
+                    <button
+                      type="button"
+                      onClick={handleCloseModal}
+                      className="rounded bg-gray-200 px-6 py-2 text-black hover:bg-gray-300 dark:bg-gray-700 dark:text-white dark:hover:bg-gray-600"
+                    >
+                      Cancelar
+                    </button>
+                  </div>
                 </div>
               </div>
             )}

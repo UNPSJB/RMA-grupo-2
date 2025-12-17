@@ -258,3 +258,82 @@ class DatosSensoresUpdate(BaseModel):
 
 class DatosSensoresResponse(DatosSensoresBase):
     pass
+
+## ----------------------- VARIABLES NODO
+
+class VariableNodoBase(BaseModel):
+    """
+    Schema base para variables de nodo.
+
+    Cambios respecto a la versión anterior:
+    - Se eliminó 'nombre' (ahora viene de tipo_sensor.descripcion)
+    - Se eliminó 'valor_actual' (no estaba en el requisito del profesor)
+    - Se agregó 'tipo_sensor_id' (vincula con el catálogo de datos_sensores)
+    """
+    nodo_id: int
+    tipo_sensor_id: int  # ID del tipo de sensor del catálogo global
+    unidad_medida: Optional[str] = None
+    rango_min: Optional[float] = None
+    rango_max: Optional[float] = None
+    activo: bool = True
+
+class VariableNodo(VariableNodoBase):
+    """
+    Schema completo de variable de nodo (para respuestas de la API).
+
+    Incluye todos los campos de la base de datos más información
+    del tipo de sensor asociado.
+    """
+    id: int
+    created_at: datetime.datetime
+    updated_at: datetime.datetime
+
+    class Config:
+        from_attributes = True
+
+class VariableNodoCreate(BaseModel):
+    """
+    Schema para crear una nueva variable de nodo.
+
+    Campos requeridos:
+    - tipo_sensor_id: Tipo de sensor del catálogo (datos_sensores)
+
+    Campos opcionales:
+    - unidad_medida: Unidad específica para este nodo (ej: °C, °F, psi, bar)
+    - rango_min: Valor mínimo aceptable para este nodo
+    - rango_max: Valor máximo aceptable para este nodo
+    - activo: Si la variable está activa (default: True)
+    """
+    tipo_sensor_id: int
+    unidad_medida: Optional[str] = None
+    rango_min: Optional[float] = None
+    rango_max: Optional[float] = None
+    activo: bool = True
+
+class VariableNodoUpdate(BaseModel):
+    """
+    Schema para actualizar una variable de nodo existente.
+
+    Todos los campos son opcionales. Solo se actualizarán
+    los campos que se proporcionen en la petición.
+
+    Nota: No se permite cambiar tipo_sensor_id una vez creada la variable.
+          Para cambiar el tipo de sensor, elimina y crea una nueva variable.
+    """
+    unidad_medida: Optional[str] = None
+    rango_min: Optional[float] = None
+    rango_max: Optional[float] = None
+    activo: Optional[bool] = None
+
+class VariableNodoConTipoSensor(VariableNodo):
+    """
+    Schema extendido que incluye información del tipo de sensor.
+
+    Útil para respuestas de API donde se necesita mostrar:
+    - ID y nombre del tipo de sensor
+    - Rangos globales del tipo de sensor
+    - Configuración específica del nodo
+    """
+    tipo_sensor_descripcion: str  # Nombre del tipo de sensor (ej: "Temperatura")
+    tipo_sensor_min_global: float  # Rango mínimo global del tipo de sensor
+    tipo_sensor_max_global: float  # Rango máximo global del tipo de sensor
