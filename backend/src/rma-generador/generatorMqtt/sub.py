@@ -3,12 +3,16 @@ import sys
 sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), '../../../..'))) #Ejecutar desde RMA-grupo-2
 import paho.mqtt.client as paho
 import asyncio
+import logging
 from dotenv import load_dotenv
 from backend.src import services
 from backend.src.schemas import MedicionCreate
 from pydantic import BaseModel
 from backend.database import SessionLocal
 import uuid
+
+# Configuración básica del logging para ver los mensajes de INFO y ERROR
+logging.basicConfig(level=logging.INFO, format='%(asctime)s - %(levelname)s - %(message)s')
 
 class Mensaje(BaseModel):
     id: int

@@ -27,12 +27,24 @@ logging.basicConfig(format='%(asctime)s - %(name)s - %(levelname)s - %(message)s
                     level=logging.INFO)
 logger = logging.getLogger(__name__)
 
+from aiogram.exceptions import TelegramRetryAfter
+
 async def send_alarm_to_channel(message: str, chat_id: str):
+    # Se instancia un nuevo objeto Bot aquí para asegurar que la sesión
+    # se maneja correctamente dentro del loop de eventos del proceso que llama (el subscriptor MQTT).
+    bot_sender = Bot(token=API_TOKEN)
     try:
-        await bot.send_message(chat_id=chat_id, text=message, parse_mode="Markdown")
-        logger.info(f"Mensaje enviado al canal: {message}")
+        await bot_sender.send_message(chat_id=chat_id, text=message, parse_mode="Markdown")
+        logger.info(f"Mensaje de alarma enviado al chat_id {chat_id}")
+    except TelegramRetryAfter as e:
+        logger.warning(f"Límite de flood excedido. Reintentando en {e.retry_after} segundos...")
+        await asyncio.sleep(e.retry_after)
+        await send_alarm_to_channel(message, chat_id) # Reintento recursivo
     except Exception as e:
-        logger.error(f"Error enviando el mensaje al canal: {e}")
+        logger.error(f"Error enviando el mensaje de alarma al chat_id {chat_id}: {e}")
+    finally:
+        # Es crucial cerrar la sesión del bot para liberar recursos.
+        await bot_sender.session.close()
 
 @dp.message(CommandStart())
 async def command_start_handler(message: Message) -> None:

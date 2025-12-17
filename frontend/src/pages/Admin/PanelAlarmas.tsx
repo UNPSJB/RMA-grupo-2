@@ -199,12 +199,17 @@ const PanelAlarmas = () => {
 
   const verificarVinculacion = async () => {
     const userId = localStorage.getItem('id');
-    console.log("User ID desde localStorage:", userId);
     if (userId) {
       try {
         const response = await axios.get(`http://localhost:8000/verificar-vinculacion?user_id=${userId}`);
-        setChatId(response.data.chat_id);
-        setIsLinked(response.data.status);
+        const { status, chat_id } = response.data;
+        setIsLinked(status);
+        setChatId(chat_id);
+
+        // Si el usuario está vinculado, pre-seleccionar su chat personal por defecto.
+        if (status && chat_id) {
+          setFormData(prev => ({ ...prev, chat_id: chat_id }));
+        }
       } catch (error) {
         console.error('Error al verificar vinculación:', error);
       }
@@ -355,7 +360,7 @@ const PanelAlarmas = () => {
               onChange={(e) => setFormData({ ...formData, chat_id: e.target.value })}
               className="w-full rounded-lg border border-stroke bg-transparent py-4 pl-6 pr-10 text-black outline-none focus:border-primary focus-visible:shadow-none dark:border-form-strokedark dark:bg-form-input dark:text-white dark:focus:border-primary"
             >
-              <option value="grupal">Chat grupal</option>
+              <option value="">Chat grupal</option>
               {isLinked && <option value={chatId}>Telegram personal</option>}
             </select>
           </div>

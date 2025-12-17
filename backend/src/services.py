@@ -73,7 +73,7 @@ async def crear_medicion(db: AsyncSession, medicion: schemas.MedicionCreate) -> 
                             destino = alarma.chat_id if alarma.chat_id else CHANNEL_ID
                             await send_alarm_to_channel(alarma_message, destino)
     except Exception as e:
-        print(f"Error al enviar alarmas: {e}")
+        print(f"Error al procesar alarmas: {e}")
 
     return new_medicion
     
