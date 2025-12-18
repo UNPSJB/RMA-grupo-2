@@ -1,7 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import Breadcrumb from '../components/Breadcrumbs/Breadcrumb';
 import axios from 'axios';
-import ToastContainer, { ToastData } from '../components/Toast/ToastContainer';
 
 interface UserData {
   id: number;
@@ -17,7 +16,8 @@ interface UserData {
 const Settings = () => {
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
-  const [toasts, setToasts] = useState<ToastData[]>([]);
+  const [successMessage, setSuccessMessage] = useState('');
+  const [errorMessage, setErrorMessage] = useState('');
   const [selectedFile, setSelectedFile] = useState<File | null>(null);
   const [previewUrl, setPreviewUrl] = useState<string>('');
   const [formData, setFormData] = useState({
@@ -28,23 +28,6 @@ const Settings = () => {
     bio: '',
     contrasena: '',
   });
-  const [originalData, setOriginalData] = useState({
-    nombre: '',
-    email: '',
-    telefono: '',
-    username: '',
-    bio: '',
-  });
-
-  // Función para mostrar toast
-  const mostrarToast = (type: 'success' | 'error' | 'info' | 'warning', message: string) => {
-    const id = Date.now().toString();
-    setToasts(prev => [...prev, { id, type, message }]);
-  };
-
-  const removerToast = (id: string) => {
-    setToasts(prev => prev.filter(toast => toast.id !== id));
-  };
 
   // Cargar datos del usuario al montar el componente
   useEffect(() => {
@@ -52,7 +35,7 @@ const Settings = () => {
       try {
         const userId = localStorage.getItem('id');
         if (!userId) {
-          mostrarToast('error', 'No se pudo obtener el ID del usuario');
+          setErrorMessage('No se pudo obtener el ID del usuario');
           setLoading(false);
           return;
         }
@@ -60,25 +43,19 @@ const Settings = () => {
         const response = await axios.get<UserData>(`http://localhost:8000/usuario/${userId}`);
         const userData = response.data;
 
-        const dataToSet = {
+        setFormData({
           nombre: userData.nombre || '',
           email: userData.email || '',
           telefono: userData.telefono || '',
           username: userData.username || '',
           bio: userData.bio || '',
-        };
-
-        setFormData({
-          ...dataToSet,
           contrasena: '', // No mostramos la contraseña por seguridad
         });
-
-        setOriginalData(dataToSet);
 
         setLoading(false);
       } catch (error) {
         console.error('Error al cargar los datos del usuario:', error);
-        mostrarToast('error', 'Error al cargar la información del usuario');
+        setErrorMessage('Error al cargar la información del usuario');
         setLoading(false);
       }
     };
@@ -97,27 +74,13 @@ const Settings = () => {
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setSaving(true);
+    setSuccessMessage('');
+    setErrorMessage('');
 
     try {
       const userId = localStorage.getItem('id');
       if (!userId) {
-        mostrarToast('error', 'No se pudo obtener el ID del usuario');
-        setSaving(false);
-        return;
-      }
-
-      // Verificar si hubo cambios en los datos (sin contar la contraseña vacía)
-      const hasDataChanges = 
-        formData.nombre !== originalData.nombre ||
-        formData.email !== originalData.email ||
-        formData.telefono !== originalData.telefono ||
-        formData.username !== originalData.username ||
-        formData.bio !== originalData.bio;
-
-      const hasPasswordChange = formData.contrasena && formData.contrasena.trim() !== '';
-
-      if (!hasDataChanges && !hasPasswordChange) {
-        mostrarToast('info', 'No se realizó ningún cambio');
+        setErrorMessage('No se pudo obtener el ID del usuario');
         setSaving(false);
         return;
       }
@@ -126,22 +89,22 @@ const Settings = () => {
       if (formData.contrasena) {
         // Validar contraseña en el frontend antes de enviar
         if (formData.contrasena.length < 8) {
-          mostrarToast('error', 'La contraseña debe tener al menos 8 caracteres');
+          setErrorMessage('La contraseña debe tener al menos 8 caracteres');
           setSaving(false);
           return;
         }
         if (!/[A-Z]/.test(formData.contrasena)) {
-          mostrarToast('error', 'La contraseña debe contener al menos una mayúscula');
+          setErrorMessage('La contraseña debe contener al menos una mayúscula');
           setSaving(false);
           return;
         }
         if (!/[0-9]/.test(formData.contrasena)) {
-          mostrarToast('error', 'La contraseña debe contener al menos un número');
+          setErrorMessage('La contraseña debe contener al menos un número');
           setSaving(false);
           return;
         }
         if (!/[a-z]/.test(formData.contrasena)) {
-          mostrarToast('error', 'La contraseña debe contener al menos una minúscula');
+          setErrorMessage('La contraseña debe contener al menos una minúscula');
           setSaving(false);
           return;
         }
@@ -163,21 +126,16 @@ const Settings = () => {
 
       await axios.put(`http://localhost:8000/usuario/${userId}`, updateData);
 
-      mostrarToast('success', 'Información guardada correctamente');
+      setSuccessMessage('Información guardada correctamente');
       setSaving(false);
-
-      // Actualizar los datos originales con los nuevos valores
-      const newOriginalData = {
-        nombre: formData.nombre,
-        email: formData.email,
-        telefono: formData.telefono,
-        username: formData.username,
-        bio: formData.bio,
-      };
-      setOriginalData(newOriginalData);
 
       // Limpiar el campo de contraseña después de guardar
       setFormData(prev => ({ ...prev, contrasena: '' }));
+
+      // Limpiar el mensaje después de 3 segundos
+      setTimeout(() => {
+        setSuccessMessage('');
+      }, 3000);
     } catch (error: any) {
       console.error('Error al guardar los datos:', error);
 
@@ -186,12 +144,12 @@ const Settings = () => {
         // Si es un array de errores de validación
         if (Array.isArray(error.response.data.detail)) {
           const errorMessages = error.response.data.detail.map((err: any) => err.msg).join(', ');
-          mostrarToast('error', errorMessages);
+          setErrorMessage(errorMessages);
         } else {
-          mostrarToast('error', error.response.data.detail);
+          setErrorMessage(error.response.data.detail);
         }
       } else {
-        mostrarToast('error', 'Error al guardar la información. Por favor intenta de nuevo.');
+        setErrorMessage('Error al guardar la información. Por favor intenta de nuevo.');
       }
 
       setSaving(false);
@@ -200,13 +158,8 @@ const Settings = () => {
 
   const handleCancel = (e: React.MouseEvent) => {
     e.preventDefault();
-    // Recargar los datos originales sin recargar toda la página
-    setFormData({
-      ...originalData,
-      contrasena: '',
-    });
-    setSelectedFile(null);
-    setPreviewUrl('');
+    // Recargar los datos originales
+    window.location.reload();
   };
 
   const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -230,16 +183,18 @@ const Settings = () => {
   const handlePhotoSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!selectedFile) {
-      mostrarToast('error', 'Por favor selecciona una foto primero');
+      setErrorMessage('Por favor selecciona una foto primero');
       return;
     }
 
     setSaving(true);
+    setSuccessMessage('');
+    setErrorMessage('');
 
     try {
       const userId = localStorage.getItem('id');
       if (!userId) {
-        mostrarToast('error', 'No se pudo obtener el ID del usuario');
+        setErrorMessage('No se pudo obtener el ID del usuario');
         setSaving(false);
         return;
       }
@@ -248,18 +203,25 @@ const Settings = () => {
       const formDataPhoto = new FormData();
       formDataPhoto.append('photo', selectedFile);
 
-      // Enviar la foto al backend
+      // Por ahora solo mostramos un mensaje de éxito
+      // Cuando tengas el endpoint del backend, descomenta esto:
+      /*
       await axios.post(`http://localhost:8000/usuario/${userId}/photo`, formDataPhoto, {
         headers: {
           'Content-Type': 'multipart/form-data',
         },
       });
+      */
 
-      mostrarToast('success', 'Foto subida correctamente');
+      setSuccessMessage('Foto subida correctamente');
       setSaving(false);
+
+      setTimeout(() => {
+        setSuccessMessage('');
+      }, 3000);
     } catch (error: any) {
       console.error('Error al subir la foto:', error);
-      mostrarToast('error', error.response?.data?.detail || 'Error al subir la foto');
+      setErrorMessage(error.response?.data?.detail || 'Error al subir la foto');
       setSaving(false);
     }
   };
@@ -513,6 +475,19 @@ const Settings = () => {
                     )}
                   </div>
 
+                  {/* Mensajes de éxito y error */}
+                  {successMessage && (
+                    <div className="mb-5.5 rounded-sm bg-success/10 border border-success py-3 px-4">
+                      <p className="text-success">{successMessage}</p>
+                    </div>
+                  )}
+
+                  {errorMessage && (
+                    <div className="mb-5.5 rounded-sm bg-danger/10 border border-danger py-3 px-4">
+                      <p className="text-danger">{errorMessage}</p>
+                    </div>
+                  )}
+
                   <div className="flex justify-end gap-4.5">
                     <button
                       className="flex justify-center rounded border border-stroke py-2 px-6 font-medium text-black hover:shadow-1 dark:border-strokedark dark:text-white"
@@ -632,9 +607,6 @@ const Settings = () => {
           </div>
         </div>
       </div>
-      
-      {/* Contenedor de notificaciones toast */}
-      <ToastContainer toasts={toasts} onRemoveToast={removerToast} />
     </>
   );
 };
