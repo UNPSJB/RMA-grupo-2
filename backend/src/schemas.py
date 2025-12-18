@@ -66,7 +66,11 @@ class Usuario(UsuarioBase):
     contrasena: str
     fecha_registro: datetime.datetime
     rol: str
-        
+    telefono: Optional[str] = None
+    username: Optional[str] = None
+    bio: Optional[str] = None
+    foto: Optional[str] = None
+
     class Config:
         orm_mode = True
 
@@ -76,23 +80,28 @@ class UsuarioCreate(UsuarioBase):
 class UsuarioUpdate(BaseModel):
     nombre: str
     email: EmailStr
-    contrasena: str
+    telefono: Optional[str] = None
+    username: Optional[str] = None
+    bio: Optional[str] = None
+    contrasena: Optional[str] = None
 
     @field_validator('contrasena')
     def validar_contrasena(cls, contrasena):
-        if len(contrasena) < 8:
-            raise ValueError('La contraseña debe tener al menos 8 caracteres.')
-        if not any(char.isdigit() for char in contrasena):
-            raise ValueError('La contraseña debe contener al menos un número.')
-        if not any(char.islower() for char in contrasena):
-            raise ValueError('La contraseña debe contener al menos una letra minúscula.')
-        if not any(char.isupper() for char in contrasena):
-            raise ValueError('La contraseña debe contener al menos una letra mayúscula.')
+        # Solo validar si se proporciona una contraseña
+        if contrasena is not None and contrasena.strip() != '':
+            if len(contrasena) < 8:
+                raise ValueError('La contraseña debe tener al menos 8 caracteres.')
+            if not any(char.isdigit() for char in contrasena):
+                raise ValueError('La contraseña debe contener al menos un número.')
+            if not any(char.islower() for char in contrasena):
+                raise ValueError('La contraseña debe contener al menos una letra minúscula.')
+            if not any(char.isupper() for char in contrasena):
+                raise ValueError('La contraseña debe contener al menos una letra mayúscula.')
         return contrasena
-    
+
 class UsuarioUpdateRol(BaseModel):
     rol: str
-    
+
 class UsuarioLogin(BaseModel):
     email: EmailStr
     contrasena: str
@@ -238,26 +247,64 @@ class AlarmaUpdate(AlarmaBase):
 ##------------DATOS SENSORES ---------##
 
 class DatosSensoresBase(BaseModel):
+    """
+    Schema base para tipos de sensores.
+    Representa el catálogo global de tipos de sensores disponibles.
+    """
     tipo: int
     min: float
     max: float
     descripcion: str
-    
+
     class Config:
-        orm_mode = True
+        from_attributes = True  # Actualizado de orm_mode
 
-class DatosSensoresCreate(DatosSensoresBase):
-    pass
+class DatosSensoresCreate(BaseModel):
+    """
+    Schema para crear un nuevo tipo de sensor.
 
-class DatosSensoresUpdate(BaseModel):
+    CAMBIO ARQUITECTÓNICO:
+    - El campo 'tipo' (ID) ahora es OPCIONAL
+    - Si no se proporciona, se genera automáticamente (autoincremental)
+    - Esto permite crear tipos de sensores dinámicamente desde el frontend
+    - Sin necesidad de modificar el código (enum TipoMensaje)
+
+    Ejemplo de uso:
+    {
+      "descripcion": "Conductividad Eléctrica",
+      "min": 0,
+      "max": 5000,
+      "unidad": "µS/cm"
+    }
+    """
+    tipo: Optional[int] = None  # Ahora es opcional, se genera automático
+    descripcion: str
     min: float
     max: float
+    unidad: Optional[str] = None  # NUEVO: Unidad de medida por defecto
 
     class Config:
-        orm_mode = True
+        from_attributes = True
+
+class DatosSensoresUpdate(BaseModel):
+    """
+    Schema para actualizar un tipo de sensor existente.
+    Todos los campos son opcionales para permitir actualizaciones parciales.
+    """
+    descripcion: Optional[str] = None
+    min: Optional[float] = None
+    max: Optional[float] = None
+    unidad: Optional[str] = None
+
+    class Config:
+        from_attributes = True
 
 class DatosSensoresResponse(DatosSensoresBase):
-    pass
+    """Schema de respuesta con todos los campos del sensor."""
+    unidad: Optional[str] = None
+
+    class Config:
+        from_attributes = True
 
 ## ----------------------- VARIABLES NODO
 

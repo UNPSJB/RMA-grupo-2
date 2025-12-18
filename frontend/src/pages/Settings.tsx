@@ -1,29 +1,264 @@
+import React, { useState, useEffect } from 'react';
 import Breadcrumb from '../components/Breadcrumbs/Breadcrumb';
-import userThree from '../images/user/user-03.png';
+import axios from 'axios';
+
+interface UserData {
+  id: number;
+  nombre: string;
+  email: string;
+  contrasena: string;
+  telefono?: string;
+  username?: string;
+  bio?: string;
+  rol: string;
+}
 
 const Settings = () => {
+  const [loading, setLoading] = useState(true);
+  const [saving, setSaving] = useState(false);
+  const [successMessage, setSuccessMessage] = useState('');
+  const [errorMessage, setErrorMessage] = useState('');
+  const [selectedFile, setSelectedFile] = useState<File | null>(null);
+  const [previewUrl, setPreviewUrl] = useState<string>('');
+  const [formData, setFormData] = useState({
+    nombre: '',
+    email: '',
+    telefono: '',
+    username: '',
+    bio: '',
+    contrasena: '',
+  });
+
+  // Cargar datos del usuario al montar el componente
+  useEffect(() => {
+    const fetchUserData = async () => {
+      try {
+        const userId = localStorage.getItem('id');
+        if (!userId) {
+          setErrorMessage('No se pudo obtener el ID del usuario');
+          setLoading(false);
+          return;
+        }
+
+        const response = await axios.get<UserData>(`http://localhost:8000/usuario/${userId}`);
+        const userData = response.data;
+
+        setFormData({
+          nombre: userData.nombre || '',
+          email: userData.email || '',
+          telefono: userData.telefono || '',
+          username: userData.username || '',
+          bio: userData.bio || '',
+          contrasena: '', // No mostramos la contraseña por seguridad
+        });
+
+        setLoading(false);
+      } catch (error) {
+        console.error('Error al cargar los datos del usuario:', error);
+        setErrorMessage('Error al cargar la información del usuario');
+        setLoading(false);
+      }
+    };
+
+    fetchUserData();
+  }, []);
+
+  const handleInputChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => {
+    const { name, value } = e.target;
+    setFormData(prev => ({
+      ...prev,
+      [name]: value
+    }));
+  };
+
+  const handleSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    setSaving(true);
+    setSuccessMessage('');
+    setErrorMessage('');
+
+    try {
+      const userId = localStorage.getItem('id');
+      if (!userId) {
+        setErrorMessage('No se pudo obtener el ID del usuario');
+        setSaving(false);
+        return;
+      }
+
+      // Si el usuario ingresó una contraseña, validarla
+      if (formData.contrasena) {
+        // Validar contraseña en el frontend antes de enviar
+        if (formData.contrasena.length < 8) {
+          setErrorMessage('La contraseña debe tener al menos 8 caracteres');
+          setSaving(false);
+          return;
+        }
+        if (!/[A-Z]/.test(formData.contrasena)) {
+          setErrorMessage('La contraseña debe contener al menos una mayúscula');
+          setSaving(false);
+          return;
+        }
+        if (!/[0-9]/.test(formData.contrasena)) {
+          setErrorMessage('La contraseña debe contener al menos un número');
+          setSaving(false);
+          return;
+        }
+        if (!/[a-z]/.test(formData.contrasena)) {
+          setErrorMessage('La contraseña debe contener al menos una minúscula');
+          setSaving(false);
+          return;
+        }
+      }
+
+      // Preparar datos para enviar
+      const updateData: any = {
+        nombre: formData.nombre,
+        email: formData.email,
+        telefono: formData.telefono,
+        username: formData.username,
+        bio: formData.bio,
+      };
+
+      // Solo incluir contraseña si el usuario la cambió
+      if (formData.contrasena && formData.contrasena.trim() !== '') {
+        updateData.contrasena = formData.contrasena;
+      }
+
+      await axios.put(`http://localhost:8000/usuario/${userId}`, updateData);
+
+      setSuccessMessage('Información guardada correctamente');
+      setSaving(false);
+
+      // Limpiar el campo de contraseña después de guardar
+      setFormData(prev => ({ ...prev, contrasena: '' }));
+
+      // Limpiar el mensaje después de 3 segundos
+      setTimeout(() => {
+        setSuccessMessage('');
+      }, 3000);
+    } catch (error: any) {
+      console.error('Error al guardar los datos:', error);
+
+      // Mostrar mensaje de error más específico
+      if (error.response?.data?.detail) {
+        // Si es un array de errores de validación
+        if (Array.isArray(error.response.data.detail)) {
+          const errorMessages = error.response.data.detail.map((err: any) => err.msg).join(', ');
+          setErrorMessage(errorMessages);
+        } else {
+          setErrorMessage(error.response.data.detail);
+        }
+      } else {
+        setErrorMessage('Error al guardar la información. Por favor intenta de nuevo.');
+      }
+
+      setSaving(false);
+    }
+  };
+
+  const handleCancel = (e: React.MouseEvent) => {
+    e.preventDefault();
+    // Recargar los datos originales
+    window.location.reload();
+  };
+
+  const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (file) {
+      setSelectedFile(file);
+      // Crear URL de vista previa
+      const reader = new FileReader();
+      reader.onloadend = () => {
+        setPreviewUrl(reader.result as string);
+      };
+      reader.readAsDataURL(file);
+    }
+  };
+
+  const handleDeletePhoto = () => {
+    setSelectedFile(null);
+    setPreviewUrl('');
+  };
+
+  const handlePhotoSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!selectedFile) {
+      setErrorMessage('Por favor selecciona una foto primero');
+      return;
+    }
+
+    setSaving(true);
+    setSuccessMessage('');
+    setErrorMessage('');
+
+    try {
+      const userId = localStorage.getItem('id');
+      if (!userId) {
+        setErrorMessage('No se pudo obtener el ID del usuario');
+        setSaving(false);
+        return;
+      }
+
+      // Crear FormData para enviar el archivo
+      const formDataPhoto = new FormData();
+      formDataPhoto.append('photo', selectedFile);
+
+      // Por ahora solo mostramos un mensaje de éxito
+      // Cuando tengas el endpoint del backend, descomenta esto:
+      /*
+      await axios.post(`http://localhost:8000/usuario/${userId}/photo`, formDataPhoto, {
+        headers: {
+          'Content-Type': 'multipart/form-data',
+        },
+      });
+      */
+
+      setSuccessMessage('Foto subida correctamente');
+      setSaving(false);
+
+      setTimeout(() => {
+        setSuccessMessage('');
+      }, 3000);
+    } catch (error: any) {
+      console.error('Error al subir la foto:', error);
+      setErrorMessage(error.response?.data?.detail || 'Error al subir la foto');
+      setSaving(false);
+    }
+  };
+
+  if (loading) {
+    return (
+      <div className="mx-auto max-w-270">
+        <Breadcrumb pageName="Configuración" />
+        <div className="flex justify-center items-center py-20">
+          <div className="text-black dark:text-white">Cargando...</div>
+        </div>
+      </div>
+    );
+  }
+
   return (
     <>
       <div className="mx-auto max-w-270">
-        <Breadcrumb pageName="Settings" />
+        <Breadcrumb pageName="Configuración" />
 
         <div className="grid grid-cols-5 gap-8">
           <div className="col-span-5 xl:col-span-3">
             <div className="rounded-sm border border-stroke bg-white shadow-default dark:border-strokedark dark:bg-boxdark">
               <div className="border-b border-stroke py-4 px-7 dark:border-strokedark">
                 <h3 className="font-medium text-black dark:text-white">
-                  Personal Information
+                  Información Personal
                 </h3>
               </div>
               <div className="p-7">
-                <form action="#">
+                <form onSubmit={handleSubmit}>
                   <div className="mb-5.5 flex flex-col gap-5.5 sm:flex-row">
                     <div className="w-full sm:w-1/2">
                       <label
                         className="mb-3 block text-sm font-medium text-black dark:text-white"
-                        htmlFor="fullName"
+                        htmlFor="nombre"
                       >
-                        Full Name
+                        Nombre Completo
                       </label>
                       <div className="relative">
                         <span className="absolute left-4.5 top-4">
@@ -54,10 +289,13 @@ const Settings = () => {
                         <input
                           className="w-full rounded border border-stroke bg-gray py-3 pl-11.5 pr-4.5 text-black focus:border-primary focus-visible:outline-none dark:border-strokedark dark:bg-meta-4 dark:text-white dark:focus:border-primary"
                           type="text"
-                          name="fullName"
-                          id="fullName"
-                          placeholder="Devid Jhon"
-                          defaultValue="Devid Jhon"
+                          name="nombre"
+                          id="nombre"
+                          placeholder="Ingrese su nombre completo"
+                          value={formData.nombre}
+                          onChange={handleInputChange}
+                          autoComplete="name"
+                          required
                         />
                       </div>
                     </div>
@@ -65,17 +303,19 @@ const Settings = () => {
                     <div className="w-full sm:w-1/2">
                       <label
                         className="mb-3 block text-sm font-medium text-black dark:text-white"
-                        htmlFor="phoneNumber"
+                        htmlFor="telefono"
                       >
-                        Phone Number
+                        Teléfono
                       </label>
                       <input
                         className="w-full rounded border border-stroke bg-gray py-3 px-4.5 text-black focus:border-primary focus-visible:outline-none dark:border-strokedark dark:bg-meta-4 dark:text-white dark:focus:border-primary"
-                        type="text"
-                        name="phoneNumber"
-                        id="phoneNumber"
-                        placeholder="+990 3343 7865"
-                        defaultValue="+990 3343 7865"
+                        type="tel"
+                        name="telefono"
+                        id="telefono"
+                        placeholder="Ingrese su teléfono"
+                        value={formData.telefono}
+                        onChange={handleInputChange}
+                        autoComplete="tel"
                       />
                     </div>
                   </div>
@@ -83,9 +323,9 @@ const Settings = () => {
                   <div className="mb-5.5">
                     <label
                       className="mb-3 block text-sm font-medium text-black dark:text-white"
-                      htmlFor="emailAddress"
+                      htmlFor="email"
                     >
-                      Email Address
+                      Email
                     </label>
                     <div className="relative">
                       <span className="absolute left-4.5 top-4">
@@ -116,10 +356,13 @@ const Settings = () => {
                       <input
                         className="w-full rounded border border-stroke bg-gray py-3 pl-11.5 pr-4.5 text-black focus:border-primary focus-visible:outline-none dark:border-strokedark dark:bg-meta-4 dark:text-white dark:focus:border-primary"
                         type="email"
-                        name="emailAddress"
-                        id="emailAddress"
-                        placeholder="devidjond45@gmail.com"
-                        defaultValue="devidjond45@gmail.com"
+                        name="email"
+                        id="email"
+                        placeholder="Ingrese su email"
+                        value={formData.email}
+                        onChange={handleInputChange}
+                        autoComplete="email"
+                        required
                       />
                     </div>
                   </div>
@@ -127,26 +370,28 @@ const Settings = () => {
                   <div className="mb-5.5">
                     <label
                       className="mb-3 block text-sm font-medium text-black dark:text-white"
-                      htmlFor="Username"
+                      htmlFor="username"
                     >
-                      Username
+                      Usuario
                     </label>
                     <input
                       className="w-full rounded border border-stroke bg-gray py-3 px-4.5 text-black focus:border-primary focus-visible:outline-none dark:border-strokedark dark:bg-meta-4 dark:text-white dark:focus:border-primary"
                       type="text"
-                      name="Username"
-                      id="Username"
-                      placeholder="devidjhon24"
-                      defaultValue="devidjhon24"
+                      name="username"
+                      id="username"
+                      placeholder="Ingrese su nombre de usuario"
+                      value={formData.username}
+                      onChange={handleInputChange}
+                      autoComplete="username"
                     />
                   </div>
 
                   <div className="mb-5.5">
                     <label
                       className="mb-3 block text-sm font-medium text-black dark:text-white"
-                      htmlFor="Username"
+                      htmlFor="bio"
                     >
-                      BIO
+                      Biografía
                     </label>
                     <div className="relative">
                       <span className="absolute left-4.5 top-4">
@@ -185,24 +430,78 @@ const Settings = () => {
                         name="bio"
                         id="bio"
                         rows={6}
-                        placeholder="Write your bio here"
-                        defaultValue="Lorem ipsum dolor sit amet, consectetur adipiscing elit. Pellentesque posuere fermentum urna, eu condimentum mauris tempus ut. Donec fermentum blandit aliquet."
+                        placeholder="Escriba su biografía aquí"
+                        value={formData.bio}
+                        onChange={handleInputChange}
                       ></textarea>
                     </div>
                   </div>
 
+                  <div className="mb-5.5">
+                    <label
+                      className="mb-3 block text-sm font-medium text-black dark:text-white"
+                      htmlFor="contrasena"
+                    >
+                      Cambiar Contraseña (opcional)
+                    </label>
+                    <input
+                      className="w-full rounded border border-stroke bg-gray py-3 px-4.5 text-black focus:border-primary focus-visible:outline-none dark:border-strokedark dark:bg-meta-4 dark:text-white dark:focus:border-primary"
+                      type="password"
+                      name="contrasena"
+                      id="contrasena"
+                      placeholder="Deja en blanco para mantener la actual"
+                      value={formData.contrasena}
+                      onChange={handleInputChange}
+                      autoComplete="new-password"
+                    />
+                    {formData.contrasena && (
+                      <div className="mt-2 text-xs text-gray-500 dark:text-gray-400">
+                        <p>La contraseña debe tener:</p>
+                        <ul className="list-disc list-inside mt-1">
+                          <li className={formData.contrasena.length >= 8 ? 'text-success' : ''}>
+                            Mínimo 8 caracteres
+                          </li>
+                          <li className={/[A-Z]/.test(formData.contrasena) ? 'text-success' : ''}>
+                            Al menos una mayúscula
+                          </li>
+                          <li className={/[a-z]/.test(formData.contrasena) ? 'text-success' : ''}>
+                            Al menos una minúscula
+                          </li>
+                          <li className={/[0-9]/.test(formData.contrasena) ? 'text-success' : ''}>
+                            Al menos un número
+                          </li>
+                        </ul>
+                      </div>
+                    )}
+                  </div>
+
+                  {/* Mensajes de éxito y error */}
+                  {successMessage && (
+                    <div className="mb-5.5 rounded-sm bg-success/10 border border-success py-3 px-4">
+                      <p className="text-success">{successMessage}</p>
+                    </div>
+                  )}
+
+                  {errorMessage && (
+                    <div className="mb-5.5 rounded-sm bg-danger/10 border border-danger py-3 px-4">
+                      <p className="text-danger">{errorMessage}</p>
+                    </div>
+                  )}
+
                   <div className="flex justify-end gap-4.5">
                     <button
                       className="flex justify-center rounded border border-stroke py-2 px-6 font-medium text-black hover:shadow-1 dark:border-strokedark dark:text-white"
-                      type="submit"
+                      type="button"
+                      onClick={handleCancel}
                     >
-                      Cancel
+                      Cancelar
                     </button>
                     <button
-                      className="flex justify-center rounded bg-primary py-2 px-6 font-medium text-gray hover:bg-opacity-90"
+                      className="flex justify-center rounded bg-primary py-2 px-6 font-medium text-gray hover:bg-opacity-90 disabled:bg-opacity-50"
                       type="submit"
+                      disabled={saving}
                     >
-                      Save
+                      {saving ? 'Guardando...' : 'Guardar'}
                     </button>
                   </div>
                 </form>
@@ -213,29 +512,30 @@ const Settings = () => {
             <div className="rounded-sm border border-stroke bg-white shadow-default dark:border-strokedark dark:bg-boxdark">
               <div className="border-b border-stroke py-4 px-7 dark:border-strokedark">
                 <h3 className="font-medium text-black dark:text-white">
-                  Your Photo
+                  Tu Foto
                 </h3>
               </div>
               <div className="p-7">
-                <form action="#">
-                  <div className="mb-4 flex items-center gap-3">
-                    <div className="h-14 w-14 rounded-full">
-                      <img src={userThree} alt="User" />
+                <form onSubmit={handlePhotoSubmit}>
+                  {/* Vista previa de la imagen */}
+                  {previewUrl && (
+                    <div className="mb-4 flex flex-col items-center gap-3">
+                      <div className="h-32 w-32 rounded-full overflow-hidden border-2 border-primary">
+                        <img
+                          src={previewUrl}
+                          alt="Vista previa"
+                          className="h-full w-full object-cover"
+                        />
+                      </div>
+                      <button
+                        type="button"
+                        onClick={handleDeletePhoto}
+                        className="text-sm text-danger hover:underline"
+                      >
+                        Eliminar foto
+                      </button>
                     </div>
-                    <div>
-                      <span className="mb-1.5 text-black dark:text-white">
-                        Edit your photo
-                      </span>
-                      <span className="flex gap-2.5">
-                        <button className="text-sm hover:text-primary">
-                          Delete
-                        </button>
-                        <button className="text-sm hover:text-primary">
-                          Update
-                        </button>
-                      </span>
-                    </div>
-                  </div>
+                  )}
 
                   <div
                     id="FileUpload"
@@ -244,6 +544,7 @@ const Settings = () => {
                     <input
                       type="file"
                       accept="image/*"
+                      onChange={handleFileChange}
                       className="absolute inset-0 z-50 m-0 h-full w-full cursor-pointer p-0 opacity-0 outline-none"
                     />
                     <div className="flex flex-col items-center justify-center space-y-3">
@@ -276,26 +577,28 @@ const Settings = () => {
                         </svg>
                       </span>
                       <p>
-                        <span className="text-primary">Click to upload</span> or
-                        drag and drop
+                        <span className="text-primary">Haz clic para subir</span> o
+                        arrastra y suelta
                       </p>
-                      <p className="mt-1.5">SVG, PNG, JPG or GIF</p>
-                      <p>(max, 800 X 800px)</p>
+                      <p className="mt-1.5">SVG, PNG, JPG o GIF</p>
+                      <p>(máx. 800 x 800px)</p>
                     </div>
                   </div>
 
                   <div className="flex justify-end gap-4.5">
                     <button
                       className="flex justify-center rounded border border-stroke py-2 px-6 font-medium text-black hover:shadow-1 dark:border-strokedark dark:text-white"
-                      type="submit"
+                      type="button"
+                      onClick={handleDeletePhoto}
                     >
-                      Cancel
+                      Cancelar
                     </button>
                     <button
-                      className="flex justify-center rounded bg-primary py-2 px-6 font-medium text-gray hover:bg-opacity-90"
+                      className="flex justify-center rounded bg-primary py-2 px-6 font-medium text-gray hover:bg-opacity-90 disabled:bg-opacity-50"
                       type="submit"
+                      disabled={!selectedFile || saving}
                     >
-                      Save
+                      {saving ? 'Guardando...' : 'Guardar'}
                     </button>
                   </div>
                 </form>

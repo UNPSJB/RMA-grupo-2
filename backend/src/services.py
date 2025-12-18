@@ -177,34 +177,37 @@ async def leer_usuario(db: AsyncSession, usuario_id: int) -> schemas.Usuario:
             raise HTTPException(status_code=404, detail="Usuario no encontrado")
         
         return db_usuario
-'''   
 async def modificar_usuario(db: AsyncSession, usuario_id: int, usuario: schemas.UsuarioUpdate) -> schemas.Usuario:
     db_usuario = await leer_usuario(db, usuario_id)
-    
-    if db_usuario:
-        db_usuario.nombre = usuario.nombre
-        db_usuario.email = usuario.email
-        db_usuario.contrasena = usuario.contrasena  # Asegúrate de manejar la contraseña de manera segura
-        await db.commit()
-        await db.refresh(db_usuario)
-        return db_usuario
-    else:
+
+    if not db_usuario:
         raise HTTPException(status_code=404, detail="Usuario no encontrado")
-'''    
-async def modificar_usuario(db: AsyncSession, usuario_id: int, usuario: schemas.UsuarioUpdateRol) -> schemas.Usuario:
-    db_usuario = await leer_usuario(db, usuario_id)
-    if db_usuario:
-        db_usuario.rol = usuario.rol
-        await db.commit()
-        await db.refresh(db_usuario)
-        return db_usuario
-    else:
-        raise HTTPException(status_code=404, detail="Usuario no encontrado")
+
+    # Actualizar campos básicos
+    db_usuario.nombre = usuario.nombre
+    db_usuario.email = usuario.email
+
+    # Actualizar campos opcionales
+    if usuario.telefono is not None:
+        db_usuario.telefono = usuario.telefono
+    if usuario.username is not None:
+        db_usuario.username = usuario.username
+    if usuario.bio is not None:
+        db_usuario.bio = usuario.bio
+
+    # Solo actualizar contraseña si se proporciona y no está vacía
+    if usuario.contrasena is not None and usuario.contrasena.strip() != '':
+        # Hashear la contraseña antes de guardarla
+        db_usuario.contrasena = pwd_context.hash(usuario.contrasena)
+
+    await db.commit()
+    await db.refresh(db_usuario)
+    return db_usuario
  
 
 async def modificar_rol_usuario(db: AsyncSession, usuario_id: int, usuario: schemas.UsuarioUpdateRol) -> schemas.Usuario:
     db_usuario = await leer_usuario(db, usuario_id)
-    
+
     if db_usuario:
         db_usuario.rol = usuario.rol
         await db.commit()
@@ -212,6 +215,7 @@ async def modificar_rol_usuario(db: AsyncSession, usuario_id: int, usuario: sche
         return db_usuario
     else:
         raise HTTPException(status_code=404, detail="Usuario no encontrado")
+
 
 async def eliminar_usuario(db: AsyncSession, usuario_id: int) -> dict:
     db_usuario = await leer_usuario(db, usuario_id)
@@ -426,17 +430,50 @@ async def verificar_codigo(token: str, usuario_id: int, db: AsyncSession):
 
 # Crear un sensor
 async def crear_sensor(db: AsyncSession, sensor: schemas.DatosSensoresCreate) -> models.DatosSensores:
+    """
+    Crea un nuevo tipo de sensor en el catálogo global.
+
+    MEJORA ARQUITECTÓNICA:
+    - Si 'tipo' (ID) no se proporciona, se genera automáticamente
+    - Valida que la descripción no esté duplicada
+    - Permite crear sensores dinámicamente desde la aplicación
+
+    Ejemplo:
+        POST /sensores
+        {
+          "descripcion": "Conductividad Eléctrica",
+          "min": 0,
+          "max": 5000,
+          "unidad": "µS/cm"
+        }
+        → Crea automáticamente con tipo=26 (siguiente ID disponible)
+    """
     try:
+        # Verificar que no exista un sensor con la misma descripción
+        result = await db.execute(
+            select(models.DatosSensores).filter(models.DatosSensores.descripcion == sensor.descripcion)
+        )
+        if result.scalars().first():
+            raise HTTPException(
+                status_code=400,
+                detail=f"Ya existe un sensor con la descripción '{sensor.descripcion}'"
+            )
+
+        # Crear el nuevo sensor
+        # Si 'tipo' no se proporciona, PostgreSQL lo genera automáticamente (autoincrement)
         nuevo_sensor = models.DatosSensores(
-            tipo=sensor.tipo,
+            tipo=sensor.tipo,  # Puede ser None, se genera automático
+            descripcion=sensor.descripcion,
             min=sensor.min,
             max=sensor.max,
-            descripcion=sensor.descripcion
+            unidad=sensor.unidad
         )
         db.add(nuevo_sensor)
         await db.commit()
         await db.refresh(nuevo_sensor)
         return nuevo_sensor
+    except HTTPException:
+        raise
     except SQLAlchemyError as e:
         await db.rollback()
         raise HTTPException(status_code=400, detail=f"Error al crear sensor: {str(e)}") from e
@@ -450,19 +487,43 @@ async def leer_sensor(db: AsyncSession, sensor_id: int) -> models.DatosSensores:
     return sensor
 
 async def modificar_sensor(db: AsyncSession, sensor_id: int, sensor: schemas.DatosSensoresUpdate) -> models.DatosSensores | None:
+    """
+    Modifica un sensor existente.
+
+    MEJORA: Ahora permite actualizar todos los campos de forma parcial.
+    Solo se actualizan los campos que se proporcionen (no None).
+    """
     # Buscar el sensor por ID
     result = await db.execute(select(models.DatosSensores).filter(models.DatosSensores.tipo == sensor_id))
     db_sensor = result.scalar_one_or_none()
 
     if db_sensor is None:
-        return None  # Si no se encuentra el sensor, retorna None
+        raise HTTPException(status_code=404, detail="Sensor no encontrado")
 
-    # Solo actualizamos 'min' y 'max'
-    db_sensor.min = sensor.min
-    db_sensor.max = sensor.max
+    # Actualizar solo los campos proporcionados
+    if sensor.descripcion is not None:
+        # Verificar que no exista otro sensor con esa descripción
+        result_check = await db.execute(
+            select(models.DatosSensores).filter(
+                models.DatosSensores.descripcion == sensor.descripcion,
+                models.DatosSensores.tipo != sensor_id
+            )
+        )
+        if result_check.scalars().first():
+            raise HTTPException(
+                status_code=400,
+                detail=f"Ya existe otro sensor con la descripción '{sensor.descripcion}'"
+            )
+        db_sensor.descripcion = sensor.descripcion
+
+    if sensor.min is not None:
+        db_sensor.min = sensor.min
+    if sensor.max is not None:
+        db_sensor.max = sensor.max
+    if sensor.unidad is not None:
+        db_sensor.unidad = sensor.unidad
 
     try:
-        # Guardar cambios
         await db.commit()
         await db.refresh(db_sensor)
         return db_sensor

@@ -35,6 +35,19 @@ def fetch_nodos_from_api(api_url="http://localhost:8000/nodos"):
         print(f"✗ Error al conectar con la API: {e}")
         return None
 
+def fetch_sensores_from_api(api_url="http://localhost:8000/sensores"):
+    """Obtiene la lista de tipos de sensores desde la API del backend."""
+    try:
+        response = requests.get(api_url, timeout=5)
+        response.raise_for_status()
+        sensores_data = response.json()
+        print(f"✓ Obtenidos {len(sensores_data)} tipos de sensores desde la API.")
+        # Retornar lista de IDs de tipos de sensores
+        return [sensor['tipo'] for sensor in sensores_data]
+    except requests.exceptions.RequestException as e:
+        print(f"✗ Error al conectar con la API de sensores: {e}")
+        return None
+
 if __name__ == "__main__":
 
     parser = argparse.ArgumentParser()
@@ -98,14 +111,22 @@ if __name__ == "__main__":
     print(f"Threads por tipo de sensor: {args.threads_por_tipo}")
     print(f"Frecuencia (segundos): {freq_min}-{freq_max}")
     print("Presione CTRL+C para detener.")
-    
-    # Definir tipos de sensor
-    tipos_sensores = [
-        TipoMensaje.TEMP_T,
-        TipoMensaje.WATER_HEIGHT,
-        TipoMensaje.LATITUDE_T,
-        TipoMensaje.VOLTAGE_T,
-    ]
+
+    # Obtener tipos de sensores desde la API (DINÁMICO)
+    tipos_sensores_api = fetch_sensores_from_api()
+
+    # Si falla la API, usar tipos por defecto como fallback
+    if tipos_sensores_api is None or len(tipos_sensores_api) == 0:
+        print("⚠️  Usando tipos de sensores de fallback (enum).")
+        tipos_sensores = [
+            TipoMensaje.TEMP_T.value,
+            TipoMensaje.WATER_HEIGHT.value,
+            TipoMensaje.LATITUDE_T.value,
+            TipoMensaje.VOLTAGE_T.value,
+        ]
+    else:
+        print(f"✓ Usando {len(tipos_sensores_api)} tipos de sensores desde la BD.")
+        tipos_sensores = tipos_sensores_api
     
     # Crear threads: N threads por tipo de sensor por nodo
     # Esto simula N sensores del mismo tipo en cada nodo

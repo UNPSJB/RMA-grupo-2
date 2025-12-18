@@ -1,6 +1,6 @@
 import datetime
 from os import getenv
-from fastapi import APIRouter, Depends, HTTPException, UploadFile
+from fastapi import APIRouter, Depends, HTTPException, UploadFile, File
 from sqlalchemy import and_
 from sqlalchemy.ext.asyncio import AsyncSession
 from backend.database import get_db
@@ -11,6 +11,7 @@ from typing import List
 from backend.src.auth import authenticate_user
 import jwt
 from jwt.exceptions import InvalidTokenError
+import base64
 
 router = APIRouter()
 
@@ -85,7 +86,7 @@ async def get_usuario(usuario_id: int, db: AsyncSession = Depends(get_db)):
 
 @router.put("/usuario/{usuario_id}", response_model=schemas.Usuario)
 async def update_usuario(
-    usuario_id: int, usuario: schemas.UsuarioUpdateRol, db: AsyncSession = Depends(get_db)
+    usuario_id: int, usuario: schemas.UsuarioUpdate, db: AsyncSession = Depends(get_db)
 ):
     return await services.modificar_usuario(db, usuario_id, usuario)
 
@@ -97,6 +98,39 @@ async def delete_usuario(usuario_id: int, db: AsyncSession = Depends(get_db)):
 @router.get("/usuarios/")
 async def read_usuarios( db: AsyncSession = Depends(get_db)):
     return await services.leer_todos_los_usuarios(db)
+
+@router.post("/usuario/{usuario_id}/photo")
+async def upload_photo(
+    usuario_id: int,
+    photo: UploadFile = File(...),
+    db: AsyncSession = Depends(get_db)
+):
+    """
+    Endpoint para subir la foto de perfil del usuario.
+    La foto se guarda como base64 en la base de datos.
+    """
+    try:
+        # Leer el contenido del archivo
+        contents = await photo.read()
+
+        # Convertir a base64
+        base64_encoded = base64.b64encode(contents).decode('utf-8')
+
+        # Crear data URI con el tipo MIME correcto
+        foto_data_uri = f"data:{photo.content_type};base64,{base64_encoded}"
+
+        # Actualizar usuario con la foto
+        db_usuario = await services.leer_usuario(db, usuario_id)
+        if not db_usuario:
+            raise HTTPException(status_code=404, detail="Usuario no encontrado")
+
+        db_usuario.foto = foto_data_uri
+        await db.commit()
+        await db.refresh(db_usuario)
+
+        return {"message": "Foto subida correctamente", "foto": foto_data_uri}
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=f"Error al subir la foto: {str(e)}")
 
 ## ---------------------- NODO
 

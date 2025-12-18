@@ -5,7 +5,7 @@ import random
 import threading
 import paho.mqtt.client as paho
 from paho.mqtt.client import CallbackAPIVersion
-from typing import Optional
+from typing import Optional, Union
 from datetime import datetime
 from dataclasses import dataclass, field
 from generatorMqtt import TipoMensaje
@@ -30,7 +30,7 @@ class Nodo:
     def publicar(
         self,
         topic: str,
-        tipo: TipoMensaje,
+        tipo: Union[TipoMensaje, int],
         message: str = "",
         qos: int = 1,
     ) -> None:
@@ -96,8 +96,11 @@ class Nodo:
         except Exception as e:
             print(f"Error al desconectar: {e}")
 
-    def formatear_mensaje(self, topic: str, tipo: TipoMensaje, mensaje: str) -> str:
+    def formatear_mensaje(self, topic: str, tipo: Union[TipoMensaje, int], mensaje: str) -> str:
+        # Convertir tipo a int si es un enum, de lo contrario usar directamente
+        tipo_id = tipo.value if isinstance(tipo, TipoMensaje) else tipo
+
         mensaje_obj = Mensaje(
-            id=self.id, type=tipo.value, data=str(mensaje), time=str(datetime.now())
+            id=self.id, type=tipo_id, data=str(mensaje), time=str(datetime.now())
         )
         return str(mensaje_obj.model_dump())

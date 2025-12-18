@@ -1,10 +1,12 @@
 import React, { useState }  from 'react';
-import { Link } from 'react-router-dom';
+import { Link, useNavigate } from 'react-router-dom';
 import Breadcrumb from '../../components/Breadcrumbs/Breadcrumb';
 import rmalogo from '../../images/logo/rmalogo-svg.svg';
 import Alerts from '../../components/alerts'
+
 const SignUp: React.FC = () => {
-    
+    const navigate = useNavigate();
+
     const [formData, setFormData] = useState({
       name: '',
       email: '',
@@ -16,67 +18,163 @@ const SignUp: React.FC = () => {
       message: '',
       description: '',
     });
-    const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
-      e.preventDefault(); // Previene el comportamiento predeterminado del formulario
+    const [passwordErrors, setPasswordErrors] = useState<string[]>([]);
 
-    // Aquí usas formData para construir el objeto que enviarás
-    const data = {
-      nombre: formData.name,  
-      email: formData.email,    
-      contrasena: formData.password,
-    };
-    const { retype_password, ...dataToSend } = formData;
-    
-    if (formData.password !== formData.retype_password) {
-      setAlert({
-        type: 'warning',
-        message: 'Atencion!',
-        description: 'Las contraseñas no coinciden.',
-      });
-      return;
+    // Función para validar la contraseña
+    const validatePassword = (password: string): string[] => {
+      const errors: string[] = [];
+
+      if (password.length < 8) {
+        errors.push('Mínimo 8 caracteres');
       }
-     
-    if (!formData.name || !formData.email || !formData.password || !formData.retype_password) {
-      setAlert({
-        type: 'warning',
-        message: 'Atencion!',
-        description: 'Debe rellenar todos los campos.',
-      });
-      return;
-    }
-  
-    // Omitir retype_password
-    console.log(dataToSend); // Imprimir datos a enviar
-    try {
+      if (!/[A-Z]/.test(password)) {
+        errors.push('Al menos una mayúscula');
+      }
+      if (!/[0-9]/.test(password)) {
+        errors.push('Al menos un número');
+      }
+
+      return errors;
+    };
+
+    // Actualizar validación cuando el usuario escribe la contraseña
+    const handlePasswordChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+      const newPassword = e.target.value;
+      setFormData({ ...formData, password: newPassword });
+      setPasswordErrors(validatePassword(newPassword));
+    };
+
+    const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
+      e.preventDefault();
+
+      // Validar campos vacíos
+      if (!formData.name || !formData.email || !formData.password || !formData.retype_password) {
+        setAlert({
+          type: 'warning',
+          message: 'Atención!',
+          description: 'Debe rellenar todos los campos.',
+        });
+        return;
+      }
+
+      // Validar fortaleza de contraseña
+      const passwordValidationErrors = validatePassword(formData.password);
+      if (passwordValidationErrors.length > 0) {
+        setAlert({
+          type: 'error',
+          message: 'Contraseña débil',
+          description: `La contraseña debe cumplir: ${passwordValidationErrors.join(', ')}`,
+        });
+        return;
+      }
+
+      // Validar que las contraseñas coincidan
+      if (formData.password !== formData.retype_password) {
+        setAlert({
+          type: 'warning',
+          message: 'Atención!',
+          description: 'Las contraseñas no coinciden.',
+        });
+        return;
+      }
+
+      // Preparar datos para enviar
+      const data = {
+        nombre: formData.name,
+        email: formData.email,
+        contrasena: formData.password,
+      };
+
+      try {
         console.log("Datos enviados:", data);
         const response = await fetch("http://localhost:8000/usuario", {
-            method: "POST", 
-            headers: {
-                "Content-Type": "application/json", // Indica que envías JSON
-            },
-            body: JSON.stringify(data), // Convierte el objeto a una cadena JSON
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+          },
+          body: JSON.stringify(data),
         });
 
         if (response.ok) {
+          const responseData = await response.json();
+          console.log("Usuario creado:", responseData);
+
           setAlert({
             type: 'success',
-            message: 'Que tipo capo',
-            description: 'Usted creo el usuario correctamente.',
+            message: '¡Registro exitoso!',
+            description: 'Usuario creado correctamente. Iniciando sesión...',
           });
-            const responseData = await response.json(); // Si la respuesta es correcta, obtienes los datos
-            console.log("Usuario creado:", responseData); // Manejo de la respuesta exitosa
+
+          // Hacer login automático con las credenciales
+          try {
+            const loginResponse = await fetch("http://localhost:8000/login", {
+              method: "POST",
+              headers: {
+                "Content-Type": "application/json",
+              },
+              body: JSON.stringify({
+                email: formData.email,
+                contrasena: formData.password,
+              }),
+            });
+
+            if (loginResponse.ok) {
+              const loginData = await loginResponse.json();
+              console.log("Login exitoso:", loginData);
+
+              // Guardar token y datos del usuario
+              localStorage.setItem('token', loginData.access_token);
+              localStorage.setItem('user_email', formData.email);
+
+              // Decodificar el token para obtener el rol
+              const tokenPayload = JSON.parse(atob(loginData.access_token.split('.')[1]));
+              const userRole = tokenPayload.role || 'usuario';
+              localStorage.setItem('user_role', userRole);
+
+              // Redirigir según el rol después de 1 segundo
+              setTimeout(() => {
+                if (userRole === 'admin') {
+                  navigate('/admin');
+                } else if (userRole === 'investigador') {
+                  navigate('/user/RMA');
+                } else {
+                  // Para rol 'usuario' u otros roles, redirigir a vista de invitado
+                  navigate('/invitado/RMA');
+                }
+              }, 1000);
+            } else {
+              // Si el login automático falla, redirigir al login manual
+              console.error("Error en login automático");
+              setTimeout(() => {
+                navigate('/');
+              }, 2000);
+            }
+          } catch (loginError) {
+            console.error("Error en login automático:", loginError);
+            // Si hay error, redirigir al login manual
+            setTimeout(() => {
+              navigate('/');
+            }, 2000);
+          }
+
         } else {
+          const errorData = await response.json();
+          console.error("Error del servidor:", errorData);
+
           setAlert({
             type: 'error',
-            message: 'Error',
-            description: 'El mail ya esta en uso.',
+            message: 'Error al crear usuario',
+            description: errorData.detail || 'El email ya está en uso.',
           });
-            const errorData = await response.json(); // Si hay un error, obtienes los datos del error
-            console.error("Error del servidor:", errorData); // Manejo del error
         }
-    } catch (error) {
-        console.error("Error:", error); // Manejo de errores de red
-    }
+      } catch (error) {
+        console.error("Error:", error);
+        setAlert({
+          type: 'error',
+          message: 'Error de conexión',
+          description: 'No se pudo conectar con el servidor.',
+        });
+      }
     };
   
   return (
@@ -188,7 +286,7 @@ const SignUp: React.FC = () => {
                       id='contrasena'
                       placeholder="Ingrese su contraseña"
                       className="w-full rounded-lg border border-stroke bg-transparent py-4 pl-6 pr-10 text-black outline-none focus:border-primary focus-visible:shadow-none dark:border-form-strokedark dark:bg-form-input dark:text-white dark:focus:border-primary"
-                      onChange={(e) => setFormData({ ...formData, password: e.target.value })}
+                      onChange={handlePasswordChange}
                       value={formData.password}
                     />
 
@@ -214,6 +312,24 @@ const SignUp: React.FC = () => {
                       </svg>
                     </span>
                   </div>
+
+                  {/* Indicadores de requisitos de contraseña */}
+                  {formData.password && (
+                    <div className="mt-2 text-sm">
+                      <p className="mb-1 text-gray-600 dark:text-gray-400">Requisitos de contraseña:</p>
+                      <ul className="ml-4 space-y-1">
+                        <li className={formData.password.length >= 8 ? 'text-green-600' : 'text-red-600'}>
+                          {formData.password.length >= 8 ? '✓' : '✗'} Mínimo 8 caracteres
+                        </li>
+                        <li className={/[A-Z]/.test(formData.password) ? 'text-green-600' : 'text-red-600'}>
+                          {/[A-Z]/.test(formData.password) ? '✓' : '✗'} Al menos una mayúscula
+                        </li>
+                        <li className={/[0-9]/.test(formData.password) ? 'text-green-600' : 'text-red-600'}>
+                          {/[0-9]/.test(formData.password) ? '✓' : '✗'} Al menos un número
+                        </li>
+                      </ul>
+                    </div>
+                  )}
                 </div>
 
                 <div className="mb-6">
