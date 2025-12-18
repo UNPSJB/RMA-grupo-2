@@ -200,8 +200,13 @@ const Settings = () => {
 
   const handleCancel = (e: React.MouseEvent) => {
     e.preventDefault();
-    // Recargar los datos originales
-    window.location.reload();
+    // Recargar los datos originales sin recargar toda la página
+    setFormData({
+      ...originalData,
+      contrasena: '',
+    });
+    setSelectedFile(null);
+    setPreviewUrl('');
   };
 
   const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
