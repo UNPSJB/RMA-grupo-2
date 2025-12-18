@@ -138,15 +138,37 @@ function App() {
           </ProtectedRoute>
         }/>
 
-        {/* Ruta accesible para cualquier usuario autenticado */}
-        <Route path="/settings" element={
-          <ProtectedRoute>
+        {/* Configuración para administradores */}
+        <Route path="/admin/settings" element={
+          <ProtectedRoute requiredRole="admin">
             <Settings />
           </ProtectedRoute>
         }/>
+
+      </Route>
+
+      {/* Rutas para investigadores con InvestigadorLayout */}
+      <Route element={<InvestigadorLayout />}>
+        {/* Configuración para investigadores */}
+        <Route path="/user/settings" element={
+          <ProtectedRoute requiredRole="investigador">
+            <Settings />
+          </ProtectedRoute>
+        }/>
+      </Route>
+
+      {/* Rutas para usuarios normales (sin sidebar de admin) */}
+      <Route element={<DefaultLayout />}>
         <Route path="/invitado/RMA" element={
           <ProtectedRoute>
             <PaginaDefault />
+          </ProtectedRoute>
+        }/>
+
+        {/* Configuración para usuarios normales */}
+        <Route path="/invitado/settings" element={
+          <ProtectedRoute>
+            <Settings />
           </ProtectedRoute>
         }/>
       </Route>

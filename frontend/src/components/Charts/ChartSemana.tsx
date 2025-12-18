@@ -83,24 +83,33 @@ const ChartSemana: React.FC = () => {
       // Crear el cuerpo del filtro
       const hoy = new Date()
       const ayer = new Date(new Date().getTime() - (7 * 24 * 60 * 60 * 1000))
-      console.log(hoy)
-      console.log(ayer)
+
+      console.log('Buscando datos para:', {
+        nodo: selectedNode,
+        tipo: selectedDataType,
+        desde: ayer.toISOString(),
+        hasta: hoy.toISOString()
+      });
+
       const filtros = {
         nodo: selectedNode,
         tipo: selectedDataType,
-        fechaDesde: ayer,
-        fechaHasta: hoy
+        fechaDesde: ayer.toISOString(),
+        fechaHasta: hoy.toISOString()
       };
-  
+
       // Realizar la solicitud POST
       const response = await axios.post(
-        "http://localhost:8000/medicion/filtrar", // Cambia el endpoint según corresponda
+        "http://localhost:8000/medicion/filtrar",
         filtros
       );
-  
+
+      console.log('Datos recibidos:', response.data.length, 'mediciones');
+
       // Procesar los datos devueltos por el backend
       const data = response.data as Medicion[];
       setFilteredData(data);
+
       const range = yAxisSettings[selectedDataType];
       setChartOptions((prevOptions) => ({
         ...prevOptions,
@@ -113,6 +122,7 @@ const ChartSemana: React.FC = () => {
       }));
     } catch (error) {
       console.error('Error al obtener las mediciones:', error);
+      alert('Error al cargar los datos. Por favor intenta de nuevo.');
     }
   };
 
@@ -127,30 +137,47 @@ const ChartSemana: React.FC = () => {
 
   return (
     <div className="col-span-12 rounded-sm border border-stroke bg-white dark:bg-boxdark px-5 pt-7.5 pb-5 shadow-default dark:border-strokedark">
-      <div className="flex justify-between items-center mb-5">
-        <Select
-          options={selectNodeOptions}
-          onChange={(option) => option && setSelectedNode(option.value)}
-          defaultValue={""}
-          className="w-full max-w-xs"
-        />
+      <div className="flex justify-between items-center mb-5 gap-4">
+        <div className="flex-1">
+          <label className="mb-2 block text-sm font-medium text-black dark:text-white">
+            Seleccionar Nodo
+          </label>
+          <Select
+            options={selectNodeOptions}
+            onChange={(option) => option && setSelectedNode(option.value)}
+            placeholder="Selecciona un nodo..."
+            className="w-full"
+          />
+        </div>
 
-        <Select
-          options={selectDataTypeOptions}
-          onChange={(option) => option && setSelectedDataType(option.value)}
-          defaultValue={""}
-          className="w-full max-w-xs"
-        />
+        <div className="flex-1">
+          <label className="mb-2 block text-sm font-medium text-black dark:text-white">
+            Tipo de Sensor
+          </label>
+          <Select
+            options={selectDataTypeOptions}
+            onChange={(option) => option && setSelectedDataType(option.value)}
+            placeholder="Selecciona un tipo..."
+            className="w-full"
+          />
+        </div>
 
-        <div className="flex space-x-2">
+        <div className="flex items-end">
           <button
             onClick={handleSearch}
-            className="bg-blue-500 text-white px-4 py-2 rounded-md hover:bg-blue-600 dark:bg-blue-800 dark:hover:bg-blue-700"
+            disabled={!selectedNode || !selectedDataType}
+            className="bg-primary text-white px-6 py-2.5 rounded-md hover:bg-opacity-90 disabled:bg-gray-400 disabled:cursor-not-allowed transition-all"
           >
             Buscar
           </button>
         </div>
       </div>
+
+      {filteredData.length === 0 && (
+        <div className="text-center py-10 text-gray-500 dark:text-gray-400">
+          Selecciona un nodo y un tipo de sensor, luego haz clic en "Buscar" para ver los datos.
+        </div>
+      )}
 
       <ReactApexChart
         options={{

@@ -26,13 +26,29 @@ class Medicion(Base):
 
 ## ----------------------- DATOS SENSORES
 class DatosSensores(Base):
+    """
+    Catálogo global de tipos de sensores.
+
+    MEJORA ARQUITECTÓNICA:
+    - Este catálogo es ahora DINÁMICO y configurable desde la aplicación
+    - No requiere modificar el código para agregar nuevos tipos de sensores
+    - El campo 'tipo' se genera automáticamente (autoincremental)
+
+    Campos:
+    - tipo: ID único del tipo de sensor (PK, autoincremental)
+    - descripcion: Nombre del tipo (ej: "Temperatura", "Conductividad Eléctrica")
+    - min/max: Rangos globales válidos para este tipo de sensor
+    - unidad: Unidad de medida por defecto (ej: "°C", "µS/cm", "hPa")
+    """
     __tablename__ = 'datos_sensores'
 
-    tipo: Mapped[int] = mapped_column(Integer, primary_key=True, index=True)
-    min: Mapped[float] = mapped_column(Float)
-    max: Mapped[float] = mapped_column(Float)
-    descripcion: Mapped[str] = mapped_column(String)
+    tipo: Mapped[int] = mapped_column(Integer, primary_key=True, index=True, autoincrement=True)
+    descripcion: Mapped[str] = mapped_column(String, nullable=False, unique=True)
+    min: Mapped[float] = mapped_column(Float, nullable=False)
+    max: Mapped[float] = mapped_column(Float, nullable=False)
+    unidad: Mapped[str] = mapped_column(String(20), nullable=True)  # NUEVO: Unidad por defecto
 
+    # Relaciones
     alarma: Mapped[list["Alarma"]] = relationship("Alarma", back_populates="tipo_sensor")
 
 ## ----------------------- ALARMAS
@@ -73,6 +89,10 @@ class Usuario(Base):
         default=func.now()
     )
     rol: Mapped[str] = mapped_column(String, index=True, nullable=False)
+    telefono: Mapped[str] = mapped_column(String(20), nullable=True)
+    username: Mapped[str] = mapped_column(String(50), nullable=True)
+    bio: Mapped[str] = mapped_column(String, nullable=True)
+    foto: Mapped[str] = mapped_column(String, nullable=True)
 
 ## ------------------- CUENCA
 
